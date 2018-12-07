@@ -4,11 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Cors;
-using Microsoft.AspNetCore.Cors.Infrastructure;
+using BenefactAPI.DataAccess;
 using Microsoft.AspNetCore.Mvc;
 using Replicate;
-using Replicate.Messages;
 using Replicate.MetaData;
 using Replicate.Serialization;
 
@@ -19,8 +17,10 @@ namespace BenefactBackend.Controllers
         public int Status = 500;
         public HTTPError(string message, int status = 500) : base(message) { Status = status; }
     }
-    public class HTTPChannel : ReplicationChannel<string>
+    public class HTTPChannel : ReplicationChannel<string, string>
     {
+        public override IReplicateSerializer<string> Serializer { get; } = new JSONSerializer(ReplicationModel.Default);
+
         public override string GetEndpoint(MethodInfo endpoint)
         {
             return endpoint.Name.ToLower();
@@ -52,11 +52,11 @@ namespace BenefactBackend.Controllers
             };
         private List<ColumnData> statuses =>
             new[] { new ColumnData { ID = 1, Title = "To Do" }, new ColumnData { ID = 2, Title = "In Progress" }, new ColumnData { ID = 3, Title = "Done" } }.ToList();
-        public CardsResponse Cards()
+        public async Task<CardsResponse> Cards()
         {
             return new CardsResponse()
             {
-                Cards = cards,
+                Cards = await BenefactDB.DB.GetCards(),
                 Columns = statuses,
                 Tags = tags.Values.ToList(),
             };
@@ -87,8 +87,8 @@ namespace BenefactBackend.Controllers
     public class ValuesController : Controller
     {
 
-        public static ReplicationChannel<string> Channel;
-        public static JSONSerializer serializer = new JSONSerializer(ReplicationModel.Default);
+        public static ReplicationChannel<string, string> Channel;
+        public static JSONSerializer serializer;
         static ValuesController()
         {
             Channel = new HTTPChannel();
@@ -102,11 +102,8 @@ namespace BenefactBackend.Controllers
             try
             {
                 var bodyText = new StreamReader(Request.Body).ReadToEnd();
-                if (path != null && Channel.TryGetContract(path, out var contract))
-                {
-                    var result = await Channel.Receive(path, string.IsNullOrEmpty(bodyText) ? null : bodyText, serializer);
-                    return new ContentResult() { Content = result, ContentType = "application/json", StatusCode = 200 };
-                }
+                var result = await Channel.Receive(path, string.IsNullOrEmpty(bodyText) ? null : bodyText);
+                return new ContentResult() { Content = result, ContentType = "application/json", StatusCode = 200 };
             }
             catch (SerializationError)
             {
@@ -116,7 +113,10 @@ namespace BenefactBackend.Controllers
             {
                 return new ContentResult() { Content = httpError.Message, ContentType = "text/plain", StatusCode = httpError.Status };
             }
-            return new NotFoundResult();
+            catch (ContractNotFoundError)
+            {
+                return new NotFoundResult();
+            }
         }
     }
 }

@@ -50,7 +50,7 @@ namespace BenefactBackend.Controllers
     [ReplicateType(AutoMethods = AutoAdd.AllPublic)]
     public interface ICardsInterface
     {
-        CardsResponse Cards();
+        Task<CardsResponse> Cards();
         /// <summary>
         /// Update a card with the non-null fields provided in CardFields
         /// </summary>
