@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using BenefactAPI.DataAccess;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Replicate;
 using Replicate.MetaData;
 using Replicate.Serialization;
@@ -19,7 +20,8 @@ namespace BenefactBackend.Controllers
     }
     public class HTTPChannel : ReplicationChannel<string, string>
     {
-        public override IReplicateSerializer<string> Serializer { get; } = new JSONSerializer(ReplicationModel.Default);
+        public override IReplicateSerializer<string> Serializer { get; }
+            = new JSONSerializer(ReplicationModel.Default) { ToLowerFieldNames = true };
 
         public override string GetEndpoint(MethodInfo endpoint)
         {
@@ -33,53 +35,98 @@ namespace BenefactBackend.Controllers
     }
     public class TestImplentation : ICardsInterface
     {
-        public TestImplentation()
+        public TestImplentation() { }
+        void UpdateMembersFrom<T>(T target, T newFields, params string[] ignoredFields)
         {
-        }
-        private Dictionary<int, TagData> tags = new Dictionary<int, TagData>
-        {
-            { 1, new TagData() { Color = "#F00", ID = 1, Name = "Story"} },
-            { 2, new TagData() { Color = "#0F0", ID = 2, Name = "Dev Task" } },
-            { 3, new TagData() { Color = "#00F", ID = 3, Name = "Business Boiz" } },
-            { 4, new TagData() { Character = "🐛", ID = 4, Name = "Bug" } },
-        };
-        private List<CardData> cards = new List<CardData>()
+            var td = ReplicationModel.Default.GetTypeAccessor(typeof(T));
+            IEnumerable<MemberAccessor> members = td.MemberAccessors;
+            if (ignoredFields != null)
+                members = members.Where(mem => !ignoredFields.Contains(mem.Info.Name));
+            foreach (var member in members)
             {
-                new CardData() { ID = 1, Description = "Some Markdown\n=====\n\n```csharp\n    var herp = \"derp\";\n```", Title = "Get MD Working", ColumnID = 2, Categories = new[] { 1,2,3,4 } },
-                new CardData() { ID = 2, Description = "😈😈😈😈😈😈", Title = "Make sure UTF8 works 😑", ColumnID = 1, Categories = new[] { 1 } },
-                new CardData() { ID = 3, Description = "There was a bug", Title = "Some Bug", ColumnID = 2, Categories = new[] { 4, 2 } },
-                new CardData() { ID = 3, Description = "There was a bug", Title = "Fixed bug", ColumnID = 3, Categories = new[] { 4 } },
-            };
-        private List<ColumnData> statuses =>
-            new[] { new ColumnData { ID = 1, Title = "To Do" }, new ColumnData { ID = 2, Title = "In Progress" }, new ColumnData { ID = 3, Title = "Done" } }.ToList();
+                var newValue = member.GetValue(newFields);
+                if (newValue == null) continue;
+                member.SetValue(target, newValue);
+            }
+        }
         public async Task<CardsResponse> Cards()
         {
-            return new CardsResponse()
+            using (var db = new BenefactDBContext())
             {
-                Cards = await BenefactDB.DB.GetCards(),
-                Columns = statuses,
-                Tags = tags.Values.ToList(),
-            };
-        }
-        public void Update(CardUpdate update)
-        {
-            var cardIndex = cards.FindIndex(card => card.ID == update.ID);
-            if (cardIndex == -1) throw new HTTPError("Card not found");
-            var updateCard = cards[cardIndex];
-            var td = ReplicationModel.Default.GetTypeAccessor(typeof(CardData));
-            if (update.CardFields != null)
-                foreach (var member in td.MemberAccessors.Where(mem => mem.Info.Name != "ID"))
+                return new CardsResponse()
                 {
-                    var newValue = member.GetValue(update.CardFields);
-                    if (newValue == null) continue;
-                    member.SetValue(updateCard, newValue);
-                }
-            if (update.InsertAboveID.HasValue)
+                    Cards = await db.Cards.Include(c => c.Categories).ToListAsync(),
+                    Columns = await db.Columns.ToListAsync(),
+                    Categories = await db.Categories.ToListAsync(),
+                };
+            }
+        }
+        public async Task UpdateCard(CardData update)
+        {
+            using (var db = new BenefactDBContext())
             {
-                var destIndex = cards.FindIndex(card => card.ID == update.ID);
-                if (destIndex == -1) throw new HTTPError("Destination card not found");
-                cards.RemoveAt(cardIndex);
-                cards.Insert(destIndex, updateCard);
+                var existingCard = await db.Cards.Include(c => c.Categories).FirstOrDefaultAsync(c => c.Id == update.Id);
+                if (existingCard == null) throw new HTTPError("Card not found");
+                UpdateMembersFrom(existingCard, update, nameof(CardData.Id), nameof(CardData.CategoryIDs));
+                if (update.CategoryIDs != null)
+                {
+                    existingCard.Categories.Clear();
+                    existingCard.CategoryIDs = update.CategoryIDs;
+                }
+                // TODO: Ordering/index
+                await db.SaveChangesAsync();
+            }
+        }
+
+        public async Task<CardData> AddCard(CardData card)
+        {
+            using (var db = new BenefactDBContext())
+            {
+                var result = await db.Cards.AddAsync(card);
+                await db.SaveChangesAsync();
+                return result.Entity;
+            }
+        }
+
+        public async Task<Category> AddCategory(Category category)
+        {
+            using (var db = new BenefactDBContext())
+            {
+                var result = await db.Categories.AddAsync(category);
+                await db.SaveChangesAsync();
+                return result.Entity;
+            }
+        }
+
+        public async Task UpdateCategory(Category category)
+        {
+            using (var db = new BenefactDBContext())
+            {
+                var existingCard = await db.Categories.FindAsync(category.Id);
+                if (existingCard == null) throw new HTTPError("Category not found");
+                UpdateMembersFrom(existingCard, category, nameof(Category.Id));
+                await db.SaveChangesAsync();
+            }
+        }
+
+        public async Task<ColumnData> AddColumn(ColumnData column)
+        {
+            using (var db = new BenefactDBContext())
+            {
+                var result = await db.Columns.AddAsync(column);
+                await db.SaveChangesAsync();
+                return result.Entity;
+            }
+        }
+
+        public async Task UpdateColumn(ColumnData column)
+        {
+            using (var db = new BenefactDBContext())
+            {
+                var existingColumn = await db.Columns.FindAsync(column.Id);
+                if (existingColumn == null) throw new HTTPError("Column not found");
+                UpdateMembersFrom(existingColumn, column, nameof(ColumnData.Id));
+                await db.SaveChangesAsync();
             }
         }
     }

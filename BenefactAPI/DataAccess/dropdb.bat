@@ -1,1 +1,0 @@
-psql -U postgres -c "drop database benefact"

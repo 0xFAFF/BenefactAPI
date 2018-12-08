@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BenefactAPI.DataAccess;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -27,6 +28,9 @@ namespace BenefactBackend
         {
             services.AddCors();
             services.AddMvc();
+            services.AddEntityFrameworkNpgsql()
+               .AddDbContext<BenefactDBContext>()
+               .BuildServiceProvider();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

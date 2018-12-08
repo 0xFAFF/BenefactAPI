@@ -1,6 +1,7 @@
 ﻿using Replicate;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -13,39 +14,52 @@ namespace BenefactBackend.Controllers
     [ReplicateType]
     public class CardData
     {
-        public int ID;
-        public string Title;
-        public string Description;
-        public int? ColumnID;
-        public IEnumerable<int> Categories = null;
+        public int Id { get; set; }
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public int? ColumnID { get; set; }
+        [ReplicateIgnore]
+        public ColumnData Column { get; set; }
+        [ReplicateIgnore]
+        public List<CardCategory> Categories { get; set; } = new List<CardCategory>();
+        [NotMapped]
+        public List<int> CategoryIDs
+        {
+            get => Categories.Select(ccd => ccd.CategoryId).ToList();
+            set => Categories = value.Select(v => new CardCategory() { Card = this, CategoryId = v }).ToList();
+        }
+    }
+    public class CardCategory
+    {
+        public int CardId { get; set; }
+        public CardData Card { get; set; }
+        public int CategoryId { get; set; }
+        public Category Category { get; set; }
+
     }
     [ReplicateType]
     public class ColumnData
     {
-        public int ID;
-        public string Title;
+        public int Id { get; set; }
+        public string Title { get; set; }
+
+        [ReplicateIgnore]
+        public List<CardData> Cards { get; set; }
     }
     [ReplicateType]
-    public class TagData
+    public class Category
     {
-        public int ID;
-        public string Name;
-        public string Color;
-        public string Character;
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Color { get; set; }
+        public string Character { get; set; }
     }
     [ReplicateType]
     public struct CardsResponse
     {
         public List<CardData> Cards;
         public List<ColumnData> Columns;
-        public List<TagData> Tags;
-    }
-    [ReplicateType]
-    public struct CardUpdate
-    {
-        public int ID;
-        public int? InsertAboveID;
-        public CardData CardFields;
+        public List<Category> Categories;
     }
     [ReplicateType(AutoMethods = AutoAdd.AllPublic)]
     public interface ICardsInterface
@@ -55,6 +69,13 @@ namespace BenefactBackend.Controllers
         /// Update a card with the non-null fields provided in CardFields
         /// </summary>
         /// <param name="update"></param>
-        void Update(CardUpdate update);
+        Task UpdateCard(CardData update);
+        Task<CardData> AddCard(CardData card);
+
+        Task<Category> AddCategory(Category category);
+        Task UpdateCategory(Category category);
+
+        Task<ColumnData> AddColumn(ColumnData column);
+        Task UpdateColumn(ColumnData column);
     }
 }

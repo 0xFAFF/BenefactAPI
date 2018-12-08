@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using BenefactAPI.DataAccess;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -14,6 +15,15 @@ namespace BenefactBackend
     {
         public static void Main(string[] args)
         {
+            if(args.Length == 1 && args[0] == "install")
+            {
+                using (var db = new BenefactDBContext())
+                {
+                    db.Database.EnsureDeleted();
+                    db.Database.EnsureCreated();
+                }
+                Environment.Exit(0);
+            }
             BuildWebHost(args).Run();
         }
 
