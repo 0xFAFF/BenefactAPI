@@ -1,6 +1,7 @@
 ﻿using BenefactBackend.Controllers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.Extensions.Configuration;
 using Npgsql;
 using Npgsql.NameTranslation;
 using System;
@@ -17,8 +18,7 @@ namespace BenefactAPI.DataAccess
         public DbSet<ColumnData> Columns { get; set; }
         public DbSet<Category> Categories { get; set; }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-            => optionsBuilder.UseNpgsql("Host=localhost;Username=postgres;Database=benefact");
+        public BenefactDBContext(DbContextOptions options) : base(options) { }
 
         private static readonly Regex _keysRegex = new Regex("^(PK|FK|IX)_", RegexOptions.Compiled);
         protected override void OnModelCreating(ModelBuilder modelBuilder)

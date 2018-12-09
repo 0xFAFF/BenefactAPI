@@ -5,8 +5,10 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using BenefactAPI.DataAccess;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Replicate;
 using Replicate.MetaData;
 using Replicate.Serialization;
@@ -23,6 +25,11 @@ namespace BenefactBackend.Controllers
         public override IReplicateSerializer<string> Serializer { get; }
             = new JSONSerializer(ReplicationModel.Default) { ToLowerFieldNames = true };
 
+        public HTTPChannel(TestImplentation implentation)
+        {
+            this.RegisterSingleton(implentation);
+        }
+
         public override string GetEndpoint(MethodInfo endpoint)
         {
             return endpoint.Name.ToLower();
@@ -35,7 +42,11 @@ namespace BenefactBackend.Controllers
     }
     public class TestImplentation : ICardsInterface
     {
-        public TestImplentation() { }
+        IServiceProvider Services;
+        public TestImplentation(IServiceProvider services)
+        {
+            Services = services;
+        }
         void UpdateMembersFrom<T>(T target, T newFields, params string[] ignoredFields)
         {
             var td = ReplicationModel.Default.GetTypeAccessor(typeof(T));
@@ -49,9 +60,17 @@ namespace BenefactBackend.Controllers
                 member.SetValue(target, newValue);
             }
         }
-        public async Task<CardsResponse> Cards()
+        public async Task<T> DoWithDB<T>(Func<BenefactDBContext, Task<T>> func)
         {
-            using (var db = new BenefactDBContext())
+            using (var scope = Services.CreateScope())
+            using (var db = scope.ServiceProvider.GetService<BenefactDBContext>())
+            {
+                return await func(db);
+            }
+        }
+        public Task<CardsResponse> Cards()
+        {
+            return DoWithDB(async db =>
             {
                 return new CardsResponse()
                 {
@@ -59,11 +78,11 @@ namespace BenefactBackend.Controllers
                     Columns = await db.Columns.ToListAsync(),
                     Categories = await db.Categories.ToListAsync(),
                 };
-            }
+            });
         }
-        public async Task UpdateCard(CardData update)
+        public Task UpdateCard(CardData update)
         {
-            using (var db = new BenefactDBContext())
+            return DoWithDB(async db =>
             {
                 var existingCard = await db.Cards.Include(c => c.Categories).FirstOrDefaultAsync(c => c.Id == update.Id);
                 if (existingCard == null) throw new HTTPError("Card not found");
@@ -75,59 +94,62 @@ namespace BenefactBackend.Controllers
                 }
                 // TODO: Ordering/index
                 await db.SaveChangesAsync();
-            }
+                return true;
+            });
         }
 
-        public async Task<CardData> AddCard(CardData card)
+        public Task<CardData> AddCard(CardData card)
         {
-            using (var db = new BenefactDBContext())
+            return DoWithDB(async db =>
             {
                 var result = await db.Cards.AddAsync(card);
                 await db.SaveChangesAsync();
                 return result.Entity;
-            }
+            });
         }
 
-        public async Task<Category> AddCategory(Category category)
+        public Task<Category> AddCategory(Category category)
         {
-            using (var db = new BenefactDBContext())
+            return DoWithDB(async db =>
             {
                 var result = await db.Categories.AddAsync(category);
                 await db.SaveChangesAsync();
                 return result.Entity;
-            }
+            });
         }
 
-        public async Task UpdateCategory(Category category)
+        public Task UpdateCategory(Category category)
         {
-            using (var db = new BenefactDBContext())
+            return DoWithDB(async db =>
             {
                 var existingCard = await db.Categories.FindAsync(category.Id);
                 if (existingCard == null) throw new HTTPError("Category not found");
                 UpdateMembersFrom(existingCard, category, nameof(Category.Id));
                 await db.SaveChangesAsync();
-            }
+                return true;
+            });
         }
 
-        public async Task<ColumnData> AddColumn(ColumnData column)
+        public Task<ColumnData> AddColumn(ColumnData column)
         {
-            using (var db = new BenefactDBContext())
+            return DoWithDB(async db =>
             {
                 var result = await db.Columns.AddAsync(column);
                 await db.SaveChangesAsync();
                 return result.Entity;
-            }
+            });
         }
 
-        public async Task UpdateColumn(ColumnData column)
+        public Task UpdateColumn(ColumnData column)
         {
-            using (var db = new BenefactDBContext())
+            return DoWithDB(async db =>
             {
                 var existingColumn = await db.Columns.FindAsync(column.Id);
                 if (existingColumn == null) throw new HTTPError("Column not found");
                 UpdateMembersFrom(existingColumn, column, nameof(ColumnData.Id));
                 await db.SaveChangesAsync();
-            }
+                return true;
+            });
         }
     }
     [Route("api/")]
@@ -136,10 +158,11 @@ namespace BenefactBackend.Controllers
 
         public static ReplicationChannel<string, string> Channel;
         public static JSONSerializer serializer;
-        static ValuesController()
+        IServiceProvider Provider;
+        public ValuesController(HTTPChannel channel, IServiceProvider provider)
         {
-            Channel = new HTTPChannel();
-            Channel.RegisterSingleton(new TestImplentation());
+            Channel = channel;
+            Provider = provider;
         }
         // GET api/values
         [HttpGet("{*path}")]
@@ -148,9 +171,12 @@ namespace BenefactBackend.Controllers
         {
             try
             {
-                var bodyText = new StreamReader(Request.Body).ReadToEnd();
-                var result = await Channel.Receive(path, string.IsNullOrEmpty(bodyText) ? null : bodyText);
-                return new ContentResult() { Content = result, ContentType = "application/json", StatusCode = 200 };
+                using (var serviceScope = Provider.CreateScope())
+                {
+                    var bodyText = new StreamReader(Request.Body).ReadToEnd();
+                    var result = await Channel.Receive(path, string.IsNullOrEmpty(bodyText) ? null : bodyText);
+                    return new ContentResult() { Content = result, ContentType = "application/json", StatusCode = 200 };
+                }
             }
             catch (SerializationError)
             {

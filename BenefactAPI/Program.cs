@@ -15,15 +15,6 @@ namespace BenefactBackend
     {
         public static void Main(string[] args)
         {
-            if(args.Length == 1 && args[0] == "install")
-            {
-                using (var db = new BenefactDBContext())
-                {
-                    db.Database.EnsureDeleted();
-                    db.Database.EnsureCreated();
-                }
-                Environment.Exit(0);
-            }
             BuildWebHost(args).Run();
         }
 
