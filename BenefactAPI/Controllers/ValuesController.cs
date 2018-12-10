@@ -74,9 +74,9 @@ namespace BenefactBackend.Controllers
             {
                 return new CardsResponse()
                 {
-                    Cards = await db.Cards.Include(c => c.Categories).ToListAsync(),
+                    Cards = await db.Cards.Include(c => c.Tags).ToListAsync(),
                     Columns = await db.Columns.ToListAsync(),
-                    Categories = await db.Categories.ToListAsync(),
+                    Tags = await db.Tags.ToListAsync(),
                 };
             });
         }
@@ -84,13 +84,13 @@ namespace BenefactBackend.Controllers
         {
             return DoWithDB(async db =>
             {
-                var existingCard = await db.Cards.Include(c => c.Categories).FirstOrDefaultAsync(c => c.Id == update.Id);
+                var existingCard = await db.Cards.Include(c => c.Tags).FirstOrDefaultAsync(c => c.Id == update.Id);
                 if (existingCard == null) throw new HTTPError("Card not found");
-                UpdateMembersFrom(existingCard, update, nameof(CardData.Id), nameof(CardData.CategoryIDs));
-                if (update.CategoryIDs != null)
+                UpdateMembersFrom(existingCard, update, nameof(CardData.Id), nameof(CardData.TagIDs));
+                if (update.TagIDs != null)
                 {
-                    existingCard.Categories.Clear();
-                    existingCard.CategoryIDs = update.CategoryIDs;
+                    existingCard.Tags.Clear();
+                    existingCard.TagIDs = update.TagIDs;
                 }
                 // TODO: Ordering/index
                 await db.SaveChangesAsync();
@@ -108,23 +108,23 @@ namespace BenefactBackend.Controllers
             });
         }
 
-        public Task<Category> AddCategory(Category category)
+        public Task<Tag> AddTag(Tag tag)
         {
             return DoWithDB(async db =>
             {
-                var result = await db.Categories.AddAsync(category);
+                var result = await db.Tags.AddAsync(tag);
                 await db.SaveChangesAsync();
                 return result.Entity;
             });
         }
 
-        public Task UpdateCategory(Category category)
+        public Task UpdateTag(Tag tag)
         {
             return DoWithDB(async db =>
             {
-                var existingCard = await db.Categories.FindAsync(category.Id);
-                if (existingCard == null) throw new HTTPError("Category not found");
-                UpdateMembersFrom(existingCard, category, nameof(Category.Id));
+                var existingCard = await db.Tags.FindAsync(tag.Id);
+                if (existingCard == null) throw new HTTPError("Tag not found");
+                UpdateMembersFrom(existingCard, tag, nameof(Tag.Id));
                 await db.SaveChangesAsync();
                 return true;
             });

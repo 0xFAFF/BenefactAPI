@@ -16,7 +16,7 @@ namespace BenefactAPI.DataAccess
     {
         public DbSet<CardData> Cards { get; set; }
         public DbSet<ColumnData> Columns { get; set; }
-        public DbSet<Category> Categories { get; set; }
+        public DbSet<Tag> Tags { get; set; }
 
         public BenefactDBContext(DbContextOptions options) : base(options) { }
 
@@ -30,12 +30,12 @@ namespace BenefactAPI.DataAccess
                 .WithMany(co => co.Cards)
                 .HasForeignKey(cd => cd.ColumnID);
 
-            modelBuilder.Entity<CardCategory>()
-                .HasKey(c => new { c.CardId, c.CategoryId });
+            modelBuilder.Entity<CardTag>()
+                .HasKey(c => new { c.CardId, c.TagId });
 
-            modelBuilder.Entity<CardCategory>()
+            modelBuilder.Entity<CardTag>()
                 .HasOne(cc => cc.Card)
-                .WithMany(ca => ca.Categories)
+                .WithMany(ca => ca.Tags)
                 .HasForeignKey(cc => cc.CardId);
 
             FixSnakeCaseNames(modelBuilder);

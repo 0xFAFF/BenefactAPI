@@ -21,20 +21,20 @@ namespace BenefactBackend.Controllers
         [ReplicateIgnore]
         public ColumnData Column { get; set; }
         [ReplicateIgnore]
-        public List<CardCategory> Categories { get; set; } = new List<CardCategory>();
+        public List<CardTag> Tags { get; set; } = new List<CardTag>();
         [NotMapped]
-        public List<int> CategoryIDs
+        public List<int> TagIDs
         {
-            get => Categories.Select(ccd => ccd.CategoryId).ToList();
-            set => Categories = value.Select(v => new CardCategory() { Card = this, CategoryId = v }).ToList();
+            get => Tags.Select(ccd => ccd.TagId).ToList();
+            set => Tags = value.Select(v => new CardTag() { Card = this, TagId = v }).ToList();
         }
     }
-    public class CardCategory
+    public class CardTag
     {
         public int CardId { get; set; }
         public CardData Card { get; set; }
-        public int CategoryId { get; set; }
-        public Category Category { get; set; }
+        public int TagId { get; set; }
+        public Tag Tag { get; set; }
 
     }
     [ReplicateType]
@@ -47,7 +47,7 @@ namespace BenefactBackend.Controllers
         public List<CardData> Cards { get; set; }
     }
     [ReplicateType]
-    public class Category
+    public class Tag
     {
         public int Id { get; set; }
         public string Name { get; set; }
@@ -59,7 +59,7 @@ namespace BenefactBackend.Controllers
     {
         public List<CardData> Cards;
         public List<ColumnData> Columns;
-        public List<Category> Categories;
+        public List<Tag> Tags;
     }
     [ReplicateType(AutoMethods = AutoAdd.AllPublic)]
     public interface ICardsInterface
@@ -72,8 +72,8 @@ namespace BenefactBackend.Controllers
         Task UpdateCard(CardData update);
         Task<CardData> AddCard(CardData card);
 
-        Task<Category> AddCategory(Category category);
-        Task UpdateCategory(Category category);
+        Task<Tag> AddTag(Tag tag);
+        Task UpdateTag(Tag tag);
 
         Task<ColumnData> AddColumn(ColumnData column);
         Task UpdateColumn(ColumnData column);
