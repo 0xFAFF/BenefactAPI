@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -53,8 +54,16 @@ namespace BenefactAPI.Controllers
         // GET api/values
         [HttpGet("{*path}")]
         [HttpPost("{*path}")]
+        [HttpOptions("{*path}")]
         public async Task<ActionResult> Post(string path)
         {
+            if(Request.Method == "OPTIONS")
+            {
+                Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST");
+                Response.Headers.Add("Access-Control-Allow-Origin", "*");
+                var result = new ContentResult();
+                return result;
+            }
             try
             {
                 using (var serviceScope = Provider.CreateScope())
