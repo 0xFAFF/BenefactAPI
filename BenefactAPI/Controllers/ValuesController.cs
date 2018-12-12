@@ -61,6 +61,8 @@ namespace BenefactAPI.Controllers
             {
                 Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST");
                 Response.Headers.Add("Access-Control-Allow-Origin", "*");
+                Response.Headers.Add("Access-Control-Allow-Headers", "*");
+                Response.Headers.Add("Access-Control-Allow-Credentials", "true");
                 var result = new ContentResult();
                 return result;
             }
