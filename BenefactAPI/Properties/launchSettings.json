@@ -28,7 +28,14 @@
 		},
 		"ConfigureDB": {
 			"commandName": "Project",
-			"commandLineArgs": "install",
+			"commandLineArgs": "action=install",
+			"environmentVariables": {
+				"ASPNETCORE_ENVIRONMENT": "Development"
+			}
+		},
+		"MockData": {
+			"commandName": "Project",
+			"commandLineArgs": "action=mockdata",
 			"environmentVariables": {
 				"ASPNETCORE_ENVIRONMENT": "Development"
 			}

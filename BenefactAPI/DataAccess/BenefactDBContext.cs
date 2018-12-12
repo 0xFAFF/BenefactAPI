@@ -16,7 +16,7 @@ namespace BenefactAPI.DataAccess
     {
         public DbSet<CardData> Cards { get; set; }
         public DbSet<ColumnData> Columns { get; set; }
-        public DbSet<Tag> Tags { get; set; }
+        public DbSet<TagData> Tags { get; set; }
 
         public BenefactDBContext(DbContextOptions options) : base(options) { }
 
@@ -28,7 +28,7 @@ namespace BenefactAPI.DataAccess
             modelBuilder.Entity<CardData>()
                 .HasOne(cd => cd.Column)
                 .WithMany(co => co.Cards)
-                .HasForeignKey(cd => cd.ColumnID);
+                .HasForeignKey(cd => cd.ColumnId);
 
             modelBuilder.Entity<CardTag>()
                 .HasKey(c => new { c.CardId, c.TagId });

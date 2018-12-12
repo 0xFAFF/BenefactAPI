@@ -17,13 +17,13 @@ namespace BenefactBackend.Controllers
         public int Id { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
-        public int? ColumnID { get; set; }
+        public int? ColumnId { get; set; }
         [ReplicateIgnore]
         public ColumnData Column { get; set; }
         [ReplicateIgnore]
         public List<CardTag> Tags { get; set; } = new List<CardTag>();
         [NotMapped]
-        public List<int> TagIDs
+        public List<int> TagIds
         {
             get => Tags.Select(ccd => ccd.TagId).ToList();
             set => Tags = value.Select(v => new CardTag() { Card = this, TagId = v }).ToList();
@@ -34,8 +34,7 @@ namespace BenefactBackend.Controllers
         public int CardId { get; set; }
         public CardData Card { get; set; }
         public int TagId { get; set; }
-        public Tag Tag { get; set; }
-
+        public TagData Tag { get; set; }
     }
     [ReplicateType]
     public class ColumnData
@@ -47,7 +46,7 @@ namespace BenefactBackend.Controllers
         public List<CardData> Cards { get; set; }
     }
     [ReplicateType]
-    public class Tag
+    public class TagData
     {
         public int Id { get; set; }
         public string Name { get; set; }
@@ -59,7 +58,7 @@ namespace BenefactBackend.Controllers
     {
         public List<CardData> Cards;
         public List<ColumnData> Columns;
-        public List<Tag> Tags;
+        public List<TagData> Tags;
     }
     [ReplicateType(AutoMethods = AutoAdd.AllPublic)]
     public interface ICardsInterface
@@ -72,8 +71,8 @@ namespace BenefactBackend.Controllers
         Task UpdateCard(CardData update);
         Task<CardData> AddCard(CardData card);
 
-        Task<Tag> AddTag(Tag tag);
-        Task UpdateTag(Tag tag);
+        Task<TagData> AddTag(TagData tag);
+        Task UpdateTag(TagData tag);
 
         Task<ColumnData> AddColumn(ColumnData column);
         Task UpdateColumn(ColumnData column);

@@ -23,7 +23,7 @@ namespace BenefactBackend.Controllers
     public class HTTPChannel : ReplicationChannel<string, string>
     {
         public override IReplicateSerializer<string> Serializer { get; }
-            = new JSONSerializer(ReplicationModel.Default) { ToLowerFieldNames = true };
+            = new JSONSerializer(ReplicationModel.Default);
 
         public HTTPChannel(TestImplentation implentation)
         {
@@ -86,11 +86,11 @@ namespace BenefactBackend.Controllers
             {
                 var existingCard = await db.Cards.Include(c => c.Tags).FirstOrDefaultAsync(c => c.Id == update.Id);
                 if (existingCard == null) throw new HTTPError("Card not found");
-                UpdateMembersFrom(existingCard, update, nameof(CardData.Id), nameof(CardData.TagIDs));
-                if (update.TagIDs != null)
+                UpdateMembersFrom(existingCard, update, nameof(CardData.Id), nameof(CardData.TagIds));
+                if (update.TagIds != null)
                 {
                     existingCard.Tags.Clear();
-                    existingCard.TagIDs = update.TagIDs;
+                    existingCard.TagIds = update.TagIds;
                 }
                 // TODO: Ordering/index
                 await db.SaveChangesAsync();
@@ -108,7 +108,7 @@ namespace BenefactBackend.Controllers
             });
         }
 
-        public Task<Tag> AddTag(Tag tag)
+        public Task<TagData> AddTag(TagData tag)
         {
             return DoWithDB(async db =>
             {
@@ -118,13 +118,13 @@ namespace BenefactBackend.Controllers
             });
         }
 
-        public Task UpdateTag(Tag tag)
+        public Task UpdateTag(TagData tag)
         {
             return DoWithDB(async db =>
             {
                 var existingCard = await db.Tags.FindAsync(tag.Id);
                 if (existingCard == null) throw new HTTPError("Tag not found");
-                UpdateMembersFrom(existingCard, tag, nameof(Tag.Id));
+                UpdateMembersFrom(existingCard, tag, nameof(TagData.Id));
                 await db.SaveChangesAsync();
                 return true;
             });
