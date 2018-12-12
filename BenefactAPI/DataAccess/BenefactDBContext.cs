@@ -1,4 +1,4 @@
-﻿using BenefactBackend.Controllers;
+﻿using BenefactAPI.Controllers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Configuration;

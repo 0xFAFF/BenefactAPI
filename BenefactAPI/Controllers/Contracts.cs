@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace BenefactBackend.Controllers
+namespace BenefactAPI.Controllers
 {
     /// <summary>
     /// All fields on this must have null defaults since it's used in CardUpdate
@@ -70,11 +70,14 @@ namespace BenefactBackend.Controllers
         /// <param name="update"></param>
         Task UpdateCard(CardData update);
         Task<CardData> AddCard(CardData card);
+        Task DeleteCard(int cardId);
 
         Task<TagData> AddTag(TagData tag);
         Task UpdateTag(TagData tag);
+        Task DeleteTag(int tagId);
 
         Task<ColumnData> AddColumn(ColumnData column);
         Task UpdateColumn(ColumnData column);
+        Task DeleteColumn(int columnId);
     }
 }
