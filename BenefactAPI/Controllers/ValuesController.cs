@@ -57,12 +57,12 @@ namespace BenefactAPI.Controllers
         [HttpOptions("{*path}")]
         public async Task<ActionResult> Post(string path)
         {
-            if(Request.Method == "OPTIONS")
+            Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST");
+            Response.Headers.Add("Access-Control-Allow-Origin", "*");
+            Response.Headers.Add("Access-Control-Allow-Headers", "*");
+            Response.Headers.Add("Access-Control-Allow-Credentials", "true");
+            if (Request.Method == "OPTIONS")
             {
-                Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST");
-                Response.Headers.Add("Access-Control-Allow-Origin", "*");
-                Response.Headers.Add("Access-Control-Allow-Headers", "*");
-                Response.Headers.Add("Access-Control-Allow-Credentials", "true");
                 var result = new ContentResult();
                 return result;
             }
@@ -79,7 +79,7 @@ namespace BenefactAPI.Controllers
             {
                 return new NotFoundResult();
             }
-            catch(Exception exception)
+            catch (Exception exception)
             {
                 return FromException(exception);
             }
