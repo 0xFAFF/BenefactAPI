@@ -7,19 +7,24 @@ using System.Threading.Tasks;
 
 namespace BenefactAPI.Controllers
 {
+    public interface IOrdered
+    {
+        int? Index { get; set; }
+    }
     /// <summary>
     /// All fields on this must have null defaults since it's used in CardUpdate
     /// and specifying a non-null default will make it clear fields!
     /// </summary>
     [ReplicateType]
-    public class CardData
+    public class CardData : IOrdered
     {
         public int Id { get; set; }
+        public int? Index { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
-        public int? ColumnId { get; set; }
         [ReplicateIgnore]
         public ColumnData Column { get; set; }
+        public int? ColumnId { get; set; }
         [ReplicateIgnore]
         public List<CardTag> Tags { get; set; } = new List<CardTag>();
         [NotMapped]

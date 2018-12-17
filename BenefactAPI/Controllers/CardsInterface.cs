@@ -17,6 +17,7 @@ namespace BenefactAPI.Controllers
         {
             Services = services;
         }
+
         void UpdateMembersFrom<T>(T target, T newFields, params string[] ignoredFields)
         {
             var td = ReplicationModel.Default.GetTypeAccessor(typeof(T));
@@ -30,6 +31,7 @@ namespace BenefactAPI.Controllers
                 member.SetValue(target, newValue);
             }
         }
+
         public async Task<T> DoWithDB<T>(Func<BenefactDBContext, Task<T>> func)
         {
             using (var scope = Services.CreateScope())
@@ -38,32 +40,64 @@ namespace BenefactAPI.Controllers
                 return await func(db);
             }
         }
+
         public Task<CardsResponse> Cards()
         {
             return DoWithDB(async db =>
             {
                 return new CardsResponse()
                 {
-                    Cards = await db.Cards.Include(c => c.Tags).ToListAsync(),
-                    Columns = await db.Columns.ToListAsync(),
-                    Tags = await db.Tags.ToListAsync(),
+                    Cards = await db.Cards.OrderBy(card => card.Index).Include(c => c.Tags).ToListAsync(),
+                    Columns = await db.Columns.OrderBy(col => col.Id).ToListAsync(),
+                    Tags = await db.Tags.OrderBy(tag => tag.Id).ToListAsync(),
                 };
             });
         }
+
+        async Task Insert<T>(T value, int? newIndex, IQueryable<T> existingSet, BenefactDBContext db) where T : IOrdered
+        {
+            var max = await existingSet.CountAsync();
+
+            if (value.Index == null)
+                value.Index = max;
+            if (newIndex == null)
+                newIndex = max;
+            if (newIndex == value.Index)
+                return;
+            newIndex = Math.Min(Math.Max(0, newIndex.Value), max);
+            var movingEarlier = newIndex < value.Index;
+            var startIndex = (movingEarlier ? newIndex : value.Index).Value;
+            var endIndex = (movingEarlier ? value.Index : newIndex).Value;
+            var greaterList = await existingSet.Where(v => v.Index.Value >= startIndex && v.Index.Value <= endIndex)
+                .ToListAsync();
+            foreach (var greaterItem in greaterList)
+            {
+                greaterItem.Index += movingEarlier ? 1 : -1;
+            }
+            value.Index = newIndex;
+            await db.SaveChangesAsync();
+            // TODO: This is only making sure there are no gaps, could be removed if that is solved other ways
+            var allItems = await existingSet.OrderBy(v => v.Index).ToListAsync();
+            foreach (var tuple in allItems.Select((item, index) => new { item, index }))
+                tuple.item.Index = tuple.index;
+        }
+
         public Task UpdateCard(CardData update)
         {
             return DoWithDB(async db =>
             {
                 var existingCard = await db.Cards.Include(c => c.Tags).FirstOrDefaultAsync(c => c.Id == update.Id);
                 if (existingCard == null) throw new HTTPError("Card not found");
-                UpdateMembersFrom(existingCard, update, nameof(CardData.Id), nameof(CardData.TagIds));
+                UpdateMembersFrom(existingCard, update, nameof(CardData.Id), nameof(CardData.TagIds), nameof(CardData.Index));
                 if (update.TagIds != null)
                 {
                     existingCard.Tags.Clear();
                     existingCard.TagIds = update.TagIds;
                 }
-                    // TODO: Ordering/index
-                    await db.SaveChangesAsync();
+                if (update.Index.HasValue)
+                    await Insert(existingCard, update.Index.Value, db.Cards, db);
+                // TODO: Ordering/index
+                await db.SaveChangesAsync();
                 return true;
             });
         }
@@ -73,6 +107,8 @@ namespace BenefactAPI.Controllers
             return DoWithDB(async db =>
             {
                 var result = await db.Cards.AddAsync(card);
+                // TODO: Filter this db.Cards when there are boards
+                await Insert(card, null, db.Cards, db);
                 await db.SaveChangesAsync();
                 return result.Entity;
             });

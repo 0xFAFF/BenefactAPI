@@ -40,13 +40,13 @@ namespace BenefactAPI.Controllers
         }
     }
     [Route("api/")]
-    public class ValuesController : Controller
+    public class ReplicateController : Controller
     {
 
         public static ReplicationChannel<string, string> Channel;
         public static JSONSerializer serializer;
         IServiceProvider Provider;
-        public ValuesController(HTTPChannel channel, IServiceProvider provider)
+        public ReplicateController(HTTPChannel channel, IServiceProvider provider)
         {
             Channel = channel;
             Provider = provider;

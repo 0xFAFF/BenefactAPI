@@ -77,34 +77,6 @@ namespace BenefactAPI
                             {
                                 Title = "Done",
                             }).Entity;
-                            db.Cards.Add(new CardData()
-                            {
-                                Title = "Get MD Working",
-                                Description = "Some Markdown\n=====\n\n```csharp\n var herp = \"derp\";\n```",
-                                Column = inp,
-                                TagIds = new[] { 1, 2, 3, 4, 5 }.ToList(),
-                            });
-                            db.Cards.Add(new CardData()
-                            {
-                                Title = "Make sure UTF8 works 😑",
-                                Description = "😈😈😈😈😈😈",
-                                Column = todo,
-                                TagIds = new[] { 1 }.ToList(),
-                            });
-                            db.Cards.Add(new CardData()
-                            {
-                                Title = "Some Bug",
-                                Description = "There was a bug",
-                                Column = inp,
-                                TagIds = new[] { 4, 2 }.ToList(),
-                            });
-                            db.Cards.Add(new CardData()
-                            {
-                                Title = "Fixed Bug",
-                                Description = "There was a bug",
-                                Column = done,
-                                TagIds = new[] { 4 }.ToList(),
-                            });
                             db.Tags.Add(new TagData()
                             {
                                 Name = "Story",
@@ -133,6 +105,35 @@ namespace BenefactAPI
                             });
                             db.SaveChanges();
                         }
+                        var cards = services.GetService<CardsInterface>();
+                        cards.AddCard(new CardData()
+                        {
+                            Title = "Get MD Working",
+                            Description = "Some Markdown\n=====\n\n```csharp\n var herp = \"derp\";\n```",
+                            ColumnId = 2,
+                            TagIds = new[] { 1, 2, 3, 4, 5 }.ToList(),
+                        }).GetAwaiter().GetResult();
+                        cards.AddCard(new CardData()
+                        {
+                            Title = "Make sure UTF8 works 😑",
+                            Description = "😈😈😈😈😈😈",
+                            ColumnId = 1,
+                            TagIds = new[] { 1 }.ToList(),
+                        }).GetAwaiter().GetResult();
+                        cards.AddCard(new CardData()
+                        {
+                            Title = "Some Bug",
+                            Description = "There was a bug",
+                            ColumnId = 2,
+                            TagIds = new[] { 4, 2 }.ToList(),
+                        }).GetAwaiter().GetResult();
+                        cards.AddCard(new CardData()
+                        {
+                            Title = "Fixed Bug",
+                            Description = "There was a bug",
+                            ColumnId = 3,
+                            TagIds = new[] { 4 }.ToList(),
+                        }).GetAwaiter().GetResult();
                         break;
                 }
                 Environment.Exit(0);
