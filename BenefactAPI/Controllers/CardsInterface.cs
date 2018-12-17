@@ -36,8 +36,11 @@ namespace BenefactAPI.Controllers
         {
             using (var scope = Services.CreateScope())
             using (var db = scope.ServiceProvider.GetService<BenefactDBContext>())
+            using (var transaction = await db.Database.BeginTransactionAsync())
             {
-                return await func(db);
+                var result = await func(db);
+                transaction.Commit();
+                return result;
             }
         }
 
@@ -76,7 +79,10 @@ namespace BenefactAPI.Controllers
             }
             value.Index = newIndex;
             await db.SaveChangesAsync();
-            // TODO: This is only making sure there are no gaps, could be removed if that is solved other ways
+            await Order(existingSet);
+        }
+        async Task Order<T>(IQueryable<T> existingSet) where T : IOrdered
+        {
             var allItems = await existingSet.OrderBy(v => v.Index).ToListAsync();
             foreach (var tuple in allItems.Select((item, index) => new { item, index }))
                 tuple.item.Index = tuple.index;
@@ -96,7 +102,6 @@ namespace BenefactAPI.Controllers
                 }
                 if (update.Index.HasValue)
                     await Insert(existingCard, update.Index.Value, db.Cards, db);
-                // TODO: Ordering/index
                 await db.SaveChangesAsync();
                 return true;
             });
@@ -108,7 +113,7 @@ namespace BenefactAPI.Controllers
             {
                 var result = await db.Cards.AddAsync(card);
                 // TODO: Filter this db.Cards when there are boards
-                await Insert(card, null, db.Cards, db);
+                await Insert(card, card.Index, db.Cards, db);
                 await db.SaveChangesAsync();
                 return result.Entity;
             });
@@ -119,6 +124,8 @@ namespace BenefactAPI.Controllers
             return DoWithDB(async db =>
             {
                 var result = db.Cards.Remove(new CardData() { Id = cardId });
+                await db.SaveChangesAsync();
+                await Order(db.Cards);
                 await db.SaveChangesAsync();
                 return result;
             });
