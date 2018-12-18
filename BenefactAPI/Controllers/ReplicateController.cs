@@ -34,7 +34,7 @@ namespace BenefactAPI.Controllers
             return endpoint.Name.ToLower();
         }
 
-        public override Task<object> Request(string messageID, RPCRequest request, ReliabilityMode reliability = ReliabilityMode.ReliableSequenced)
+        public override Task<string> Request(string messageID, RPCRequest request, ReliabilityMode reliability = ReliabilityMode.ReliableSequenced)
         {
             throw new NotImplementedException();
         }

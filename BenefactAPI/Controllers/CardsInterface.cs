@@ -111,6 +111,7 @@ namespace BenefactAPI.Controllers
         {
             return DoWithDB(async db =>
             {
+                card.Id = 0;
                 var result = await db.Cards.AddAsync(card);
                 // TODO: Filter this db.Cards when there are boards
                 await Insert(card, card.Index, db.Cards, db);
@@ -135,6 +136,7 @@ namespace BenefactAPI.Controllers
         {
             return DoWithDB(async db =>
             {
+                tag.Id = 0;
                 var result = await db.Tags.AddAsync(tag);
                 await db.SaveChangesAsync();
                 return result.Entity;
@@ -167,6 +169,7 @@ namespace BenefactAPI.Controllers
         {
             return DoWithDB(async db =>
             {
+                column.Id = 0;
                 var result = await db.Columns.AddAsync(column);
                 await db.SaveChangesAsync();
                 return result.Entity;
