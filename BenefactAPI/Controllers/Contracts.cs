@@ -30,7 +30,8 @@ namespace BenefactAPI.Controllers
         [NotMapped]
         public List<int> TagIds
         {
-            get => Tags.Select(ccd => ccd.TagId).ToList();
+            // TODO: Order by tag order?
+            get => Tags.OrderBy(tag => tag.TagId).Select(ccd => ccd.TagId).ToList();
             set => Tags = value.Select(v => new CardTag() { Card = this, TagId = v }).ToList();
         }
     }
