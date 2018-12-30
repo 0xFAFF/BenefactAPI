@@ -51,7 +51,7 @@ namespace BenefactAPI.Controllers
                 return new CardsResponse()
                 {
                     Cards = await db.Cards.OrderBy(card => card.Index).Include(c => c.Tags).ToListAsync(),
-                    Columns = await db.Columns.OrderBy(col => col.Id).ToListAsync(),
+                    Columns = await db.Columns.OrderBy(col => col.Index).ToListAsync(),
                     Tags = await db.Tags.OrderBy(tag => tag.Id).ToListAsync(),
                 };
             });
@@ -120,15 +120,17 @@ namespace BenefactAPI.Controllers
             });
         }
 
-        public Task DeleteCard(int cardId)
+        public Task<bool> DeleteCard(DeleteData card)
         {
             return DoWithDB(async db =>
             {
-                var result = db.Cards.Remove(new CardData() { Id = cardId });
-                await db.SaveChangesAsync();
-                await Order(db.Cards);
-                await db.SaveChangesAsync();
-                return result;
+                if (await Delete(db, db.Cards, new CardData() { Id = card.Id }))
+                {
+                    await Order(db.Cards);
+                    await db.SaveChangesAsync();
+                    return true;
+                }
+                return false;
             });
         }
 
@@ -143,13 +145,11 @@ namespace BenefactAPI.Controllers
             });
         }
 
-        public Task DeleteTag(int tagId)
+        public Task<bool> DeleteTag(DeleteData tag)
         {
             return DoWithDB(async db =>
             {
-                var result = db.Tags.Remove(new TagData() { Id = tagId });
-                await db.SaveChangesAsync();
-                return result;
+                return await Delete(db, db.Tags, new TagData() { Id = tag.Id });
             });
         }
 
@@ -171,31 +171,52 @@ namespace BenefactAPI.Controllers
             {
                 column.Id = 0;
                 var result = await db.Columns.AddAsync(column);
+                await Insert(column, column.Index, db.Columns, db);
                 await db.SaveChangesAsync();
                 return result.Entity;
             });
         }
 
-        public Task DeleteColumn(int columnId)
+        public Task<bool> DeleteColumn(DeleteData column)
         {
             return DoWithDB(async db =>
             {
-                var result = db.Columns.Remove(new ColumnData() { Id = columnId });
-                await db.SaveChangesAsync();
-                return result;
+                if (await Delete(db, db.Columns, new ColumnData() { Id = column.Id }))
+                {
+                    await Order(db.Columns);
+                    await db.SaveChangesAsync();
+                    return true;
+                }
+                return false;
             });
         }
 
-        public Task UpdateColumn(ColumnData column)
+        public Task UpdateColumn(ColumnData update)
         {
             return DoWithDB(async db =>
             {
-                var existingColumn = await db.Columns.FindAsync(column.Id);
-                if (existingColumn == null) throw new HTTPError("Column not found");
-                UpdateMembersFrom(existingColumn, column, nameof(ColumnData.Id));
+                var column = await db.Columns.FindAsync(update.Id);
+                if (column == null) throw new HTTPError("Column not found");
+                UpdateMembersFrom(column, update, nameof(ColumnData.Id), nameof(ColumnData.Index));
+                if (update.Index.HasValue)
+                    await Insert(column, update.Index.Value, db.Columns, db);
                 await db.SaveChangesAsync();
                 return true;
             });
+        }
+
+        async Task<bool> Delete<T>(BenefactDBContext db, DbSet<T> set, T delete) where T : class
+        {
+            set.Remove(delete);
+            try
+            {
+                await db.SaveChangesAsync();
+                return true;
+            }
+            catch (DbUpdateConcurrencyException e)
+            {
+                return false;
+            }
         }
     }
 }

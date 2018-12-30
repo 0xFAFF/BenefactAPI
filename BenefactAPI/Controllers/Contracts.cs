@@ -43,9 +43,10 @@ namespace BenefactAPI.Controllers
         public TagData Tag { get; set; }
     }
     [ReplicateType]
-    public class ColumnData
+    public class ColumnData : IOrdered
     {
         public int Id { get; set; }
+        public int? Index { get; set; }
         public string Title { get; set; }
 
         [ReplicateIgnore]
@@ -66,6 +67,11 @@ namespace BenefactAPI.Controllers
         public List<ColumnData> Columns;
         public List<TagData> Tags;
     }
+    [ReplicateType]
+    public class DeleteData
+    {
+        public int Id { get; set; }
+    }
     [ReplicateType(AutoMethods = AutoAdd.AllPublic)]
     public interface ICardsInterface
     {
@@ -76,14 +82,14 @@ namespace BenefactAPI.Controllers
         /// <param name="update"></param>
         Task UpdateCard(CardData update);
         Task<CardData> AddCard(CardData card);
-        Task DeleteCard(int cardId);
+        Task<bool> DeleteCard(DeleteData card);
 
         Task<TagData> AddTag(TagData tag);
         Task UpdateTag(TagData tag);
-        Task DeleteTag(int tagId);
+        Task<bool> DeleteTag(DeleteData tag);
 
         Task<ColumnData> AddColumn(ColumnData column);
         Task UpdateColumn(ColumnData column);
-        Task DeleteColumn(int columnId);
+        Task<bool> DeleteColumn(DeleteData column);
     }
 }
