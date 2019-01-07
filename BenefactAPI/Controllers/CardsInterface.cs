@@ -59,10 +59,8 @@ namespace BenefactAPI.Controllers
             var query = baseQuery;
             if (terms != null)
             {
-                query = query.WhereOr(
-                    (card, _terms) => _terms.Tags.All(
-                        termTag => card.Tags.Any(cardTag => cardTag.TagId == termTag)),
-                    terms);
+                query = query.WhereOr(terms, (card, _terms) =>
+                    _terms.Tags.All(termTag => card.Tags.Any(cardTag => cardTag.TagId == termTag)));
             }
             return query;
         }
