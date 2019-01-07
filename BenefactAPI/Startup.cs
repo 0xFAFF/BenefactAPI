@@ -31,7 +31,7 @@ namespace BenefactAPI
             services.AddCors();
             services.AddMvc();
             services.AddEntityFrameworkNpgsql()
-               .AddDbContext<BenefactDBContext>(c => c.UseNpgsql(Configuration.GetConnectionString("BenefactDatabase")))
+               .AddDbContext<BenefactDbContext>(c => c.UseNpgsql(Configuration.GetConnectionString("BenefactDatabase")))
                .BuildServiceProvider();
             services.AddSingleton<CardsInterface>();
             services.AddSingleton<HTTPChannel>();
@@ -43,7 +43,6 @@ namespace BenefactAPI
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseCors(options => options.AllowAnyOrigin().AllowAnyMethod());
             }
 
             app.UseMvc();
@@ -54,14 +53,14 @@ namespace BenefactAPI
                 switch (command)
                 {
                     case "install":
-                        using (var db = services.GetService<BenefactDBContext>())
+                        using (var db = services.GetService<BenefactDbContext>())
                         {
                             db.Database.EnsureDeleted();
                             db.Database.EnsureCreated();
                         }
                         break;
                     case "mockdata":
-                        using (var db = services.GetService<BenefactDBContext>())
+                        using (var db = services.GetService<BenefactDbContext>())
                         {
                             db.Database.EnsureDeleted();
                             db.Database.EnsureCreated();

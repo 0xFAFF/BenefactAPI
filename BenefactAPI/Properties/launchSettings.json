@@ -18,7 +18,7 @@
 		},
 		"BenefactBackend": {
 			"commandName": "Project",
-			"launchBrowser": true,
+			"launchBrowser": false,
 			"launchUrl": "api/cards",
 			"commandLineArgs": "dbconnection=derp",
 			"environmentVariables": {

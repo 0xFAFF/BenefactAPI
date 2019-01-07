@@ -63,7 +63,7 @@ namespace BenefactAPI.Controllers
     [ReplicateType]
     public struct CardsResponse
     {
-        public List<CardData> Cards;
+        public Dictionary<string, List<CardData>> Cards;
         public List<ColumnData> Columns;
         public List<TagData> Tags;
     }
@@ -72,10 +72,21 @@ namespace BenefactAPI.Controllers
     {
         public int Id { get; set; }
     }
+    [ReplicateType]
+    public class CardQuery
+    {
+        public Dictionary<string, List<CardQueryTerm>> Groups;
+        public int? Limit;
+    }
+    [ReplicateType]
+    public class CardQueryTerm
+    {
+        public List<int> Tags;
+    }
     [ReplicateType(AutoMethods = AutoAdd.AllPublic)]
     public interface ICardsInterface
     {
-        Task<CardsResponse> Cards();
+        Task<CardsResponse> Cards(CardQuery query);
         /// <summary>
         /// Update a card with the non-null fields provided in CardFields
         /// </summary>

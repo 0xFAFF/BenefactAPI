@@ -32,10 +32,10 @@ namespace BenefactAPI.Controllers
             }
         }
 
-        public async Task<T> DoWithDB<T>(Func<BenefactDBContext, Task<T>> func)
+        public async Task<T> DoWithDB<T>(Func<BenefactDbContext, Task<T>> func)
         {
             using (var scope = Services.CreateScope())
-            using (var db = scope.ServiceProvider.GetService<BenefactDBContext>())
+            using (var db = scope.ServiceProvider.GetService<BenefactDbContext>())
             using (var transaction = await db.Database.BeginTransactionAsync())
             {
                 var result = await func(db);
@@ -44,20 +44,46 @@ namespace BenefactAPI.Controllers
             }
         }
 
-        public Task<CardsResponse> Cards()
+        IQueryable<CardData> FilterFromTerm(IQueryable<CardData> query, CardQueryTerm term)
         {
+            foreach (var tag in term.Tags)
+            {
+                query = query.Where(card => card.Tags.Any(cardTag => cardTag.TagId == tag));
+            }
+            return query;
+        }
+
+        IQueryable<CardData> QueryCards(BenefactDbContext db, List<CardQueryTerm> terms)
+        {
+            IQueryable<CardData> baseQuery = db.Cards.OrderBy(card => card.Index).Include(card => card.Tags);
+            var query = baseQuery;
+            if (terms != null)
+            {
+                query = query.WhereOr(
+                    (card, _terms) => _terms.Tags.All(
+                        termTag => card.Tags.Any(cardTag => cardTag.TagId == termTag)),
+                    terms);
+            }
+            return query;
+        }
+
+        public Task<CardsResponse> Cards(CardQuery query)
+        {
+            query = query ?? new CardQuery() { Groups = new Dictionary<string, List<CardQueryTerm>>() { { "All", null } } };
             return DoWithDB(async db =>
             {
+                var queryGroups = query.Groups.ToDictionary(kvp => kvp.Key, kvp => QueryCards(db, kvp.Value).ToListAsync());
+                await Task.WhenAll(queryGroups.Values);
                 return new CardsResponse()
                 {
-                    Cards = await db.Cards.OrderBy(card => card.Index).Include(c => c.Tags).ToListAsync(),
+                    Cards = queryGroups.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Result),
                     Columns = await db.Columns.OrderBy(col => col.Index).ToListAsync(),
                     Tags = await db.Tags.OrderBy(tag => tag.Id).ToListAsync(),
                 };
             });
         }
 
-        async Task Insert<T>(T value, int? newIndex, IQueryable<T> existingSet, BenefactDBContext db) where T : IOrdered
+        async Task Insert<T>(T value, int? newIndex, IQueryable<T> existingSet, BenefactDbContext db) where T : IOrdered
         {
             var max = await existingSet.CountAsync();
 
@@ -205,7 +231,7 @@ namespace BenefactAPI.Controllers
             });
         }
 
-        async Task<bool> Delete<T>(BenefactDBContext db, DbSet<T> set, T delete) where T : class
+        async Task<bool> Delete<T>(BenefactDbContext db, DbSet<T> set, T delete) where T : class
         {
             set.Remove(delete);
             try

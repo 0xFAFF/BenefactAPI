@@ -22,7 +22,7 @@ namespace BenefactAPI.Controllers
     public class HTTPChannel : ReplicationChannel<string, string>
     {
         public override IReplicateSerializer<string> Serializer { get; }
-            = new JSONSerializer(ReplicationModel.Default);
+            = new JSONGraphSerializer(new ReplicationModel() { DictionaryAsObject = true });
 
         public HTTPChannel(CardsInterface implentation)
         {
@@ -44,7 +44,6 @@ namespace BenefactAPI.Controllers
     {
 
         public static ReplicationChannel<string, string> Channel;
-        public static JSONSerializer serializer;
         IServiceProvider Provider;
         public ReplicateController(HTTPChannel channel, IServiceProvider provider)
         {

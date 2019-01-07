@@ -12,13 +12,13 @@ using System.Threading.Tasks;
 
 namespace BenefactAPI.DataAccess
 {
-    public class BenefactDBContext : DbContext
+    public class BenefactDbContext : DbContext
     {
         public DbSet<CardData> Cards { get; set; }
         public DbSet<ColumnData> Columns { get; set; }
         public DbSet<TagData> Tags { get; set; }
 
-        public BenefactDBContext(DbContextOptions options) : base(options) { }
+        public BenefactDbContext(DbContextOptions options) : base(options) { }
 
         private static readonly Regex _keysRegex = new Regex("^(PK|FK|IX)_", RegexOptions.Compiled);
         protected override void OnModelCreating(ModelBuilder modelBuilder)
