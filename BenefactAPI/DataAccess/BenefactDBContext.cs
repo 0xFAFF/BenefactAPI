@@ -83,8 +83,8 @@ namespace BenefactAPI.DataAccess
                 case IMutableIndex indexKey:
                     indexKey.Relational().Name = ConvertKeyToSnake(mapper, indexKey.Relational().Name);
                     break;
-                default:
-                    throw new NotImplementedException("Unexpected type was provided to snake case converter");
+                //default:
+                //    throw new NotImplementedException("Unexpected type was provided to snake case converter");
             }
         }
 
