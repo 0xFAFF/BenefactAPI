@@ -82,7 +82,8 @@ namespace BenefactAPI.Controllers
     public class CardQueryTerm
     {
         public List<int> Tags;
-        public int? Column;
+        public int? ColumnId;
+        public string Title;
     }
     [ReplicateType(AutoMethods = AutoAdd.AllPublic)]
     public interface ICardsInterface

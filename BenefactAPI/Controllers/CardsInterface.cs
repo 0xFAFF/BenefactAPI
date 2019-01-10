@@ -53,8 +53,10 @@ namespace BenefactAPI.Controllers
                 andTerms = andTerms.Union(term.Tags.SelectExp<int, CardData, bool>(
                     tagId => card => card.Tags.Any(cardTag => cardTag.TagId == tagId)));
             }
-            if (term.Column.HasValue)
-                andTerms = andTerms.Union(card => card.Column.Id == term.Column);
+            if (term.Title != null)
+                andTerms = andTerms.Union(card => card.Title.ToLower().Contains(term.Title.ToLower()));
+            if (term.ColumnId.HasValue)
+                andTerms = andTerms.Union(card => card.Column.Id == term.ColumnId);
             if (!andTerms.Any())
                 andTerms = andTerms.Union(c => true);
             return andTerms.BinaryCombinator(Expression.And);
