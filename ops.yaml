@@ -1,0 +1,16 @@
+name: db
+vars:
+  default:
+    name: db
+cmds:
+  build:
+    - cmd: docker build -t {name} .
+  clean:
+    - steps: [stop]
+    - cmd: docker image rm {name}
+  run:
+    - cmd: docker run -itd --name {name} {name}
+    - cmd: docker network connect --ip {ip} {network} {name}
+  stop:
+    - cmd: docker stop {name}
+    - cmd: docker container rm {name}

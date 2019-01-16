@@ -1,0 +1,21 @@
+name: api
+vars:
+  default:
+    name: benefact_api
+    commit: master
+cmds:
+  checkout:
+    - cmd: git checkout {commit}
+  build:
+    - cmd: docker build -t {name} .
+  clean:
+    - steps: [stop]
+    - cmd: docker image rm {name}
+  mock:
+    - cmd: docker exec -it {name} dotnet BenefactAPI.dll action=mockdata
+  run:
+    - cmd: docker run -itd -e ConnectionStrings:BenefactDatabase='Host={dbhost};Username={dbuser};Database=benefact;Password={dbpassword};' --name {name} {name}
+    - cmd: docker network connect --ip {ip} {network} {name}
+  stop:
+    - cmd: docker stop {name}
+    - cmd: docker container rm {name}
