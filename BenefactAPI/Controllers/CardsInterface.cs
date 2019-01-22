@@ -47,18 +47,18 @@ namespace BenefactAPI.Controllers
 
         Expression<Func<CardData, bool>> termCardExpression(CardQueryTerm term)
         {
-            var andTerms = Enumerable.Empty<Expression<Func<CardData, bool>>>();
+            var andTerms = new List<Expression<Func<CardData, bool>>>();
             if (term.Tags != null)
             {
-                andTerms = andTerms.Union(term.Tags.SelectExp<int, CardData, bool>(
+                andTerms.AddRange(term.Tags.SelectExp<int, CardData, bool>(
                     tagId => card => card.Tags.Any(cardTag => cardTag.TagId == tagId)));
             }
             if (term.Title != null)
-                andTerms = andTerms.Union(card => card.Title.ToLower().Contains(term.Title.ToLower()));
+                andTerms.Add(card => card.Title.ToLower().Contains(term.Title.ToLower()));
             if (term.ColumnId.HasValue)
-                andTerms = andTerms.Union(card => card.Column.Id == term.ColumnId);
+                andTerms.Add(card => card.Column.Id == term.ColumnId);
             if (!andTerms.Any())
-                andTerms = andTerms.Union(c => true);
+                andTerms.Add(c => true);
             return andTerms.BinaryCombinator(Expression.And);
         }
 

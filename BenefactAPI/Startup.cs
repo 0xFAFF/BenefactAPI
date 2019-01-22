@@ -56,14 +56,14 @@ namespace BenefactAPI
                         using (var db = services.GetService<BenefactDbContext>())
                         {
                             db.Database.EnsureDeleted();
-                            db.Database.EnsureCreated();
+                            db.Database.Migrate();
                         }
                         break;
                     case "mockdata":
                         using (var db = services.GetService<BenefactDbContext>())
                         {
                             db.Database.EnsureDeleted();
-                            db.Database.EnsureCreated();
+                            db.Database.Migrate();
                             var todo = db.Columns.Add(new ColumnData()
                             {
                                 Title = "To Do",
