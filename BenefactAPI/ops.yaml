@@ -1,6 +1,7 @@
 name: api
 vars:
   default:
+    conn_string: ConnectionStrings:BenefactDatabase='Host={dbhost};Username={dbuser};Database=benefact;Password={dbpassword};'
     name: benefact_api
     commit: master
 cmds:
@@ -13,10 +14,11 @@ cmds:
     - steps: [stop]
     - cmd: docker image rm {name}
   mock:
-    - cmd: docker exec -it {name} dotnet BenefactAPI.dll action=mockdata
+    - cmd: docker run -it --rm --network={network} -e {conn_string} {name} --action mock
+  migrate:
+    - cmd: docker run -it --rm --network={network} -e {conn_string} {name} --action migrate
   run:
-    - cmd: docker run -itd -e ConnectionStrings:BenefactDatabase='Host={dbhost};Username={dbuser};Database=benefact;Password={dbpassword};' --name {name} {name}
-    - cmd: docker network connect --ip {ip} {network} {name}
+    - cmd: docker run -itd --network={network} -e {conn_string} --name {name} {name}
   stop:
     - cmd: docker stop {name}
     - cmd: docker container rm {name}
