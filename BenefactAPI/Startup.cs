@@ -52,10 +52,9 @@ namespace BenefactAPI
             {
                 switch (command)
                 {
-                    case "install":
+                    case "migrate":
                         using (var db = services.GetService<BenefactDbContext>())
                         {
-                            db.Database.EnsureDeleted();
                             db.Database.Migrate();
                         }
                         break;
