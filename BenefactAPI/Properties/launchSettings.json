@@ -39,6 +39,20 @@
 			"environmentVariables": {
 				"ASPNETCORE_ENVIRONMENT": "Development"
 			}
+		},
+		"Migrate": {
+			"commandName": "Project",
+			"commandLineArgs": "action=migrate",
+			"environmentVariables": {
+				"ASPNETCORE_ENVIRONMENT": "Development"
+			}
+		},
+		"Destroy": {
+			"commandName": "Project",
+			"commandLineArgs": "action=destroy",
+			"environmentVariables": {
+				"ASPNETCORE_ENVIRONMENT": "Development"
+			}
 		}
 	}
 }

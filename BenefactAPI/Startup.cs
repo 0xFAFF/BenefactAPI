@@ -52,11 +52,13 @@ namespace BenefactAPI
             {
                 switch (command)
                 {
+                    case "destroy":
+                        using (var db = services.GetService<BenefactDbContext>())
+                            db.Database.EnsureDeleted();
+                        break;
                     case "migrate":
                         using (var db = services.GetService<BenefactDbContext>())
-                        {
                             db.Database.Migrate();
-                        }
                         break;
                     case "mockdata":
                         using (var db = services.GetService<BenefactDbContext>())

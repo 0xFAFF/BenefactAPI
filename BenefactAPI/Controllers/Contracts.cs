@@ -1,6 +1,7 @@
 ﻿using Replicate;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
@@ -19,11 +20,13 @@ namespace BenefactAPI.Controllers
     public class CardData : IOrdered
     {
         public int Id { get; set; }
+        [Required]
         public int? Index { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
         [ReplicateIgnore]
         public ColumnData Column { get; set; }
+        [Required]
         public int? ColumnId { get; set; }
         [ReplicateIgnore]
         public List<CardTag> Tags { get; set; } = new List<CardTag>();
