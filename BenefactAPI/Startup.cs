@@ -65,18 +65,6 @@ namespace BenefactAPI
                         {
                             db.Database.EnsureDeleted();
                             db.Database.Migrate();
-                            var todo = db.Columns.Add(new ColumnData()
-                            {
-                                Title = "To Do",
-                            }).Entity;
-                            var inp = db.Columns.Add(new ColumnData()
-                            {
-                                Title = "In Progress",
-                            }).Entity;
-                            var done = db.Columns.Add(new ColumnData()
-                            {
-                                Title = "Done",
-                            }).Entity;
                             db.Tags.Add(new TagData()
                             {
                                 Name = "Story",
@@ -106,6 +94,18 @@ namespace BenefactAPI
                             db.SaveChanges();
                         }
                         var cards = services.GetService<CardsInterface>();
+                        var todo = cards.AddColumn(new ColumnData()
+                        {
+                            Title = "To Do",
+                        }).GetAwaiter().GetResult();
+                        var inp = cards.AddColumn(new ColumnData()
+                        {
+                            Title = "In Progress",
+                        }).GetAwaiter().GetResult();
+                        var done = cards.AddColumn(new ColumnData()
+                        {
+                            Title = "Done",
+                        }).GetAwaiter().GetResult();
                         cards.AddCard(new CardData()
                         {
                             Title = "Get MD Working",
