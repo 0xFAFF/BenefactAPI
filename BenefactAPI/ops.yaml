@@ -16,7 +16,7 @@ cmds:
     - steps: [stop]
     - cmd: docker image rm {name}
   mock:
-    - cmd: docker run -it --rm --network={network} -e {conn_string} {name} --action mock
+    - cmd: docker run -it --rm --network={network} -e {conn_string} {name} --action mockdata
   migrate:
     - cmd: docker run -it --rm --network={network} -e {conn_string} {name} --action migrate
   run:
