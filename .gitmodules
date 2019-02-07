@@ -1,0 +1,3 @@
+[submodule "BenefactAPI/Replicate"]
+	path = BenefactAPI/Replicate
+	url = https://github.com/alex-sherman/Replicate

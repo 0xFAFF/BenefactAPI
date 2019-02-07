@@ -8,6 +8,7 @@ cmds:
   checkout:
     - cmd: git checkout {commit}
     - cmd: git pull
+    - cmd: git submodule update
   version:
     - cmd: docker inspect {name} --format '\{\{ index .Config.Labels.git_commit \}\}'
   build:

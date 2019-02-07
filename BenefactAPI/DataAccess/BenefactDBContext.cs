@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using Npgsql.NameTranslation;
 using System;
@@ -14,6 +15,7 @@ namespace BenefactAPI.DataAccess
 {
     public class BenefactDbContext : DbContext
     {
+        public DbSet<UserData> Users { get; set; }
         public DbSet<CardData> Cards { get; set; }
         public DbSet<ColumnData> Columns { get; set; }
         public DbSet<TagData> Tags { get; set; }
@@ -37,6 +39,9 @@ namespace BenefactAPI.DataAccess
                 .HasOne(cc => cc.Card)
                 .WithMany(ca => ca.Tags)
                 .HasForeignKey(cc => cc.CardId);
+
+            modelBuilder.Entity<UserData>()
+                .HasKey(ud => ud.Email);
 
             FixSnakeCaseNames(modelBuilder);
         }

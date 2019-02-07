@@ -8,9 +8,30 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Linq.Expressions;
+using Replicate;
 
 namespace BenefactAPI.Controllers
 {
+    [ReplicateType(AutoMethods = AutoAdd.AllPublic)]
+    public interface ICardsInterface
+    {
+        Task<CardsResponse> Cards(CardQuery query);
+        /// <summary>
+        /// Update a card with the non-null fields provided in CardFields
+        /// </summary>
+        /// <param name="update"></param>
+        Task UpdateCard(CardData update);
+        Task<CardData> AddCard(CardData card);
+        Task<bool> DeleteCard(DeleteData card);
+
+        Task<TagData> AddTag(TagData tag);
+        Task UpdateTag(TagData tag);
+        Task<bool> DeleteTag(DeleteData tag);
+
+        Task<ColumnData> AddColumn(ColumnData column);
+        Task UpdateColumn(ColumnData column);
+        Task<bool> DeleteColumn(DeleteData column);
+    }
     public class CardsInterface : ICardsInterface
     {
         IServiceProvider Services;
@@ -30,18 +51,6 @@ namespace BenefactAPI.Controllers
                 var newValue = member.GetValue(newFields);
                 if (newValue == null) continue;
                 member.SetValue(target, newValue);
-            }
-        }
-
-        public async Task<T> DoWithDB<T>(Func<BenefactDbContext, Task<T>> func)
-        {
-            using (var scope = Services.CreateScope())
-            using (var db = scope.ServiceProvider.GetService<BenefactDbContext>())
-            using (var transaction = await db.Database.BeginTransactionAsync())
-            {
-                var result = await func(db);
-                transaction.Commit();
-                return result;
             }
         }
 
@@ -77,7 +86,7 @@ namespace BenefactAPI.Controllers
         public Task<CardsResponse> Cards(CardQuery query)
         {
             query = query ?? new CardQuery() { Groups = new Dictionary<string, List<CardQueryTerm>>() { { "All", null } } };
-            return DoWithDB(async db =>
+            return Services.DoWithDB(async db =>
             {
                 var cardGroups = new Dictionary<string, List<CardData>>();
                 // TODO: This is derpy and serial, but the EF Core Include seems to have a bug in it when the queries run simultanesouly
@@ -124,9 +133,10 @@ namespace BenefactAPI.Controllers
                 tuple.item.Index = tuple.index;
         }
 
+        [AuthRequired]
         public Task UpdateCard(CardData update)
         {
-            return DoWithDB(async db =>
+            return Services.DoWithDB(async db =>
             {
                 var existingCard = await db.Cards.Include(c => c.Tags).FirstOrDefaultAsync(c => c.Id == update.Id);
                 if (existingCard == null) throw new HTTPError("Card not found");
@@ -145,7 +155,7 @@ namespace BenefactAPI.Controllers
 
         public Task<CardData> AddCard(CardData card)
         {
-            return DoWithDB(async db =>
+            return Services.DoWithDB(async db =>
             {
                 card.Id = 0;
                 var result = await db.Cards.AddAsync(card);
@@ -158,7 +168,7 @@ namespace BenefactAPI.Controllers
 
         public Task<bool> DeleteCard(DeleteData card)
         {
-            return DoWithDB(async db =>
+            return Services.DoWithDB(async db =>
             {
                 if (await Delete(db, db.Cards, new CardData() { Id = card.Id }))
                 {
@@ -172,7 +182,7 @@ namespace BenefactAPI.Controllers
 
         public Task<TagData> AddTag(TagData tag)
         {
-            return DoWithDB(async db =>
+            return Services.DoWithDB(async db =>
             {
                 tag.Id = 0;
                 var result = await db.Tags.AddAsync(tag);
@@ -183,7 +193,7 @@ namespace BenefactAPI.Controllers
 
         public Task<bool> DeleteTag(DeleteData tag)
         {
-            return DoWithDB(async db =>
+            return Services.DoWithDB(async db =>
             {
                 return await Delete(db, db.Tags, new TagData() { Id = tag.Id });
             });
@@ -191,7 +201,7 @@ namespace BenefactAPI.Controllers
 
         public Task UpdateTag(TagData tag)
         {
-            return DoWithDB(async db =>
+            return Services.DoWithDB(async db =>
             {
                 var existingCard = await db.Tags.FindAsync(tag.Id);
                 if (existingCard == null) throw new HTTPError("Tag not found");
@@ -203,7 +213,7 @@ namespace BenefactAPI.Controllers
 
         public Task<ColumnData> AddColumn(ColumnData column)
         {
-            return DoWithDB(async db =>
+            return Services.DoWithDB(async db =>
             {
                 column.Id = 0;
                 var result = await db.Columns.AddAsync(column);
@@ -215,7 +225,7 @@ namespace BenefactAPI.Controllers
 
         public Task<bool> DeleteColumn(DeleteData column)
         {
-            return DoWithDB(async db =>
+            return Services.DoWithDB(async db =>
             {
                 if (await Delete(db, db.Columns, new ColumnData() { Id = column.Id }))
                 {
@@ -229,7 +239,7 @@ namespace BenefactAPI.Controllers
 
         public Task UpdateColumn(ColumnData update)
         {
-            return DoWithDB(async db =>
+            return Services.DoWithDB(async db =>
             {
                 var column = await db.Columns.FindAsync(update.Id);
                 if (column == null) throw new HTTPError("Column not found");

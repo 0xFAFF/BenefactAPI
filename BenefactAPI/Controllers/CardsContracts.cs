@@ -12,6 +12,7 @@ namespace BenefactAPI.Controllers
     {
         int? Index { get; set; }
     }
+
     /// <summary>
     /// All fields on this must have null defaults since it's used in CardUpdate
     /// and specifying a non-null default will make it clear fields!
@@ -87,25 +88,5 @@ namespace BenefactAPI.Controllers
         public List<int> Tags;
         public int? ColumnId;
         public string Title;
-    }
-    [ReplicateType(AutoMethods = AutoAdd.AllPublic)]
-    public interface ICardsInterface
-    {
-        Task<CardsResponse> Cards(CardQuery query);
-        /// <summary>
-        /// Update a card with the non-null fields provided in CardFields
-        /// </summary>
-        /// <param name="update"></param>
-        Task UpdateCard(CardData update);
-        Task<CardData> AddCard(CardData card);
-        Task<bool> DeleteCard(DeleteData card);
-
-        Task<TagData> AddTag(TagData tag);
-        Task UpdateTag(TagData tag);
-        Task<bool> DeleteTag(DeleteData tag);
-
-        Task<ColumnData> AddColumn(ColumnData column);
-        Task UpdateColumn(ColumnData column);
-        Task<bool> DeleteColumn(DeleteData column);
     }
 }

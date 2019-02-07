@@ -4,12 +4,16 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using BenefactAPI.DataAccess;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Replicate;
 using Replicate.MetaData;
+using Replicate.RPC;
 using Replicate.Serialization;
 
 namespace BenefactAPI.Controllers
@@ -19,14 +23,15 @@ namespace BenefactAPI.Controllers
         public int Status = 500;
         public HTTPError(string message, int status = 500) : base(message) { Status = status; }
     }
-    public class HTTPChannel : ReplicationChannel<string, string>
+    public class HTTPChannel : RPCChannel<string, string>
     {
         public override IReplicateSerializer<string> Serializer { get; }
             = new JSONGraphSerializer(new ReplicationModel() { DictionaryAsObject = true });
 
-        public HTTPChannel(CardsInterface implentation)
+        public HTTPChannel(CardsInterface cardsInterface, UserInterface userInterface)
         {
-            this.RegisterSingleton(implentation);
+            this.RegisterSingleton(cardsInterface);
+            this.RegisterSingleton(userInterface);
         }
 
         public override string GetEndpoint(MethodInfo endpoint)
@@ -43,7 +48,7 @@ namespace BenefactAPI.Controllers
     public class ReplicateController : Controller
     {
 
-        public static ReplicationChannel<string, string> Channel;
+        public static RPCChannel<string, string> Channel;
         IServiceProvider Provider;
         public ReplicateController(HTTPChannel channel, IServiceProvider provider)
         {
@@ -70,7 +75,16 @@ namespace BenefactAPI.Controllers
                 using (var serviceScope = Provider.CreateScope())
                 {
                     var bodyText = new StreamReader(Request.Body).ReadToEnd();
+                    if (!Channel.TryGetContract(path, out var contract)) return new NotFoundResult();
+                    if (contract.Method?.GetCustomAttribute<AuthRequiredAttribute>() != null)
+                    {
+                        var email = Auth.ValidateUserEmail(Request);
+                        if (email == null) throw new HTTPError("Unauthorized", 401);
+                        var user = Auth.CurrentUser.Value = await Provider.DoWithDB(async db => await db.Users.FirstOrDefaultAsync(u => u.Email == email));
+                        if (user == null) throw new HTTPError("Unauthorized", 401);
+                    }
                     var result = await Channel.Receive(path, string.IsNullOrEmpty(bodyText) ? null : bodyText);
+                    Auth.CurrentUser.Value = null;
                     return new ContentResult() { Content = result, ContentType = "application/json", StatusCode = 200 };
                 }
             }

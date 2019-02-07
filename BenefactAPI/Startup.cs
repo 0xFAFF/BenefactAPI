@@ -13,6 +13,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Identity;
 
 namespace BenefactAPI
 {
@@ -34,6 +35,7 @@ namespace BenefactAPI
                .AddDbContext<BenefactDbContext>(c => c.UseNpgsql(Configuration.GetConnectionString("BenefactDatabase")))
                .BuildServiceProvider();
             services.AddSingleton<CardsInterface>();
+            services.AddSingleton<UserInterface>();
             services.AddSingleton<HTTPChannel>();
         }
 
