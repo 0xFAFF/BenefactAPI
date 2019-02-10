@@ -38,6 +38,21 @@ namespace BenefactAPI.Controllers
             get => Tags.OrderBy(tag => tag.TagId).Select(ccd => ccd.TagId).ToList();
             set => Tags = value.Select(v => new CardTag() { Card = this, TagId = v }).ToList();
         }
+        public List<CommentData> Comments { get; set; } = new List<CommentData>();
+    }
+    [ReplicateType]
+    public class CommentData
+    {
+        public int Id { get; set; }
+        public string Text { get; set; }
+        public int UserId { get; set; }
+        [Required]
+        [ReplicateIgnore]
+        public UserData User { get; set; }
+        public int CardId { get; set; }
+        [Required]
+        [ReplicateIgnore]
+        public CardData Card { get; set; }
     }
     public class CardTag
     {
@@ -70,6 +85,7 @@ namespace BenefactAPI.Controllers
         public Dictionary<string, List<CardData>> Cards;
         public List<ColumnData> Columns;
         public List<TagData> Tags;
+        public List<UserData> Users;
     }
     [ReplicateType]
     public class DeleteData

@@ -96,6 +96,7 @@ namespace BenefactAPI
                             db.SaveChanges();
                         }
                         var cards = services.GetService<CardsInterface>();
+                        var users = services.GetService<UserInterface>();
                         var todo = cards.AddColumn(new ColumnData()
                         {
                             Title = "To Do",
@@ -135,6 +136,12 @@ namespace BenefactAPI
                             Description = "There was a bug",
                             ColumnId = 3,
                             TagIds = new[] { 4 }.ToList(),
+                        }).GetAwaiter().GetResult();
+                        users.CreateUser(new UserCreateRequest()
+                        {
+                            Email = "faff@faff.faff",
+                            Name = "FAFF",
+                            Password = "fafffaff",
                         }).GetAwaiter().GetResult();
                         break;
                 }

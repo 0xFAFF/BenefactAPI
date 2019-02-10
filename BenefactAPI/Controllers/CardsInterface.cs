@@ -73,7 +73,7 @@ namespace BenefactAPI.Controllers
 
         IQueryable<CardData> QueryCards(BenefactDbContext db, List<CardQueryTerm> terms)
         {
-            IQueryable<CardData> baseQuery = db.Cards.Include(card => card.Tags).OrderBy(card => card.Index);
+            IQueryable<CardData> baseQuery = db.Cards.Include(card => card.Tags).Include(card => card.Comments).OrderBy(card => card.Index);
             var query = baseQuery;
             if (terms != null)
             {
@@ -98,6 +98,7 @@ namespace BenefactAPI.Controllers
                     Cards = cardGroups,
                     Columns = await db.Columns.OrderBy(col => col.Index).ToListAsync(),
                     Tags = await db.Tags.OrderBy(tag => tag.Id).ToListAsync(),
+                    Users = await db.Users.ToListAsync(),
                 };
             });
         }
@@ -133,7 +134,6 @@ namespace BenefactAPI.Controllers
                 tuple.item.Index = tuple.index;
         }
 
-        [AuthRequired]
         public Task UpdateCard(CardData update)
         {
             return Services.DoWithDB(async db =>
@@ -148,6 +148,18 @@ namespace BenefactAPI.Controllers
                 }
                 if (update.Index.HasValue)
                     await Insert(existingCard, update.Index.Value, db.Cards, db);
+                await db.SaveChangesAsync();
+                return true;
+            });
+        }
+
+        [AuthRequired]
+        public Task AddComment(CommentData comment)
+        {
+            return Services.DoWithDB(async db =>
+            {
+                comment.UserId = Auth.CurrentUser.Value.Id;
+                await db.Comments.AddAsync(comment);
                 await db.SaveChangesAsync();
                 return true;
             });

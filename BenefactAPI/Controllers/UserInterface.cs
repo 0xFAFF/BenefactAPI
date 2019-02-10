@@ -12,7 +12,7 @@ namespace BenefactAPI.Controllers
     public interface IUserInterface
     {
         Task<string> AuthUser(UserAuthRequest auth);
-        Task<bool> CreateUser(UserAuthRequest auth);
+        Task<bool> CreateUser(UserCreateRequest auth);
         UserData CurrentUser();
     }
     public class UserInterface : IUserInterface
@@ -33,15 +33,16 @@ namespace BenefactAPI.Controllers
                 return Auth.GenerateToken(user);
             });
         }
-        public Task<bool> CreateUser(UserAuthRequest auth)
+        public Task<bool> CreateUser(UserCreateRequest create)
         {
-            if (auth?.Email == null || auth?.Password == null) return null;
+            if (create?.Email == null || create?.Password == null) return null;
             return Services.DoWithDB(async db =>
             {
                 await db.Users.AddAsync(new UserData()
                 {
-                    Email = auth.Email,
-                    Hash = PasswordStorage.CreateHash(auth.Password),
+                    Email = create.Email,
+                    Name = create.Name,
+                    Hash = PasswordStorage.CreateHash(create.Password),
                 });
                 await db.SaveChangesAsync();
                 return true;

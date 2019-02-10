@@ -17,6 +17,7 @@ namespace BenefactAPI.DataAccess
     {
         public DbSet<UserData> Users { get; set; }
         public DbSet<CardData> Cards { get; set; }
+        public DbSet<CommentData> Comments { get; set; }
         public DbSet<ColumnData> Columns { get; set; }
         public DbSet<TagData> Tags { get; set; }
 
@@ -32,6 +33,11 @@ namespace BenefactAPI.DataAccess
                 .WithMany(co => co.Cards)
                 .HasForeignKey(cd => cd.ColumnId);
 
+            modelBuilder.Entity<CardData>()
+                .HasMany(cd => cd.Comments)
+                .WithOne(co => co.Card)
+                .HasForeignKey(co => co.CardId);
+
             modelBuilder.Entity<CardTag>()
                 .HasKey(c => new { c.CardId, c.TagId });
 
@@ -41,7 +47,12 @@ namespace BenefactAPI.DataAccess
                 .HasForeignKey(cc => cc.CardId);
 
             modelBuilder.Entity<UserData>()
-                .HasKey(ud => ud.Email);
+                .HasAlternateKey(ud => ud.Email);
+
+            modelBuilder.Entity<UserData>()
+                .HasMany(u => u.Comments)
+                .WithOne(co => co.User);
+
 
             FixSnakeCaseNames(modelBuilder);
         }
