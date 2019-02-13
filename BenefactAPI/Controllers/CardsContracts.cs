@@ -39,12 +39,32 @@ namespace BenefactAPI.Controllers
             set => Tags = value.Select(v => new CardTag() { Card = this, TagId = v }).ToList();
         }
         public List<CommentData> Comments { get; set; } = new List<CommentData>();
+        public List<VoteData> Votes { get; set; } = new List<VoteData>();
     }
     [ReplicateType]
     public class CommentData
     {
         public int Id { get; set; }
         public string Text { get; set; }
+        public int UserId { get; set; }
+        [Required]
+        [ReplicateIgnore]
+        public UserData User { get; set; }
+        public int CardId { get; set; }
+        [Required]
+        [ReplicateIgnore]
+        public CardData Card { get; set; }
+    }
+    [ReplicateType]
+    public class CardVoteRequest
+    {
+        public int Count;
+        public int CardId;
+    }
+    [ReplicateType]
+    public class VoteData
+    {
+        public int Count { get; set; }
         public int UserId { get; set; }
         [Required]
         [ReplicateIgnore]

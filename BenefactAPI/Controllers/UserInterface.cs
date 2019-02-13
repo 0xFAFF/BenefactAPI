@@ -9,13 +9,7 @@ using System.Threading.Tasks;
 namespace BenefactAPI.Controllers
 {
     [ReplicateType(AutoMethods = AutoAdd.AllPublic)]
-    public interface IUserInterface
-    {
-        Task<string> AuthUser(UserAuthRequest auth);
-        Task<bool> CreateUser(UserCreateRequest auth);
-        UserData CurrentUser();
-    }
-    public class UserInterface : IUserInterface
+    public class UserInterface
     {
         IServiceProvider Services;
         public UserInterface(IServiceProvider services)

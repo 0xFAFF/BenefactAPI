@@ -50,7 +50,7 @@ namespace BenefactAPI.DataAccess
 
                 var validationParameters = new TokenValidationParameters()
                 {
-                    RequireExpirationTime = true,
+                    RequireExpirationTime = false,
                     ValidateIssuer = false,
                     ValidateAudience = false,
                     IssuerSigningKey = new SymmetricSecurityKey(key)

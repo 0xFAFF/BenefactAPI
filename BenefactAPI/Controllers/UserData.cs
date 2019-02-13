@@ -32,5 +32,7 @@ namespace BenefactAPI.Controllers
         public string Hash { get; set; }
         [ReplicateIgnore]
         public List<CommentData> Comments { get; set; }
+        [ReplicateIgnore]
+        public List<VoteData> Votes { get; set; }
     }
 }

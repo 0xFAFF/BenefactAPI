@@ -34,10 +34,7 @@ namespace BenefactAPI.Controllers
             this.RegisterSingleton(userInterface);
         }
 
-        public override string GetEndpoint(MethodInfo endpoint)
-        {
-            return endpoint.Name.ToLower();
-        }
+        public override string GetEndpoint(MethodInfo endpoint) => endpoint.Name.ToLower();
 
         public override Task<string> Request(string messageID, RPCRequest request, ReliabilityMode reliability = ReliabilityMode.ReliableSequenced)
         {

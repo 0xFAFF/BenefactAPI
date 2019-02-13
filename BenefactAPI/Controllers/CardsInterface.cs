@@ -13,26 +13,7 @@ using Replicate;
 namespace BenefactAPI.Controllers
 {
     [ReplicateType(AutoMethods = AutoAdd.AllPublic)]
-    public interface ICardsInterface
-    {
-        Task<CardsResponse> Cards(CardQuery query);
-        /// <summary>
-        /// Update a card with the non-null fields provided in CardFields
-        /// </summary>
-        /// <param name="update"></param>
-        Task UpdateCard(CardData update);
-        Task<CardData> AddCard(CardData card);
-        Task<bool> DeleteCard(DeleteData card);
-
-        Task<TagData> AddTag(TagData tag);
-        Task UpdateTag(TagData tag);
-        Task<bool> DeleteTag(DeleteData tag);
-
-        Task<ColumnData> AddColumn(ColumnData column);
-        Task UpdateColumn(ColumnData column);
-        Task<bool> DeleteColumn(DeleteData column);
-    }
-    public class CardsInterface : ICardsInterface
+    public class CardsInterface
     {
         IServiceProvider Services;
         public CardsInterface(IServiceProvider services)
@@ -73,7 +54,11 @@ namespace BenefactAPI.Controllers
 
         IQueryable<CardData> QueryCards(BenefactDbContext db, List<CardQueryTerm> terms)
         {
-            IQueryable<CardData> baseQuery = db.Cards.Include(card => card.Tags).Include(card => card.Comments).OrderBy(card => card.Index);
+            IQueryable<CardData> baseQuery = db.Cards
+                .Include(card => card.Tags)
+                .Include(card => card.Comments)
+                .Include(card => card.Votes)
+                .OrderBy(card => card.Index);
             var query = baseQuery;
             if (terms != null)
             {
@@ -275,6 +260,22 @@ namespace BenefactAPI.Controllers
             {
                 return false;
             }
+        }
+
+        [AuthRequired]
+        public Task CardVote(CardVoteRequest request)
+        {
+            return Services.DoWithDB(async db =>
+            {
+                var userId = Auth.CurrentUser.Value.Id;
+                var vote = db.Votes.FirstOrDefault(v => v.UserId == userId && v.CardId == request.CardId)
+                ?? (await db.Votes.AddAsync(new VoteData() { CardId = request.CardId, UserId = userId, Count = 0 })).Entity;
+                vote.Count += request.Count;
+                if (vote.Count <= 0)
+                    db.Votes.Remove(vote);
+                await db.SaveChangesAsync();
+                return true;
+            });
         }
     }
 }

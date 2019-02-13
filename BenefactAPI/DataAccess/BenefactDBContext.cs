@@ -18,6 +18,7 @@ namespace BenefactAPI.DataAccess
         public DbSet<UserData> Users { get; set; }
         public DbSet<CardData> Cards { get; set; }
         public DbSet<CommentData> Comments { get; set; }
+        public DbSet<VoteData> Votes { get; set; }
         public DbSet<ColumnData> Columns { get; set; }
         public DbSet<TagData> Tags { get; set; }
 
@@ -33,11 +34,31 @@ namespace BenefactAPI.DataAccess
                 .WithMany(co => co.Cards)
                 .HasForeignKey(cd => cd.ColumnId);
 
+            // Comments
             modelBuilder.Entity<CardData>()
                 .HasMany(cd => cd.Comments)
                 .WithOne(co => co.Card)
                 .HasForeignKey(co => co.CardId);
 
+            modelBuilder.Entity<UserData>()
+                .HasMany(u => u.Comments)
+                .WithOne(co => co.User);
+
+            // Votes
+            modelBuilder.Entity<VoteData>()
+                .HasKey(v => new { v.CardId, v.UserId });
+
+            modelBuilder.Entity<CardData>()
+                .HasMany(cd => cd.Votes)
+                .WithOne(vo => vo.Card)
+                .HasForeignKey(vo => vo.CardId);
+
+            modelBuilder.Entity<UserData>()
+                .HasMany(u => u.Votes)
+                .WithOne(vo => vo.User)
+                .HasForeignKey(vo => vo.UserId);
+
+            // Card Tags
             modelBuilder.Entity<CardTag>()
                 .HasKey(c => new { c.CardId, c.TagId });
 
@@ -48,10 +69,6 @@ namespace BenefactAPI.DataAccess
 
             modelBuilder.Entity<UserData>()
                 .HasAlternateKey(ud => ud.Email);
-
-            modelBuilder.Entity<UserData>()
-                .HasMany(u => u.Comments)
-                .WithOne(co => co.User);
 
 
             FixSnakeCaseNames(modelBuilder);
