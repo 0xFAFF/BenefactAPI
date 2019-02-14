@@ -27,19 +27,20 @@ namespace BenefactAPI.Controllers
                 return Auth.GenerateToken(user);
             });
         }
-        public Task<bool> CreateUser(UserCreateRequest create)
+        public Task<UserData> CreateUser(UserCreateRequest create)
         {
             if (create?.Email == null || create?.Password == null) return null;
             return Services.DoWithDB(async db =>
             {
-                await db.Users.AddAsync(new UserData()
+                var user = (await db.Users.AddAsync(new UserData()
                 {
+                    Id = 0,
                     Email = create.Email,
                     Name = create.Name,
                     Hash = PasswordStorage.CreateHash(create.Password),
-                });
+                })).Entity;
                 await db.SaveChangesAsync();
-                return true;
+                return user;
             });
         }
         [AuthRequired]
