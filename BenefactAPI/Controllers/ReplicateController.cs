@@ -32,6 +32,12 @@ namespace BenefactAPI.Controllers
         {
             this.RegisterSingleton(cardsInterface);
             this.RegisterSingleton(userInterface);
+            this.Respond<None, string>(Version);
+        }
+
+        public Task<string> Version(None _)
+        {
+            return Task.FromResult(Environment.GetEnvironmentVariable("GIT_COMMIT"));
         }
 
         public override string GetEndpoint(MethodInfo endpoint) => endpoint.Name.ToLower();

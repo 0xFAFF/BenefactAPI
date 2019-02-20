@@ -119,6 +119,7 @@ namespace BenefactAPI.Controllers
                 tuple.item.Index = tuple.index;
         }
 
+        [AuthRequired]
         public Task UpdateCard(CardData update)
         {
             return Services.DoWithDB(async db =>
@@ -150,6 +151,7 @@ namespace BenefactAPI.Controllers
             });
         }
 
+        [AuthRequired]
         public Task<CardData> AddCard(CardData card)
         {
             return Services.DoWithDB(async db =>
@@ -163,6 +165,7 @@ namespace BenefactAPI.Controllers
             });
         }
 
+        [AuthRequired]
         public Task<bool> DeleteCard(DeleteData card)
         {
             return Services.DoWithDB(async db =>
@@ -177,6 +180,7 @@ namespace BenefactAPI.Controllers
             });
         }
 
+        [AuthRequired]
         public Task<TagData> AddTag(TagData tag)
         {
             return Services.DoWithDB(async db =>
@@ -188,6 +192,7 @@ namespace BenefactAPI.Controllers
             });
         }
 
+        [AuthRequired]
         public Task<bool> DeleteTag(DeleteData tag)
         {
             return Services.DoWithDB(async db =>
@@ -196,6 +201,7 @@ namespace BenefactAPI.Controllers
             });
         }
 
+        [AuthRequired]
         public Task UpdateTag(TagData tag)
         {
             return Services.DoWithDB(async db =>
@@ -208,6 +214,7 @@ namespace BenefactAPI.Controllers
             });
         }
 
+        [AuthRequired]
         public Task<ColumnData> AddColumn(ColumnData column)
         {
             return Services.DoWithDB(async db =>
@@ -220,6 +227,7 @@ namespace BenefactAPI.Controllers
             });
         }
 
+        [AuthRequired]
         public Task<bool> DeleteColumn(DeleteData column)
         {
             return Services.DoWithDB(async db =>
@@ -234,6 +242,7 @@ namespace BenefactAPI.Controllers
             });
         }
 
+        [AuthRequired]
         public Task UpdateColumn(ColumnData update)
         {
             return Services.DoWithDB(async db =>

@@ -15,4 +15,5 @@ ARG GIT_COMMIT=unspecified
 LABEL git_commit=$GIT_COMMIT
 WORKDIR /app
 COPY --from=build-env /app/out .
+ENV GIT_COMMIT $GIT_COMMIT
 ENTRYPOINT ["dotnet", "BenefactAPI.dll"]
