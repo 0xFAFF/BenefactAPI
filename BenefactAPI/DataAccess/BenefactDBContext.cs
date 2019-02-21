@@ -24,7 +24,6 @@ namespace BenefactAPI.DataAccess
 
         public BenefactDbContext(DbContextOptions options) : base(options) { }
 
-        private static readonly Regex _keysRegex = new Regex("^(PK|FK|IX)_", RegexOptions.Compiled);
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -70,12 +69,57 @@ namespace BenefactAPI.DataAccess
             modelBuilder.Entity<UserData>()
                 .HasAlternateKey(ud => ud.Email);
 
-
             FixSnakeCaseNames(modelBuilder);
         }
 
-        #region Name Conversion
+        public async Task<bool> Delete<T>(DbSet<T> set, T delete) where T : class
+        {
+            set.Remove(delete);
+            try
+            {
+                await SaveChangesAsync();
+                return true;
+            }
+            catch (DbUpdateConcurrencyException e)
+            {
+                return false;
+            }
+        }
 
+        public async Task Insert<T>(T value, int? newIndex, IQueryable<T> existingSet) where T : IOrdered
+        {
+            var max = await existingSet.CountAsync();
+
+            if (value.Index == null)
+                value.Index = max;
+            if (newIndex == null)
+                newIndex = max;
+            if (newIndex == value.Index)
+                return;
+            newIndex = Math.Min(Math.Max(0, newIndex.Value), max);
+            var movingEarlier = newIndex < value.Index;
+            var startIndex = (movingEarlier ? newIndex : value.Index).Value;
+            var endIndex = (movingEarlier ? value.Index : newIndex).Value;
+            var greaterList = await existingSet.Where(v => v.Index.Value >= startIndex && v.Index.Value <= endIndex)
+                .ToListAsync();
+            foreach (var greaterItem in greaterList)
+            {
+                greaterItem.Index += movingEarlier ? 1 : -1;
+            }
+            value.Index = newIndex;
+            await SaveChangesAsync();
+            await Order(existingSet);
+        }
+
+        public async Task Order<T>(IQueryable<T> existingSet) where T : IOrdered
+        {
+            var allItems = await existingSet.OrderBy(v => v.Index).ToListAsync();
+            foreach (var tuple in allItems.Select((item, index) => new { item, index }))
+                tuple.item.Index = tuple.index;
+        }
+
+        #region Name Conversion
+        private static readonly Regex _keysRegex = new Regex("^(PK|FK|IX)_", RegexOptions.Compiled);
         private void FixSnakeCaseNames(ModelBuilder modelBuilder)
         {
             var mapper = new NpgsqlSnakeCaseNameTranslator();
@@ -89,7 +133,6 @@ namespace BenefactAPI.DataAccess
                 }
             }
         }
-
         private void ConvertToSnake(INpgsqlNameTranslator mapper, object entity)
         {
             switch (entity)
@@ -120,10 +163,8 @@ namespace BenefactAPI.DataAccess
                 //    throw new NotImplementedException("Unexpected type was provided to snake case converter");
             }
         }
-
         private string ConvertKeyToSnake(INpgsqlNameTranslator mapper, string keyName) =>
             ConvertGeneralToSnake(mapper, _keysRegex.Replace(keyName, match => match.Value.ToLower()));
-
         private string ConvertGeneralToSnake(INpgsqlNameTranslator mapper, string entityName) =>
             mapper.TranslateMemberName(entityName);
         #endregion

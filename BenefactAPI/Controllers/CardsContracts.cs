@@ -54,6 +54,8 @@ namespace BenefactAPI.Controllers
         [Required]
         [ReplicateIgnore]
         public CardData Card { get; set; }
+        public double CreatedTime { get; set; } = Util.Now();
+        public double? EditedTime { get; set; }
     }
     [ReplicateType]
     public class CardVoteRequest

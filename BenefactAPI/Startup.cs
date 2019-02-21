@@ -34,8 +34,6 @@ namespace BenefactAPI
             services.AddEntityFrameworkNpgsql()
                .AddDbContext<BenefactDbContext>(c => c.UseNpgsql(Configuration.GetConnectionString("BenefactDatabase")))
                .BuildServiceProvider();
-            services.AddSingleton<CardsInterface>();
-            services.AddSingleton<UserInterface>();
             services.AddSingleton<HTTPChannel>();
         }
 

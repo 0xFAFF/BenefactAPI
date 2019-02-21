@@ -21,20 +21,6 @@ namespace BenefactAPI.Controllers
             Services = services;
         }
 
-        void UpdateMembersFrom<T>(T target, T newFields, params string[] ignoredFields)
-        {
-            var td = ReplicationModel.Default.GetTypeAccessor(typeof(T));
-            IEnumerable<MemberAccessor> members = td.MemberAccessors;
-            if (ignoredFields != null)
-                members = members.Where(mem => !ignoredFields.Contains(mem.Info.Name));
-            foreach (var member in members)
-            {
-                var newValue = member.GetValue(newFields);
-                if (newValue == null) continue;
-                member.SetValue(target, newValue);
-            }
-        }
-
         Expression<Func<CardData, bool>> termCardExpression(CardQueryTerm term)
         {
             var andTerms = new List<Expression<Func<CardData, bool>>>();
@@ -88,37 +74,6 @@ namespace BenefactAPI.Controllers
             });
         }
 
-        async Task Insert<T>(T value, int? newIndex, IQueryable<T> existingSet, BenefactDbContext db) where T : IOrdered
-        {
-            var max = await existingSet.CountAsync();
-
-            if (value.Index == null)
-                value.Index = max;
-            if (newIndex == null)
-                newIndex = max;
-            if (newIndex == value.Index)
-                return;
-            newIndex = Math.Min(Math.Max(0, newIndex.Value), max);
-            var movingEarlier = newIndex < value.Index;
-            var startIndex = (movingEarlier ? newIndex : value.Index).Value;
-            var endIndex = (movingEarlier ? value.Index : newIndex).Value;
-            var greaterList = await existingSet.Where(v => v.Index.Value >= startIndex && v.Index.Value <= endIndex)
-                .ToListAsync();
-            foreach (var greaterItem in greaterList)
-            {
-                greaterItem.Index += movingEarlier ? 1 : -1;
-            }
-            value.Index = newIndex;
-            await db.SaveChangesAsync();
-            await Order(existingSet);
-        }
-        async Task Order<T>(IQueryable<T> existingSet) where T : IOrdered
-        {
-            var allItems = await existingSet.OrderBy(v => v.Index).ToListAsync();
-            foreach (var tuple in allItems.Select((item, index) => new { item, index }))
-                tuple.item.Index = tuple.index;
-        }
-
         [AuthRequired]
         public Task UpdateCard(CardData update)
         {
@@ -126,26 +81,14 @@ namespace BenefactAPI.Controllers
             {
                 var existingCard = await db.Cards.Include(c => c.Tags).FirstOrDefaultAsync(c => c.Id == update.Id);
                 if (existingCard == null) throw new HTTPError("Card not found");
-                UpdateMembersFrom(existingCard, update, nameof(CardData.Id), nameof(CardData.TagIds), nameof(CardData.Index));
+                Util.UpdateMembersFrom(existingCard, update, nameof(CardData.Id), nameof(CardData.TagIds), nameof(CardData.Index));
                 if (update.TagIds != null)
                 {
                     existingCard.Tags.Clear();
                     existingCard.TagIds = update.TagIds;
                 }
                 if (update.Index.HasValue)
-                    await Insert(existingCard, update.Index.Value, db.Cards, db);
-                await db.SaveChangesAsync();
-                return true;
-            });
-        }
-
-        [AuthRequired]
-        public Task AddComment(CommentData comment)
-        {
-            return Services.DoWithDB(async db =>
-            {
-                comment.UserId = Auth.CurrentUser.Value.Id;
-                await db.Comments.AddAsync(comment);
+                    await db.Insert(existingCard, update.Index.Value, db.Cards);
                 await db.SaveChangesAsync();
                 return true;
             });
@@ -159,7 +102,7 @@ namespace BenefactAPI.Controllers
                 card.Id = 0;
                 var result = await db.Cards.AddAsync(card);
                 // TODO: Filter this db.Cards when there are boards
-                await Insert(card, card.Index, db.Cards, db);
+                await db.Insert(card, card.Index, db.Cards);
                 await db.SaveChangesAsync();
                 return result.Entity;
             });
@@ -170,9 +113,9 @@ namespace BenefactAPI.Controllers
         {
             return Services.DoWithDB(async db =>
             {
-                if (await Delete(db, db.Cards, new CardData() { Id = card.Id }))
+                if (await db.Delete(db.Cards, new CardData() { Id = card.Id }))
                 {
-                    await Order(db.Cards);
+                    await db.Order(db.Cards);
                     await db.SaveChangesAsync();
                     return true;
                 }
@@ -197,7 +140,7 @@ namespace BenefactAPI.Controllers
         {
             return Services.DoWithDB(async db =>
             {
-                return await Delete(db, db.Tags, new TagData() { Id = tag.Id });
+                return await db.Delete(db.Tags, new TagData() { Id = tag.Id });
             });
         }
 
@@ -208,7 +151,7 @@ namespace BenefactAPI.Controllers
             {
                 var existingCard = await db.Tags.FindAsync(tag.Id);
                 if (existingCard == null) throw new HTTPError("Tag not found");
-                UpdateMembersFrom(existingCard, tag, nameof(TagData.Id));
+                Util.UpdateMembersFrom(existingCard, tag, nameof(TagData.Id));
                 await db.SaveChangesAsync();
                 return true;
             });
@@ -221,7 +164,7 @@ namespace BenefactAPI.Controllers
             {
                 column.Id = 0;
                 var result = await db.Columns.AddAsync(column);
-                await Insert(column, column.Index, db.Columns, db);
+                await db.Insert(column, column.Index, db.Columns);
                 await db.SaveChangesAsync();
                 return result.Entity;
             });
@@ -232,9 +175,9 @@ namespace BenefactAPI.Controllers
         {
             return Services.DoWithDB(async db =>
             {
-                if (await Delete(db, db.Columns, new ColumnData() { Id = column.Id }))
+                if (await db.Delete(db.Columns, new ColumnData() { Id = column.Id }))
                 {
-                    await Order(db.Columns);
+                    await db.Order(db.Columns);
                     await db.SaveChangesAsync();
                     return true;
                 }
@@ -249,26 +192,12 @@ namespace BenefactAPI.Controllers
             {
                 var column = await db.Columns.FindAsync(update.Id);
                 if (column == null) throw new HTTPError("Column not found");
-                UpdateMembersFrom(column, update, nameof(ColumnData.Id), nameof(ColumnData.Index));
+                Util.UpdateMembersFrom(column, update, nameof(ColumnData.Id), nameof(ColumnData.Index));
                 if (update.Index.HasValue)
-                    await Insert(column, update.Index.Value, db.Columns, db);
+                    await db.Insert(column, update.Index.Value, db.Columns);
                 await db.SaveChangesAsync();
                 return true;
             });
-        }
-
-        async Task<bool> Delete<T>(BenefactDbContext db, DbSet<T> set, T delete) where T : class
-        {
-            set.Remove(delete);
-            try
-            {
-                await db.SaveChangesAsync();
-                return true;
-            }
-            catch (DbUpdateConcurrencyException e)
-            {
-                return false;
-            }
         }
 
         [AuthRequired]

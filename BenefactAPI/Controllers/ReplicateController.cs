@@ -28,11 +28,12 @@ namespace BenefactAPI.Controllers
         public override IReplicateSerializer<string> Serializer { get; }
             = new JSONGraphSerializer(new ReplicationModel() { DictionaryAsObject = true });
 
-        public HTTPChannel(CardsInterface cardsInterface, UserInterface userInterface)
+        public HTTPChannel(IServiceProvider services)
         {
-            this.RegisterSingleton(cardsInterface);
-            this.RegisterSingleton(userInterface);
             this.Respond<None, string>(Version);
+            this.RegisterSingleton(new CardsInterface(services));
+            this.RegisterSingleton(new UserInterface(services));
+            this.RegisterSingleton(new CommentsInterface(services));
         }
 
         public Task<string> Version(None _)
