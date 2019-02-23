@@ -63,7 +63,9 @@ namespace BenefactAPI.Controllers
                 // TODO: This is derpy and serial, but the EF Core Include seems to have a bug in it when the queries run simultanesouly
                 // which duplicates Tags in CardData
                 foreach (var group in query.Groups)
+                {
                     cardGroups[group.Key] = await QueryCards(db, group.Value).ToListAsync();
+                }
                 return new CardsResponse()
                 {
                     Cards = cardGroups,
@@ -82,8 +84,7 @@ namespace BenefactAPI.Controllers
                 var existingCard = await db.Cards.Include(c => c.Tags).FirstOrDefaultAsync(c => c.Id == update.Id);
                 if (existingCard == null) throw new HTTPError("Card not found");
                 Util.UpdateMembersFrom(existingCard, update,
-                    nameof(CardData.Id), nameof(CardData.TagIds), nameof(CardData.Index),
-                    nameof(CardData.Comments), nameof(CardData.Votes));
+                    whiteList: new[] { nameof(CardData.Title), nameof(CardData.Description) });
                 if (update.TagIds != null)
                 {
                     existingCard.Tags.Clear();
@@ -153,7 +154,7 @@ namespace BenefactAPI.Controllers
             {
                 var existingCard = await db.Tags.FindAsync(tag.Id);
                 if (existingCard == null) throw new HTTPError("Tag not found");
-                Util.UpdateMembersFrom(existingCard, tag, nameof(TagData.Id));
+                Util.UpdateMembersFrom(existingCard, tag, blackList: new[] { nameof(TagData.Id) });
                 await db.SaveChangesAsync();
                 return true;
             });
@@ -194,7 +195,7 @@ namespace BenefactAPI.Controllers
             {
                 var column = await db.Columns.FindAsync(update.Id);
                 if (column == null) throw new HTTPError("Column not found");
-                Util.UpdateMembersFrom(column, update, nameof(ColumnData.Id), nameof(ColumnData.Index));
+                Util.UpdateMembersFrom(column, update, whiteList: new[] { nameof(ColumnData.Title) });
                 if (update.Index.HasValue)
                     await db.Insert(column, update.Index.Value, db.Columns);
                 await db.SaveChangesAsync();
