@@ -81,7 +81,9 @@ namespace BenefactAPI.Controllers
             {
                 var existingCard = await db.Cards.Include(c => c.Tags).FirstOrDefaultAsync(c => c.Id == update.Id);
                 if (existingCard == null) throw new HTTPError("Card not found");
-                Util.UpdateMembersFrom(existingCard, update, nameof(CardData.Id), nameof(CardData.TagIds), nameof(CardData.Index));
+                Util.UpdateMembersFrom(existingCard, update,
+                    nameof(CardData.Id), nameof(CardData.TagIds), nameof(CardData.Index),
+                    nameof(CardData.Comments), nameof(CardData.Votes));
                 if (update.TagIds != null)
                 {
                     existingCard.Tags.Clear();
