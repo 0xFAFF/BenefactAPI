@@ -18,7 +18,7 @@ namespace BenefactAPI.DataAccess
     {
         public static AsyncLocal<UserData> CurrentUser = new AsyncLocal<UserData>();
         static readonly byte[] key = Convert.FromBase64String("ufbSRUHVCGWsWa1Ny+7oS8Wj9BB2n8m+DqBnLz8PreKH+ykeStpNLo621d3NnvzJRNJjY5yMPTlTkFpZzmmtpg==");
-        public static string GenerateToken(UserData user, int expireMinutes = 20)
+        public static string GenerateToken(UserData user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
 
@@ -28,7 +28,7 @@ namespace BenefactAPI.DataAccess
                 {
                     new Claim(ClaimTypes.Email, user.Email)
                 }),
-                Expires = DateTime.UtcNow.AddMinutes(Convert.ToInt32(expireMinutes)),
+                Expires = DateTime.UtcNow.AddDays(28),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
@@ -50,7 +50,7 @@ namespace BenefactAPI.DataAccess
 
                 var validationParameters = new TokenValidationParameters()
                 {
-                    RequireExpirationTime = false,
+                    RequireExpirationTime = true,
                     ValidateIssuer = false,
                     ValidateAudience = false,
                     IssuerSigningKey = new SymmetricSecurityKey(key)
