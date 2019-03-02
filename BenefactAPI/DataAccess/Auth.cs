@@ -26,7 +26,9 @@ namespace BenefactAPI.DataAccess
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-                    new Claim(ClaimTypes.Email, user.Email)
+                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim("name", user.Name),
+                    new Claim("id", user.Id.ToString(), ClaimValueTypes.Integer64),
                 }),
                 Expires = DateTime.UtcNow.AddDays(28),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -37,7 +39,7 @@ namespace BenefactAPI.DataAccess
 
             return token;
         }
-        public static string ValidateUserEmail(string token) => ValidateToken(token)?.FindFirst(ClaimTypes.Email)?.Value;
+        public static string ValidateUserEmail(string token) => ValidateToken(token)?.FindFirstValue(ClaimTypes.Email);
         public static ClaimsPrincipal ValidateToken(string token)
         {
             try
@@ -53,7 +55,7 @@ namespace BenefactAPI.DataAccess
                     RequireExpirationTime = true,
                     ValidateIssuer = false,
                     ValidateAudience = false,
-                    IssuerSigningKey = new SymmetricSecurityKey(key)
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
                 };
 
                 SecurityToken securityToken;
