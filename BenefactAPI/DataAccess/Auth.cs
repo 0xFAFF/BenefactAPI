@@ -1,5 +1,6 @@
 ﻿using BenefactAPI.Controllers;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
@@ -68,18 +69,22 @@ namespace BenefactAPI.DataAccess
                 return null;
             }
         }
-        public static string ValidateUserEmail(HttpRequest request)
+        public static async Task AuthorizeUser(HttpRequest request, IServiceProvider provider)
         {
+            CurrentUser.Value = null;
             if (request.Headers.ContainsKey("Authorization"))
             {
                 var bearer = request.Headers["Authorization"].FirstOrDefault(h => h.Substring(0, 6) == "Bearer");
                 if (bearer != null && bearer.Length > 7)
                 {
                     var token = bearer.Substring(7, bearer.Length - 7);
-                    return ValidateUserEmail(token);
+                    var email = ValidateUserEmail(token);
+                    if (email != null)
+                        CurrentUser.Value = await provider.DoWithDB(async db => await db.Users.FirstOrDefaultAsync(u => u.Email == email));
                 }
             }
-            return null;
+            if (CurrentUser.Value == null)
+                throw new HTTPError("Unauthorized", 401);
         }
     }
 }

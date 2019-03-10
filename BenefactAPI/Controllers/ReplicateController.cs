@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using BenefactAPI.DataAccess;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +25,11 @@ namespace BenefactAPI.Controllers
         public int Status = 500;
         public HTTPError(string message, int status = 500) : base(message) { Status = status; }
     }
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+    public class UrlParam : Attribute
+    {
+        public string Name;
+    }
     public class HTTPChannel : RPCChannel<string, string>
     {
         public override IReplicateSerializer<string> Serializer { get; }
@@ -34,6 +41,7 @@ namespace BenefactAPI.Controllers
             this.RegisterSingleton(new CardsInterface(services));
             this.RegisterSingleton(new UserInterface(services));
             this.RegisterSingleton(new CommentsInterface(services));
+            this.RegisterSingleton(new StorageInterface(services));
         }
 
         public Task<string> Version(None _)
@@ -51,7 +59,7 @@ namespace BenefactAPI.Controllers
     [Route("api/")]
     public class ReplicateController : Controller
     {
-
+        public static AsyncLocal<HttpRequest> CurrentRequest = new AsyncLocal<HttpRequest>();
         public static RPCChannel<string, string> Channel;
         IServiceProvider Provider;
         public ReplicateController(HTTPChannel channel, IServiceProvider provider)
@@ -65,15 +73,7 @@ namespace BenefactAPI.Controllers
         [HttpOptions("{*path}")]
         public async Task<ActionResult> Post(string path)
         {
-            Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST");
-            Response.Headers.Add("Access-Control-Allow-Origin", "*");
-            Response.Headers.Add("Access-Control-Allow-Headers", "*");
-            Response.Headers.Add("Access-Control-Allow-Credentials", "true");
-            if (Request.Method == "OPTIONS")
-            {
-                var result = new ContentResult();
-                return result;
-            }
+            CurrentRequest.Value = Request;
             try
             {
                 using (var serviceScope = Provider.CreateScope())
@@ -81,12 +81,7 @@ namespace BenefactAPI.Controllers
                     var bodyText = new StreamReader(Request.Body).ReadToEnd();
                     if (!Channel.TryGetContract(path, out var contract)) return new NotFoundResult();
                     if (contract.Method?.GetCustomAttribute<AuthRequiredAttribute>() != null)
-                    {
-                        var email = Auth.ValidateUserEmail(Request);
-                        if (email == null) throw new HTTPError("Unauthorized", 401);
-                        var user = Auth.CurrentUser.Value = await Provider.DoWithDB(async db => await db.Users.FirstOrDefaultAsync(u => u.Email == email));
-                        if (user == null) throw new HTTPError("Unauthorized", 401);
-                    }
+                        await Auth.AuthorizeUser(Request, Provider);
                     var result = await Channel.Receive(path, string.IsNullOrEmpty(bodyText) ? null : bodyText);
                     Auth.CurrentUser.Value = null;
                     return new ContentResult() { Content = result, ContentType = "application/json", StatusCode = 200 };
@@ -96,22 +91,9 @@ namespace BenefactAPI.Controllers
             {
                 return new NotFoundResult();
             }
-            catch (Exception exception)
+            finally
             {
-                return FromException(exception);
-            }
-        }
-        ContentResult FromException(Exception exception)
-        {
-            // TODO: Turn off stack traces in production probably eventually
-            switch (exception)
-            {
-                case HTTPError httpError:
-                    return new ContentResult() { Content = httpError.Message, ContentType = "text/plain", StatusCode = httpError.Status };
-                default:
-                    if (exception.InnerException != null)
-                        return FromException(exception.InnerException);
-                    return new ContentResult() { Content = exception.ToString(), ContentType = "text/plain", StatusCode = 500 };
+                CurrentRequest.Value = null;
             }
         }
     }

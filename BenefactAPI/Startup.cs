@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Http;
 
 namespace BenefactAPI
 {
@@ -36,6 +37,19 @@ namespace BenefactAPI
                .BuildServiceProvider();
             services.AddSingleton<HTTPChannel>();
         }
+        ContentResult FromException(Exception exception)
+        {
+            // TODO: Turn off stack traces in production probably eventually
+            switch (exception)
+            {
+                case HTTPError httpError:
+                    return new ContentResult() { Content = httpError.Message, ContentType = "text/plain", StatusCode = httpError.Status };
+                default:
+                    if (exception.InnerException != null)
+                        return FromException(exception.InnerException);
+                    return new ContentResult() { Content = exception.ToString(), ContentType = "text/plain", StatusCode = 500 };
+            }
+        }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, IServiceProvider services)
@@ -44,7 +58,27 @@ namespace BenefactAPI
             {
                 app.UseDeveloperExceptionPage();
             }
-
+            app.Use(async (context, next) =>
+            {
+                context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST");
+                context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+                context.Response.Headers.Add("Access-Control-Allow-Headers", "*");
+                context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
+                if (context.Request.Method != "OPTIONS")
+                {
+                    try
+                    {
+                        await next.Invoke();
+                    }
+                    catch(Exception e)
+                    {
+                        var result = FromException(e);
+                        context.Response.Clear();
+                        context.Response.StatusCode = result.StatusCode ?? 500;
+                        await context.Response.WriteAsync(result.Content);
+                    }
+                }
+            });
             app.UseMvc();
 
             var command = Configuration.GetValue<string>("action");
