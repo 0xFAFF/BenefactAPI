@@ -17,6 +17,7 @@ namespace BenefactAPI
             {
                 var result = await func(db);
                 transaction.Commit();
+                await db.SaveChangesAsync();
                 return result;
             }
         }

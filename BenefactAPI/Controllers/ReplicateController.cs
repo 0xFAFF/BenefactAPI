@@ -41,7 +41,6 @@ namespace BenefactAPI.Controllers
             this.RegisterSingleton(new CardsInterface(services));
             this.RegisterSingleton(new UserInterface(services));
             this.RegisterSingleton(new CommentsInterface(services));
-            this.RegisterSingleton(new StorageInterface(services));
         }
 
         public Task<string> Version(None _)

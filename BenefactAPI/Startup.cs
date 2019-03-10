@@ -127,8 +127,8 @@ namespace BenefactAPI
                             });
                             db.SaveChanges();
                         }
-                        var cards = services.GetService<CardsInterface>();
-                        var users = services.GetService<UserInterface>();
+                        var cards = new CardsInterface(services);
+                        var users = new UserInterface(services);
                         var todo = cards.AddColumn(new ColumnData()
                         {
                             Title = "To Do",

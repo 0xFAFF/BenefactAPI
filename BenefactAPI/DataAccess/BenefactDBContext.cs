@@ -21,6 +21,7 @@ namespace BenefactAPI.DataAccess
         public DbSet<VoteData> Votes { get; set; }
         public DbSet<ColumnData> Columns { get; set; }
         public DbSet<TagData> Tags { get; set; }
+        public DbSet<StorageEntry> Files { get; set; }
 
         public BenefactDbContext(DbContextOptions options) : base(options) { }
 
