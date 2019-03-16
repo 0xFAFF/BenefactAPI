@@ -41,7 +41,7 @@ namespace BenefactAPI.Controllers
         [HttpPost("add")]
         public async Task<int> Post()
         {
-            await Auth.AuthorizeUser(Request, services);
+            Auth.ThrowIfUnauthorized();
             var file = Request.Form.Files.FirstOrDefault();
             if (file == null) throw new HTTPError("Post contains no files");
             var stream = new MemoryStream();
@@ -52,7 +52,6 @@ namespace BenefactAPI.Controllers
                 ContentType = file.ContentType,
             };
             var id = (await services.DoWithDB(db => db.Files.AddAsync(fileEntry))).Entity.Id;
-            Auth.CurrentUser.Value = null;
             return id;
         }
     }

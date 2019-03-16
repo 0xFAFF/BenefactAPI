@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 namespace BenefactAPI.Controllers
 {
     [ReplicateType(AutoMethods = AutoAdd.AllPublic)]
+    [ReplicateRoute(Route = "users")]
     public class UserInterface
     {
         IServiceProvider Services;
@@ -16,7 +17,7 @@ namespace BenefactAPI.Controllers
         {
             Services = services;
         }
-        public Task<string> AuthUser(UserAuthRequest auth)
+        public Task<string> auth(UserAuthRequest auth)
         {
             if (auth?.Email == null || auth?.Password == null) return null;
             return Services.DoWithDB(async db =>
@@ -27,7 +28,7 @@ namespace BenefactAPI.Controllers
                 return Auth.GenerateToken(user);
             });
         }
-        public Task<UserData> CreateUser(UserCreateRequest create)
+        public Task<UserData> Add(UserCreateRequest create)
         {
             if (create?.Email == null || create?.Password == null) return null;
             return Services.DoWithDB(async db =>
@@ -44,7 +45,7 @@ namespace BenefactAPI.Controllers
             });
         }
         [AuthRequired]
-        public UserData CurrentUser()
+        public UserData Current()
         {
             return Auth.CurrentUser.Value;
         }

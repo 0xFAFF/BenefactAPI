@@ -9,7 +9,8 @@ namespace BenefactAPI
 {
     public static class DependencyInjection
     {
-        public static async Task<T> DoWithDB<T>(this IServiceProvider Services, Func<BenefactDbContext, Task<T>> func)
+        public static async Task<T> DoWithDB<T>(this IServiceProvider Services, Func<BenefactDbContext, Task<T>> func,
+            bool autoSave = true)
         {
             using (var scope = Services.CreateScope())
             using (var db = scope.ServiceProvider.GetService<BenefactDbContext>())
@@ -17,7 +18,8 @@ namespace BenefactAPI
             {
                 var result = await func(db);
                 transaction.Commit();
-                await db.SaveChangesAsync();
+                if (autoSave)
+                    await db.SaveChangesAsync();
                 return result;
             }
         }

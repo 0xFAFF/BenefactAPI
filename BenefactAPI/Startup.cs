@@ -35,7 +35,7 @@ namespace BenefactAPI
             services.AddEntityFrameworkNpgsql()
                .AddDbContext<BenefactDbContext>(c => c.UseNpgsql(Configuration.GetConnectionString("BenefactDatabase")))
                .BuildServiceProvider();
-            services.AddSingleton<HTTPChannel>();
+            services.AddTransient<HTTPChannel>();
         }
         ContentResult FromException(Exception exception)
         {
@@ -79,6 +79,7 @@ namespace BenefactAPI
                     }
                 }
             });
+            app.UseAuth();
             app.UseMvc();
 
             var command = Configuration.GetValue<string>("action");
@@ -129,47 +130,48 @@ namespace BenefactAPI
                         }
                         var cards = new CardsInterface(services);
                         var users = new UserInterface(services);
-                        var todo = cards.AddColumn(new ColumnData()
+                        var columns = new ColumnsInterface(services);
+                        var todo = columns.Add(new ColumnData()
                         {
                             Title = "To Do",
                         }).GetAwaiter().GetResult();
-                        var inp = cards.AddColumn(new ColumnData()
+                        var inp = columns.Add(new ColumnData()
                         {
                             Title = "In Progress",
                         }).GetAwaiter().GetResult();
-                        var done = cards.AddColumn(new ColumnData()
+                        var done = columns.Add(new ColumnData()
                         {
                             Title = "Done",
                         }).GetAwaiter().GetResult();
-                        cards.AddCard(new CardData()
+                        cards.Add(new CardData()
                         {
                             Title = "Get MD Working",
                             Description = "Some Markdown\n=====\n\n```csharp\n var herp = \"derp\";\n```",
                             ColumnId = 2,
                             TagIds = new[] { 1, 2, 3, 4, 5 }.ToList(),
                         }).GetAwaiter().GetResult();
-                        cards.AddCard(new CardData()
+                        cards.Add(new CardData()
                         {
                             Title = "Make sure UTF8 works 😑",
                             Description = "😈😈😈😈😈😈",
                             ColumnId = 1,
                             TagIds = new[] { 1 }.ToList(),
                         }).GetAwaiter().GetResult();
-                        cards.AddCard(new CardData()
+                        cards.Add(new CardData()
                         {
                             Title = "Some Bug",
                             Description = "There was a bug",
                             ColumnId = 2,
                             TagIds = new[] { 4, 2 }.ToList(),
                         }).GetAwaiter().GetResult();
-                        cards.AddCard(new CardData()
+                        cards.Add(new CardData()
                         {
                             Title = "Fixed Bug",
                             Description = "There was a bug",
                             ColumnId = 3,
                             TagIds = new[] { 4 }.ToList(),
                         }).GetAwaiter().GetResult();
-                        users.CreateUser(new UserCreateRequest()
+                        users.Add(new UserCreateRequest()
                         {
                             Email = "faff@faff.faff",
                             Name = "FAFF",

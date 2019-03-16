@@ -1,4 +1,5 @@
 ﻿using BenefactAPI.Controllers;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -15,7 +16,7 @@ namespace BenefactAPI.DataAccess
     [AttributeUsage(AttributeTargets.Method, Inherited = true)]
     public class AuthRequiredAttribute : Attribute { }
 
-    public class Auth
+    public static class Auth
     {
         public static AsyncLocal<UserData> CurrentUser = new AsyncLocal<UserData>();
         static readonly byte[] key = Convert.FromBase64String("ufbSRUHVCGWsWa1Ny+7oS8Wj9BB2n8m+DqBnLz8PreKH+ykeStpNLo621d3NnvzJRNJjY5yMPTlTkFpZzmmtpg==");
@@ -69,9 +70,8 @@ namespace BenefactAPI.DataAccess
                 return null;
             }
         }
-        public static async Task AuthorizeUser(HttpRequest request, IServiceProvider provider)
+        public static async Task<UserData> AuthorizeUser(HttpRequest request, IServiceProvider provider)
         {
-            CurrentUser.Value = null;
             if (request.Headers.ContainsKey("Authorization"))
             {
                 var bearer = request.Headers["Authorization"].FirstOrDefault(h => h.Substring(0, 6) == "Bearer");
@@ -80,11 +80,23 @@ namespace BenefactAPI.DataAccess
                     var token = bearer.Substring(7, bearer.Length - 7);
                     var email = ValidateUserEmail(token);
                     if (email != null)
-                        CurrentUser.Value = await provider.DoWithDB(async db => await db.Users.FirstOrDefaultAsync(u => u.Email == email));
+                        return await provider.DoWithDB(async db => await db.Users.FirstOrDefaultAsync(u => u.Email == email));
                 }
             }
+            return null;
+        }
+        public static void ThrowIfUnauthorized()
+        {
             if (CurrentUser.Value == null)
                 throw new HTTPError("Unauthorized", 401);
+        }
+        public static IApplicationBuilder UseAuth(this IApplicationBuilder app)
+        {
+            return app.Use(async (context, next) =>
+            {
+                CurrentUser.Value = await AuthorizeUser(context.Request, app.ApplicationServices);
+                await next();
+            });
         }
     }
 }

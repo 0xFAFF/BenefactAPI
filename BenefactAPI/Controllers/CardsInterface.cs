@@ -13,6 +13,7 @@ using Replicate;
 namespace BenefactAPI.Controllers
 {
     [ReplicateType(AutoMethods = AutoAdd.AllPublic)]
+    [ReplicateRoute(Route = "cards")]
     public class CardsInterface
     {
         IServiceProvider Services;
@@ -54,7 +55,8 @@ namespace BenefactAPI.Controllers
             return query;
         }
 
-        public Task<CardsResponse> Cards(CardQuery query)
+        [ReplicateRoute(Route = "/")]
+        public Task<CardsResponse> Get(CardQuery query)
         {
             query = query ?? new CardQuery() { Groups = new Dictionary<string, List<CardQueryTerm>>() { { "All", null } } };
             return Services.DoWithDB(async db =>
@@ -77,7 +79,7 @@ namespace BenefactAPI.Controllers
         }
 
         [AuthRequired]
-        public Task UpdateCard(CardData update)
+        public Task Update(CardData update)
         {
             return Services.DoWithDB(async db =>
             {
@@ -98,7 +100,7 @@ namespace BenefactAPI.Controllers
         }
 
         [AuthRequired]
-        public Task<CardData> AddCard(CardData card)
+        public Task<CardData> Add(CardData card)
         {
             return Services.DoWithDB(async db =>
             {
@@ -112,7 +114,7 @@ namespace BenefactAPI.Controllers
         }
 
         [AuthRequired]
-        public Task<bool> DeleteCard(DeleteData card)
+        public Task<bool> Delete(DeleteData card)
         {
             return Services.DoWithDB(async db =>
             {
@@ -123,88 +125,11 @@ namespace BenefactAPI.Controllers
                     return true;
                 }
                 return false;
-            });
+            }, false);
         }
 
         [AuthRequired]
-        public Task<TagData> AddTag(TagData tag)
-        {
-            return Services.DoWithDB(async db =>
-            {
-                tag.Id = 0;
-                var result = await db.Tags.AddAsync(tag);
-                await db.SaveChangesAsync();
-                return result.Entity;
-            });
-        }
-
-        [AuthRequired]
-        public Task<bool> DeleteTag(DeleteData tag)
-        {
-            return Services.DoWithDB(async db =>
-            {
-                return await db.Delete(db.Tags, new TagData() { Id = tag.Id });
-            });
-        }
-
-        [AuthRequired]
-        public Task UpdateTag(TagData tag)
-        {
-            return Services.DoWithDB(async db =>
-            {
-                var existingCard = await db.Tags.FindAsync(tag.Id);
-                if (existingCard == null) throw new HTTPError("Tag not found");
-                Util.UpdateMembersFrom(existingCard, tag, blackList: new[] { nameof(TagData.Id) });
-                await db.SaveChangesAsync();
-                return true;
-            });
-        }
-
-        [AuthRequired]
-        public Task<ColumnData> AddColumn(ColumnData column)
-        {
-            return Services.DoWithDB(async db =>
-            {
-                column.Id = 0;
-                var result = await db.Columns.AddAsync(column);
-                await db.Insert(column, column.Index, db.Columns);
-                await db.SaveChangesAsync();
-                return result.Entity;
-            });
-        }
-
-        [AuthRequired]
-        public Task<bool> DeleteColumn(DeleteData column)
-        {
-            return Services.DoWithDB(async db =>
-            {
-                if (await db.Delete(db.Columns, new ColumnData() { Id = column.Id }))
-                {
-                    await db.Order(db.Columns);
-                    await db.SaveChangesAsync();
-                    return true;
-                }
-                return false;
-            });
-        }
-
-        [AuthRequired]
-        public Task UpdateColumn(ColumnData update)
-        {
-            return Services.DoWithDB(async db =>
-            {
-                var column = await db.Columns.FindAsync(update.Id);
-                if (column == null) throw new HTTPError("Column not found");
-                Util.UpdateMembersFrom(column, update, whiteList: new[] { nameof(ColumnData.Title) });
-                if (update.Index.HasValue)
-                    await db.Insert(column, update.Index.Value, db.Columns);
-                await db.SaveChangesAsync();
-                return true;
-            });
-        }
-
-        [AuthRequired]
-        public Task CardVote(CardVoteRequest request)
+        public Task Vote(CardVoteRequest request)
         {
             return Services.DoWithDB(async db =>
             {

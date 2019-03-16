@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Replicate;
@@ -20,27 +21,66 @@ using Replicate.Serialization;
 
 namespace BenefactAPI.Controllers
 {
+    public class ReplicateRouteAttribute : Attribute
+    {
+        public string Route;
+    }
     public class HTTPError : Exception
     {
         public int Status = 500;
         public HTTPError(string message, int status = 500) : base(message) { Status = status; }
-    }
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
-    public class UrlParam : Attribute
-    {
-        public string Name;
     }
     public class HTTPChannel : RPCChannel<string, string>
     {
         public override IReplicateSerializer<string> Serializer { get; }
             = new JSONGraphSerializer(new ReplicationModel() { DictionaryAsObject = true });
 
-        public HTTPChannel(IServiceProvider services)
+        public override string GetEndpoint(MethodInfo endpoint)
         {
-            this.Respond<None, string>(Version);
-            this.RegisterSingleton(new CardsInterface(services));
-            this.RegisterSingleton(new UserInterface(services));
-            this.RegisterSingleton(new CommentsInterface(services));
+            var methodRoute = endpoint.GetCustomAttribute<ReplicateRouteAttribute>();
+            var name = methodRoute?.Route ?? endpoint.Name.ToLower();
+            var classRoute = endpoint.DeclaringType.GetCustomAttribute<ReplicateRouteAttribute>();
+            if (classRoute != null)
+                name = $"{classRoute.Route}/{name}";
+            while (name.Any() && name.Last() == '/')
+                name = name.Substring(0, name.Length - 1);
+            return name;
+        }
+
+        public override Task<string> Request(string messageID, RPCRequest request, ReliabilityMode reliability = ReliabilityMode.ReliableSequenced)
+        {
+            throw new NotImplementedException();
+        }
+    }
+    public class ReplicateController : Controller
+    {
+        private static AsyncLocal<HttpRequest> currentRequest = new AsyncLocal<HttpRequest>();
+        private static AsyncLocal<RouteData> routeData = new AsyncLocal<RouteData>();
+        public static T GetRouteParam<T>(string key, Func<string, T> converter)
+        {
+            if (routeData.Value.Values.TryGetValue(key, out var value))
+            {
+                try
+                {
+                    return converter((string)value);
+                }
+                catch { }
+            }
+            throw new HTTPError($"Invalid URL param {key}");
+        }
+
+        public RPCChannel<string, string> Channel;
+        IServiceProvider Provider;
+        public ReplicateController(IServiceProvider provider)
+        {
+            Channel = provider.GetRequiredService<HTTPChannel>();
+            Channel.RegisterSingleton(new CardsInterface(provider));
+            Channel.RegisterSingleton(new CommentsInterface(provider));
+            Channel.RegisterSingleton(new ColumnsInterface(provider));
+            Channel.RegisterSingleton(new TagsInterface(provider));
+            Channel.RegisterSingleton(new UserInterface(provider));
+            Channel.Respond<None, string>(Version);
+            Provider = provider;
         }
 
         public Task<string> Version(None _)
@@ -48,43 +88,17 @@ namespace BenefactAPI.Controllers
             return Task.FromResult(Environment.GetEnvironmentVariable("GIT_COMMIT"));
         }
 
-        public override string GetEndpoint(MethodInfo endpoint) => endpoint.Name.ToLower();
-
-        public override Task<string> Request(string messageID, RPCRequest request, ReliabilityMode reliability = ReliabilityMode.ReliableSequenced)
-        {
-            throw new NotImplementedException();
-        }
-    }
-    [Route("api/")]
-    public class ReplicateController : Controller
-    {
-        public static AsyncLocal<HttpRequest> CurrentRequest = new AsyncLocal<HttpRequest>();
-        public static RPCChannel<string, string> Channel;
-        IServiceProvider Provider;
-        public ReplicateController(HTTPChannel channel, IServiceProvider provider)
-        {
-            Channel = channel;
-            Provider = provider;
-        }
         // GET api/values
         [HttpGet("{*path}")]
         [HttpPost("{*path}")]
         [HttpOptions("{*path}")]
-        public async Task<ActionResult> Post(string path)
+        public virtual async Task<ActionResult> Post(string path)
         {
-            CurrentRequest.Value = Request;
+            currentRequest.Value = Request;
+            routeData.Value = RouteData;
             try
             {
-                using (var serviceScope = Provider.CreateScope())
-                {
-                    var bodyText = new StreamReader(Request.Body).ReadToEnd();
-                    if (!Channel.TryGetContract(path, out var contract)) return new NotFoundResult();
-                    if (contract.Method?.GetCustomAttribute<AuthRequiredAttribute>() != null)
-                        await Auth.AuthorizeUser(Request, Provider);
-                    var result = await Channel.Receive(path, string.IsNullOrEmpty(bodyText) ? null : bodyText);
-                    Auth.CurrentUser.Value = null;
-                    return new ContentResult() { Content = result, ContentType = "application/json", StatusCode = 200 };
-                }
+                return await Handle(path);
             }
             catch (ContractNotFoundError)
             {
@@ -92,7 +106,23 @@ namespace BenefactAPI.Controllers
             }
             finally
             {
-                CurrentRequest.Value = null;
+                currentRequest.Value = null;
+                routeData.Value = null;
+            }
+        }
+        public virtual async Task<ActionResult> Handle(string path)
+        {
+            while (path.Any() && path.Last() == '/')
+                path = path.Substring(0, path.Length - 1);
+            using (var serviceScope = Provider.CreateScope())
+            {
+                var bodyText = new StreamReader(Request.Body).ReadToEnd();
+                if (!Channel.TryGetContract(path, out var contract)) return new NotFoundResult();
+                if (contract.Method?.GetCustomAttribute<AuthRequiredAttribute>() != null)
+                    Auth.ThrowIfUnauthorized();
+                var result = await Channel.Receive(path, string.IsNullOrEmpty(bodyText) ? null : bodyText);
+                Auth.CurrentUser.Value = null;
+                return new ContentResult() { Content = result, ContentType = "application/json", StatusCode = 200 };
             }
         }
     }

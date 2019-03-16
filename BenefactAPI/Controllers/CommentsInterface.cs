@@ -9,16 +9,17 @@ using System.Threading.Tasks;
 namespace BenefactAPI.Controllers
 {
     [ReplicateType(AutoMethods = AutoAdd.AllPublic)]
+    [ReplicateRoute(Route = "comments")]
     public class CommentsInterface
     {
-        IServiceProvider Services;
+        readonly IServiceProvider Services;
         public CommentsInterface(IServiceProvider services)
         {
             Services = services;
         }
 
         [AuthRequired]
-        public Task AddComment(CommentData comment)
+        public Task Add(CommentData comment)
         {
             return Services.DoWithDB(async db =>
             {
@@ -30,7 +31,7 @@ namespace BenefactAPI.Controllers
         }
 
         [AuthRequired]
-        public Task<bool> UpdateComment(CommentData comment)
+        public Task<bool> Update(CommentData comment)
         {
             return Services.DoWithDB(async db =>
             {
@@ -46,7 +47,7 @@ namespace BenefactAPI.Controllers
         }
 
         [AuthRequired]
-        public Task<bool> DeleteComment(CommentData comment)
+        public Task<bool> Delete(CommentData comment)
         {
             return Services.DoWithDB(async db =>
             {
@@ -59,7 +60,7 @@ namespace BenefactAPI.Controllers
                     return true;
                 }
                 return false;
-            });
+            }, false);
         }
     }
 }
