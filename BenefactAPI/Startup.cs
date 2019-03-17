@@ -51,6 +51,13 @@ namespace BenefactAPI
             }
         }
 
+        void AddCors(HttpResponse response)
+        {
+            response.Headers.Add("Access-Control-Allow-Methods", "GET, POST");
+            response.Headers.Add("Access-Control-Allow-Origin", "*");
+            response.Headers.Add("Access-Control-Allow-Headers", "*");
+            response.Headers.Add("Access-Control-Allow-Credentials", "true");
+        }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, IServiceProvider services)
         {
@@ -60,10 +67,7 @@ namespace BenefactAPI
             }
             app.Use(async (context, next) =>
             {
-                context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST");
-                context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
-                context.Response.Headers.Add("Access-Control-Allow-Headers", "*");
-                context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
+                AddCors(context.Response);
                 if (context.Request.Method != "OPTIONS")
                 {
                     try
@@ -74,6 +78,7 @@ namespace BenefactAPI
                     {
                         var result = FromException(e);
                         context.Response.Clear();
+                        AddCors(context.Response);
                         context.Response.StatusCode = result.StatusCode ?? 500;
                         await context.Response.WriteAsync(result.Content);
                     }

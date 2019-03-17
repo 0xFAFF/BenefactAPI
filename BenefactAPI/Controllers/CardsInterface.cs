@@ -39,13 +39,8 @@ namespace BenefactAPI.Controllers
             return andTerms.BinaryCombinator(Expression.And);
         }
 
-        IQueryable<CardData> QueryCards(BenefactDbContext db, List<CardQueryTerm> terms)
+        IQueryable<CardData> FilterCards(IQueryable<CardData> baseQuery, List<CardQueryTerm> terms)
         {
-            IQueryable<CardData> baseQuery = db.Cards
-                .Include(card => card.Tags)
-                .Include(card => card.Comments)
-                .Include(card => card.Votes)
-                .OrderBy(card => card.Index);
             var query = baseQuery;
             if (terms != null)
             {
@@ -58,15 +53,22 @@ namespace BenefactAPI.Controllers
         [ReplicateRoute(Route = "/")]
         public Task<CardsResponse> Get(CardQuery query)
         {
-            query = query ?? new CardQuery() { Groups = new Dictionary<string, List<CardQueryTerm>>() { { "All", null } } };
+            query = query ?? new CardQuery();
+            query.Groups = query.Groups ?? new Dictionary<string, List<CardQueryTerm>>() { { "All", null } };
             return Services.DoWithDB(async db =>
             {
+                IQueryable<CardData> baseQuery = db.Cards
+                    .Include(card => card.Tags)
+                    .Include(card => card.Comments)
+                    .Include(card => card.Votes)
+                    .Where(c => c.BoardId == query.BoardId)
+                    .OrderBy(card => card.Index);
                 var cardGroups = new Dictionary<string, List<CardData>>();
                 // TODO: This is derpy and serial, but the EF Core Include seems to have a bug in it when the queries run simultanesouly
                 // which duplicates Tags in CardData
                 foreach (var group in query.Groups)
                 {
-                    cardGroups[group.Key] = await QueryCards(db, group.Value).ToListAsync();
+                    cardGroups[group.Key] = await FilterCards(baseQuery, group.Value).ToListAsync();
                 }
                 return new CardsResponse()
                 {

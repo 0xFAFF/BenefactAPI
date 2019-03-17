@@ -15,6 +15,7 @@ namespace BenefactAPI.DataAccess
 {
     public class BenefactDbContext : DbContext
     {
+        public DbSet<BoardData> Boards { get; set; }
         public DbSet<UserData> Users { get; set; }
         public DbSet<CardData> Cards { get; set; }
         public DbSet<CommentData> Comments { get; set; }
@@ -29,6 +30,23 @@ namespace BenefactAPI.DataAccess
         {
             base.OnModelCreating(modelBuilder);
 
+            // Boards
+            modelBuilder.Entity<CardData>()
+                .HasOne(cd => cd.Board)
+                .WithMany(bo => bo.Cards)
+                .HasForeignKey(cd => cd.BoardId);
+
+            modelBuilder.Entity<TagData>()
+                .HasOne(t => t.Board)
+                .WithMany(bo => bo.Tags)
+                .HasForeignKey(t => t.BoardId);
+
+            modelBuilder.Entity<ColumnData>()
+                .HasOne(co => co.Board)
+                .WithMany(bo => bo.Columns)
+                .HasForeignKey(co => co.BoardId);
+
+            // Column-Card
             modelBuilder.Entity<CardData>()
                 .HasOne(cd => cd.Column)
                 .WithMany(co => co.Cards)

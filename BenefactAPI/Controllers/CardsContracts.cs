@@ -13,6 +13,15 @@ namespace BenefactAPI.Controllers
         int? Index { get; set; }
     }
 
+    [ReplicateType]
+    public class BoardData
+    {
+        public int Id { get; set; }
+        public List<CardData> Cards { get; set; }
+        public List<ColumnData> Columns { get; set; }
+        public List<TagData> Tags { get; set; }
+    }
+
     /// <summary>
     /// All fields on this must have null defaults since it's used in CardUpdate
     /// and specifying a non-null default will make it clear fields!
@@ -26,6 +35,9 @@ namespace BenefactAPI.Controllers
         [Required]
         public string Title { get; set; }
         public string Description { get; set; }
+        [ReplicateIgnore]
+        public BoardData Board { get; set; }
+        public int BoardId { get; set; }
         [ReplicateIgnore]
         public ColumnData Column { get; set; }
         [Required]
@@ -92,6 +104,10 @@ namespace BenefactAPI.Controllers
         public string Title { get; set; }
 
         [ReplicateIgnore]
+        public BoardData Board { get; set; }
+        public int BoardId { get; set; }
+
+        [ReplicateIgnore]
         public List<CardData> Cards { get; set; }
     }
     [ReplicateType]
@@ -101,6 +117,10 @@ namespace BenefactAPI.Controllers
         public string Name { get; set; }
         public string Color { get; set; }
         public string Character { get; set; }
+
+        [ReplicateIgnore]
+        public BoardData Board { get; set; }
+        public int BoardId { get; set; }
     }
     [ReplicateType]
     public struct CardsResponse
@@ -119,6 +139,7 @@ namespace BenefactAPI.Controllers
     public class CardQuery
     {
         public Dictionary<string, List<CardQueryTerm>> Groups;
+        public int BoardId;
         public int? Limit;
     }
     [ReplicateType]
