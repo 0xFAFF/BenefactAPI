@@ -196,12 +196,18 @@ namespace BenefactAPI.Migrations
                         .IsRequired()
                         .HasColumnName("email");
 
+                    b.Property<bool>("EmailVerified")
+                        .HasColumnName("email_verified");
+
                     b.Property<string>("Hash")
                         .HasColumnName("hash");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnName("name");
+
+                    b.Property<Guid?>("Nonce")
+                        .HasColumnName("nonce");
 
                     b.HasKey("Id")
                         .HasName("pk_users");

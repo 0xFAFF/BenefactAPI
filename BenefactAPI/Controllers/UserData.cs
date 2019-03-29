@@ -29,6 +29,9 @@ namespace BenefactAPI.Controllers
         [Required]
         public string Name { get; set; }
         [ReplicateIgnore]
+        public Guid? Nonce { get; set; }
+        public bool EmailVerified { get; set; }
+        [ReplicateIgnore]
         public string Hash { get; set; }
         [ReplicateIgnore]
         public List<CommentData> Comments { get; set; }

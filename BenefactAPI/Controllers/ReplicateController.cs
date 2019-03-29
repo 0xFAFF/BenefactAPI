@@ -68,6 +68,18 @@ namespace BenefactAPI.Controllers
             }
             throw new HTTPError($"Invalid URL param {key}");
         }
+        public static T GetQueryParam<T>(string key, Func<string, T> converter)
+        {
+            if (currentRequest.Value.Query.TryGetValue(key, out var value))
+            {
+                try
+                {
+                    return converter(value);
+                }
+                catch { }
+            }
+            throw new HTTPError($"Invalid query param {key}");
+        }
 
         public RPCChannel<string, string> Channel;
         IServiceProvider Provider;
@@ -118,11 +130,11 @@ namespace BenefactAPI.Controllers
             {
                 var bodyText = new StreamReader(Request.Body).ReadToEnd();
                 if (!Channel.TryGetContract(path, out var contract)) return new NotFoundResult();
-                if (contract.Method?.GetCustomAttribute<AuthRequiredAttribute>() != null)
-                    Auth.ThrowIfUnauthorized();
-                var result = await Channel.Receive(path, string.IsNullOrEmpty(bodyText) ? null : bodyText);
-                Auth.CurrentUser.Value = null;
-                return new ContentResult() { Content = result, ContentType = "application/json", StatusCode = 200 };
+                contract.Method?.GetCustomAttribute<AuthRequiredAttribute>()?.ThrowIfUnverified();
+                var result = await Channel.ReceiveRaw(path, string.IsNullOrEmpty(bodyText) ? null : bodyText);
+                if (result.Item1 is ActionResult actionResult)
+                    return actionResult;
+                return new ContentResult() { Content = Channel.Serializer.Serialize(result.Item2.ResponseType, result.Item1), ContentType = "application/json", StatusCode = 200 };
             }
         }
     }

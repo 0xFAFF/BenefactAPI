@@ -23,7 +23,7 @@ namespace BenefactAPI.Controllers
         {
             return Services.DoWithDB(async db =>
             {
-                comment.UserId = Auth.CurrentUser.Value.Id;
+                comment.UserId = Auth.CurrentUser.Id;
                 await db.Comments.AddAsync(comment);
                 await db.SaveChangesAsync();
                 return true;
@@ -37,7 +37,7 @@ namespace BenefactAPI.Controllers
             {
                 var existingComment = await db.Comments.FirstOrDefaultAsync(c => c.Id == comment.Id);
                 if (existingComment == null) throw new HTTPError("Card not found");
-                if (existingComment.UserId != Auth.CurrentUser.Value.Id)
+                if (existingComment.UserId != Auth.CurrentUser.Id)
                     return false;
                 existingComment.Text = comment.Text;
                 existingComment.EditedTime = Util.Now();
@@ -52,7 +52,7 @@ namespace BenefactAPI.Controllers
             return Services.DoWithDB(async db =>
             {
                 var existingComment = await db.Comments.FirstOrDefaultAsync(c => c.Id == comment.Id);
-                if (existingComment.UserId != Auth.CurrentUser.Value.Id)
+                if (existingComment.UserId != Auth.CurrentUser.Id)
                     return false;
                 if (await db.Delete(db.Comments, existingComment))
                 {

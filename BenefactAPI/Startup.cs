@@ -7,13 +7,9 @@ using BenefactAPI.Controllers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Cors.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Http;
 
 namespace BenefactAPI
@@ -194,6 +190,12 @@ namespace BenefactAPI
                             Email = "faff@faff.faff",
                             Name = "FAFF",
                             Password = "fafffaff",
+                        }).GetAwaiter().GetResult();
+                        services.DoWithDB(async db =>
+                        {
+                            var faff = await db.Users.FirstOrDefaultAsync(u => u.Name == "FAFF");
+                            faff.EmailVerified = true;
+                            return true;
                         }).GetAwaiter().GetResult();
                         break;
                 }

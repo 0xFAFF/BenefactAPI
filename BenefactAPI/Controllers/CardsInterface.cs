@@ -127,7 +127,7 @@ namespace BenefactAPI.Controllers
         {
             return Services.DoWithDB(async db =>
             {
-                var userId = Auth.CurrentUser.Value.Id;
+                var userId = Auth.CurrentUser.Id;
                 var vote = db.Votes.FirstOrDefault(v => v.UserId == userId && v.CardId == request.CardId)
                 ?? (await db.Votes.AddAsync(new VoteData() { CardId = request.CardId, UserId = userId, Count = 0 })).Entity;
                 vote.Count += request.Count;
