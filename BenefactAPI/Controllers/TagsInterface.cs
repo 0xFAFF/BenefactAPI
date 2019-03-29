@@ -32,10 +32,10 @@ namespace BenefactAPI.Controllers
         [AuthRequired]
         public Task<bool> Delete(DeleteData tag)
         {
-            return Services.DoWithDB(async db =>
-            {
-                return await db.Delete(db.Tags, new TagData() { Id = tag.Id });
-            }, false);
+
+            return Services.DoWithDB(
+                db => db.Delete(db.Tags, new TagData() { Id = tag.Id }),
+                false);
         }
 
         [AuthRequired]

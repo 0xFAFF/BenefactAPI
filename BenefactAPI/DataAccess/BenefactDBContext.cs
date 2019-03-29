@@ -8,6 +8,7 @@ using Npgsql.NameTranslation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -93,16 +94,26 @@ namespace BenefactAPI.DataAccess
 
         public async Task<bool> Delete<T>(DbSet<T> set, T delete) where T : class
         {
-            set.Remove(delete);
+            Remove(delete);
             try
             {
                 await SaveChangesAsync();
                 return true;
             }
-            catch (DbUpdateConcurrencyException e)
+            catch (DbUpdateConcurrencyException)
             {
                 return false;
             }
+        }
+
+        public async Task<bool> DeleteAndOrder<T>(DbSet<T> set, int id, Func<T, Expression<Func<T, bool>>> orderPredicate)
+            where T : class, IOrdered, IId
+        {
+            var existing = await set.FirstOrDefaultAsync(e => e.Id == id);
+            if (existing == null) return false;
+            if (!await Delete(set, existing)) return false;
+            await Order(set.Where(orderPredicate(existing)));
+            return true;
         }
 
         public async Task Insert<T>(T value, int? newIndex, IQueryable<T> existingSet) where T : IOrdered
@@ -135,6 +146,7 @@ namespace BenefactAPI.DataAccess
             var allItems = await existingSet.OrderBy(v => v.Index).ToListAsync();
             foreach (var tuple in allItems.Select((item, index) => new { item, index }))
                 tuple.item.Index = tuple.index;
+            await SaveChangesAsync();
         }
 
         #region Name Conversion

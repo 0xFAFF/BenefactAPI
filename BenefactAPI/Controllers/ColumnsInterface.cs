@@ -24,7 +24,7 @@ namespace BenefactAPI.Controllers
             {
                 column.Id = 0;
                 var result = await db.Columns.AddAsync(column);
-                await db.Insert(column, column.Index, db.Columns);
+                await db.Insert(column, column.Index, db.Columns.Where(co => co.BoardId == column.BoardId));
                 await db.SaveChangesAsync();
                 return result.Entity;
             });
@@ -33,16 +33,9 @@ namespace BenefactAPI.Controllers
         [AuthRequired]
         public Task<bool> Delete(DeleteData column)
         {
-            return Services.DoWithDB(async db =>
-            {
-                if (await db.Delete(db.Columns, new ColumnData() { Id = column.Id }))
-                {
-                    await db.Order(db.Columns);
-                    await db.SaveChangesAsync();
-                    return true;
-                }
-                return false;
-            }, false);
+            return Services.DoWithDB(
+                db => db.DeleteAndOrder(db.Columns, column.Id, deleted => c => c.BoardId == deleted.BoardId),
+                false);
         }
 
         [AuthRequired]
@@ -54,7 +47,7 @@ namespace BenefactAPI.Controllers
                 if (column == null) throw new HTTPError("Column not found");
                 Util.UpdateMembersFrom(column, update, whiteList: new[] { nameof(ColumnData.Title) });
                 if (update.Index.HasValue)
-                    await db.Insert(column, update.Index.Value, db.Columns);
+                    await db.Insert(column, update.Index.Value, db.Columns.Where(co => co.BoardId == column.BoardId));
                 await db.SaveChangesAsync();
                 return true;
             });

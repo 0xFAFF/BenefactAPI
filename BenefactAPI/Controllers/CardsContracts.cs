@@ -13,6 +13,11 @@ namespace BenefactAPI.Controllers
         int? Index { get; set; }
     }
 
+    public interface IId
+    {
+        int Id { get; }
+    }
+
     [ReplicateType]
     public class BoardData
     {
@@ -27,7 +32,7 @@ namespace BenefactAPI.Controllers
     /// and specifying a non-null default will make it clear fields!
     /// </summary>
     [ReplicateType]
-    public class CardData : IOrdered
+    public class CardData : IOrdered, IId
     {
         public int Id { get; set; }
         [Required]
@@ -97,7 +102,7 @@ namespace BenefactAPI.Controllers
         public TagData Tag { get; set; }
     }
     [ReplicateType]
-    public class ColumnData : IOrdered
+    public class ColumnData : IOrdered, IId
     {
         public int Id { get; set; }
         public int? Index { get; set; }

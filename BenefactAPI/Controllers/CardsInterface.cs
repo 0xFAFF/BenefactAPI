@@ -85,17 +85,17 @@ namespace BenefactAPI.Controllers
         {
             return Services.DoWithDB(async db =>
             {
-                var existingCard = await db.Cards.Include(c => c.Tags).FirstOrDefaultAsync(c => c.Id == update.Id);
-                if (existingCard == null) throw new HTTPError("Card not found");
-                Util.UpdateMembersFrom(existingCard, update,
+                var card = await db.Cards.Include(c => c.Tags).FirstOrDefaultAsync(c => c.Id == update.Id);
+                if (card == null) throw new HTTPError("Card not found");
+                Util.UpdateMembersFrom(card, update,
                     whiteList: new[] { nameof(CardData.Title), nameof(CardData.Description), nameof(CardData.ColumnId) });
                 if (update.TagIds != null)
                 {
-                    existingCard.Tags.Clear();
-                    existingCard.TagIds = update.TagIds;
+                    card.Tags.Clear();
+                    card.TagIds = update.TagIds;
                 }
                 if (update.Index.HasValue)
-                    await db.Insert(existingCard, update.Index.Value, db.Cards);
+                    await db.Insert(card, update.Index.Value, db.Cards.Where(c => c.BoardId == card.BoardId));
                 await db.SaveChangesAsync();
                 return true;
             });
@@ -108,8 +108,7 @@ namespace BenefactAPI.Controllers
             {
                 card.Id = 0;
                 var result = await db.Cards.AddAsync(card);
-                // TODO: Filter this db.Cards when there are boards
-                await db.Insert(card, card.Index, db.Cards);
+                await db.Insert(card, card.Index, db.Cards.Where(c => c.BoardId == card.BoardId));
                 await db.SaveChangesAsync();
                 return result.Entity;
             });
@@ -118,16 +117,9 @@ namespace BenefactAPI.Controllers
         [AuthRequired]
         public Task<bool> Delete(DeleteData card)
         {
-            return Services.DoWithDB(async db =>
-            {
-                if (await db.Delete(db.Cards, new CardData() { Id = card.Id }))
-                {
-                    await db.Order(db.Cards);
-                    await db.SaveChangesAsync();
-                    return true;
-                }
-                return false;
-            }, false);
+            return Services.DoWithDB(
+                db => db.DeleteAndOrder(db.Cards, card.Id, deleted => c => c.BoardId == deleted.BoardId),
+                false);
         }
 
         [AuthRequired]

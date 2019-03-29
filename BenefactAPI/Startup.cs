@@ -74,7 +74,7 @@ namespace BenefactAPI
                     {
                         await next.Invoke();
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         var result = FromException(e);
                         context.Response.Clear();
@@ -105,31 +105,37 @@ namespace BenefactAPI
                         {
                             db.Database.EnsureDeleted();
                             db.Database.Migrate();
+                            db.Boards.Add(new BoardData());
                             db.Tags.Add(new TagData()
                             {
                                 Name = "Story",
                                 Color = "#001f3f",
+                                BoardId = 1,
                             });
                             db.Tags.Add(new TagData()
                             {
                                 Name = "Dev Task",
                                 Color = "#2ECC40",
+                                BoardId = 1,
                             });
                             db.Tags.Add(new TagData()
                             {
                                 Name = "Business Boiz",
                                 Color = "#FF851B",
+                                BoardId = 1,
                             });
                             db.Tags.Add(new TagData()
                             {
                                 Name = "Bug",
                                 Character = "bug",
+                                BoardId = 1,
                             });
                             db.Tags.Add(new TagData()
                             {
                                 Name = "Star",
                                 Color = "#F012BE",
                                 Character = "star",
+                                BoardId = 1,
                             });
                             db.SaveChanges();
                         }
@@ -139,14 +145,17 @@ namespace BenefactAPI
                         var todo = columns.Add(new ColumnData()
                         {
                             Title = "To Do",
+                            BoardId = 1,
                         }).GetAwaiter().GetResult();
                         var inp = columns.Add(new ColumnData()
                         {
                             Title = "In Progress",
+                            BoardId = 1,
                         }).GetAwaiter().GetResult();
                         var done = columns.Add(new ColumnData()
                         {
                             Title = "Done",
+                            BoardId = 1,
                         }).GetAwaiter().GetResult();
                         cards.Add(new CardData()
                         {
@@ -154,6 +163,7 @@ namespace BenefactAPI
                             Description = "Some Markdown\n=====\n\n```csharp\n var herp = \"derp\";\n```",
                             ColumnId = 2,
                             TagIds = new[] { 1, 2, 3, 4, 5 }.ToList(),
+                            BoardId = 1,
                         }).GetAwaiter().GetResult();
                         cards.Add(new CardData()
                         {
@@ -161,6 +171,7 @@ namespace BenefactAPI
                             Description = "😈😈😈😈😈😈",
                             ColumnId = 1,
                             TagIds = new[] { 1 }.ToList(),
+                            BoardId = 1,
                         }).GetAwaiter().GetResult();
                         cards.Add(new CardData()
                         {
@@ -168,6 +179,7 @@ namespace BenefactAPI
                             Description = "There was a bug",
                             ColumnId = 2,
                             TagIds = new[] { 4, 2 }.ToList(),
+                            BoardId = 1,
                         }).GetAwaiter().GetResult();
                         cards.Add(new CardData()
                         {
@@ -175,6 +187,7 @@ namespace BenefactAPI
                             Description = "There was a bug",
                             ColumnId = 3,
                             TagIds = new[] { 4 }.ToList(),
+                            BoardId = 1,
                         }).GetAwaiter().GetResult();
                         users.Add(new UserCreateRequest()
                         {
