@@ -83,7 +83,7 @@ namespace BenefactAPI.Controllers
                 Type = "image/png",
             });
             var response = await client.SendEmailAsync(msg);
-            if (response.StatusCode != HttpStatusCode.OK)
+            if (!(response.StatusCode == HttpStatusCode.OK || response.StatusCode == HttpStatusCode.Accepted))
                 throw new HTTPError("Failed to send verification email");
         }
         [AuthRequired(RequireVerified = false)]
