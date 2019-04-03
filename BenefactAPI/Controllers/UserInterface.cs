@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using PasswordSecurity;
 using Replicate;
 using SendGrid;
@@ -23,9 +24,11 @@ namespace BenefactAPI.Controllers
         IServiceProvider Services;
         string baseURL;
         string sendKey;
+        ILogger logger;
         public UserInterface(IServiceProvider services)
         {
             Services = services;
+            logger = services.GetRequiredService<ILogger<UserInterface>>();
             var config = services.GetService<IConfiguration>();
             baseURL = config.GetValue<string>("BaseURL");
             sendKey = config.GetValue<string>("SendKey");
@@ -82,7 +85,12 @@ namespace BenefactAPI.Controllers
                 Filename = "logo.png",
                 Type = "image/png",
             });
-            var response = await client.SendEmailAsync(msg);
+            var response = await client.SendEmailAsync(msg).ContinueWith(t =>
+            {
+                if (t.Exception != null)
+                    logger.LogError(t.Exception.InnerExceptions[0], "Sending verification email failed");
+                return t.Result;
+            });
             if (!(response.StatusCode == HttpStatusCode.OK || response.StatusCode == HttpStatusCode.Accepted))
                 throw new HTTPError("Failed to send verification email");
         }

@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Replicate;
 using Replicate.MetaData;
 using Replicate.RPC;
@@ -82,17 +83,19 @@ namespace BenefactAPI.Controllers
         }
 
         public RPCChannel<string, string> Channel;
-        IServiceProvider Provider;
-        public ReplicateController(IServiceProvider provider)
+        IServiceProvider Services;
+        readonly ILogger logger;
+        public ReplicateController(IServiceProvider services)
         {
-            Channel = provider.GetRequiredService<HTTPChannel>();
-            Channel.RegisterSingleton(new CardsInterface(provider));
-            Channel.RegisterSingleton(new CommentsInterface(provider));
-            Channel.RegisterSingleton(new ColumnsInterface(provider));
-            Channel.RegisterSingleton(new TagsInterface(provider));
-            Channel.RegisterSingleton(new UserInterface(provider));
+            logger = services.GetRequiredService<ILogger<ReplicateController>>();
+            Channel = services.GetRequiredService<HTTPChannel>();
+            Channel.RegisterSingleton(new CardsInterface(services));
+            Channel.RegisterSingleton(new CommentsInterface(services));
+            Channel.RegisterSingleton(new ColumnsInterface(services));
+            Channel.RegisterSingleton(new TagsInterface(services));
+            Channel.RegisterSingleton(new UserInterface(services));
             Channel.Respond<None, string>(Version);
-            Provider = provider;
+            Services = services;
         }
 
         public Task<string> Version(None _)
@@ -110,6 +113,7 @@ namespace BenefactAPI.Controllers
             routeData.Value = RouteData;
             try
             {
+                logger.LogInformation($"Beginning request to {path}");
                 return await Handle(path);
             }
             catch (ContractNotFoundError)
@@ -120,13 +124,14 @@ namespace BenefactAPI.Controllers
             {
                 currentRequest.Value = null;
                 routeData.Value = null;
+                logger.LogInformation($"Finished request to {path}");
             }
         }
         public virtual async Task<ActionResult> Handle(string path)
         {
             while (path.Any() && path.Last() == '/')
                 path = path.Substring(0, path.Length - 1);
-            using (var serviceScope = Provider.CreateScope())
+            using (var serviceScope = Services.CreateScope())
             {
                 var bodyText = new StreamReader(Request.Body).ReadToEnd();
                 if (!Channel.TryGetContract(path, out var contract)) return new NotFoundResult();
