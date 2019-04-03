@@ -58,7 +58,7 @@ namespace BenefactAPI.Controllers
                 })).Entity;
                 return _user;
             });
-            await _sendVerification(user);
+            await _sendVerification(user).ConfigureAwait(false);
             return user;
         }
         private async Task _sendVerification(UserData user)
@@ -90,9 +90,9 @@ namespace BenefactAPI.Controllers
                 throw new HTTPError($"Failed to send verification email\n{await response.Body.ReadAsStringAsync()}");
         }
         [AuthRequired(RequireVerified = false)]
-        public Task SendVerification()
+        public async Task SendVerification()
         {
-            return _sendVerification(Auth.CurrentUser);
+            await _sendVerification(Auth.CurrentUser).ConfigureAwait(false);
         }
         public async Task<ActionResult> Verify()
         {
