@@ -21,7 +21,7 @@ cmds:
   migrate:
     - cmd: docker run -it --rm --network={network} -e {conn_string} {name} --action migrate
   run:
-    - cmd: docker run -itd --network={network} -e {conn_string} -e BaseURL={url} -e SendKey={sendgrid_key} --name {name} {name}
+    - cmd: docker run -itd --network={network} -e {conn_string} -e BaseURL={url} -e SendKey={sendgrid_key} {args} --name {name} {name}
   stop:
     - cmd: docker stop {name}
     - cmd: docker container rm {name}
