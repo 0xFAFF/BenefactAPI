@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace BenefactAPI
 {
@@ -57,6 +58,7 @@ namespace BenefactAPI
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, IServiceProvider services)
         {
+            var logger = services.GetRequiredService<ILogger<Startup>>();
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -72,6 +74,7 @@ namespace BenefactAPI
                     }
                     catch (Exception e)
                     {
+                        logger.LogError(e, "Handler exception");
                         var result = FromException(e);
                         context.Response.Clear();
                         AddCors(context.Response);

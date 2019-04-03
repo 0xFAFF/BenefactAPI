@@ -92,7 +92,7 @@ namespace BenefactAPI.Controllers
                 return t.Result;
             });
             if (!(response.StatusCode == HttpStatusCode.OK || response.StatusCode == HttpStatusCode.Accepted))
-                throw new HTTPError("Failed to send verification email");
+                throw new HTTPError($"Failed to send verification email\n{await response.Body.ReadAsStringAsync()}");
         }
         [AuthRequired(RequireVerified = false)]
         public Task SendVerification()
