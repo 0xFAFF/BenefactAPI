@@ -85,12 +85,7 @@ namespace BenefactAPI.Controllers
                 Filename = "logo.png",
                 Type = "image/png",
             });
-            var response = await client.SendEmailAsync(msg).ConfigureAwait(false).ContinueWith(t =>
-            {
-                if (t.Exception != null)
-                    logger.LogError(t.Exception.InnerExceptions[0], "Sending verification email failed");
-                return t.Result;
-            });
+            var response = await client.SendEmailAsync(msg).ConfigureAwait(false);
             if (!(response.StatusCode == HttpStatusCode.OK || response.StatusCode == HttpStatusCode.Accepted))
                 throw new HTTPError($"Failed to send verification email\n{await response.Body.ReadAsStringAsync()}");
         }
