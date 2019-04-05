@@ -61,7 +61,7 @@ namespace BenefactAPI.Controllers
         [ReplicateIgnore]
         public List<AttachmentData> Attachments { get; set; } = new List<AttachmentData>();
         [NotMapped]
-        public IEnumerable<int> AttachmentIds => Attachments.Select(a => a.StorageId);
+        public IEnumerable<int> AttachmentIds { get => Attachments.Select(a => a.StorageId); /*TODO: Remove this*/set => value = null; }
     }
     [ReplicateType]
     public class CommentData
