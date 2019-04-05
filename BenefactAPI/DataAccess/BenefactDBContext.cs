@@ -24,6 +24,7 @@ namespace BenefactAPI.DataAccess
         public DbSet<ColumnData> Columns { get; set; }
         public DbSet<TagData> Tags { get; set; }
         public DbSet<StorageEntry> Files { get; set; }
+        public DbSet<AttachmentData> Attachments { get; set; }
 
         public BenefactDbContext(DbContextOptions options) : base(options) { }
 
@@ -88,6 +89,22 @@ namespace BenefactAPI.DataAccess
 
             modelBuilder.Entity<UserData>()
                 .HasAlternateKey(ud => ud.Email);
+
+            // Attachments
+            modelBuilder.Entity<CardData>()
+                .HasMany(c => c.Attachments)
+                .WithOne(a => a.Card)
+                .HasForeignKey(a => a.CardId);
+
+            modelBuilder.Entity<UserData>()
+                .HasMany(u => u.Attachments)
+                .WithOne(a => a.User)
+                .HasForeignKey(a => a.UserId);
+
+            modelBuilder.Entity<AttachmentData>()
+                .HasOne(a => a.Storage)
+                .WithOne(s => s.Attachment)
+                .HasForeignKey<AttachmentData>(a => a.StorageId);
 
             FixSnakeCaseNames(modelBuilder);
         }
@@ -190,8 +207,8 @@ namespace BenefactAPI.DataAccess
                 case IMutableIndex indexKey:
                     indexKey.Relational().Name = ConvertKeyToSnake(mapper, indexKey.Relational().Name);
                     break;
-                //default:
-                //    throw new NotImplementedException("Unexpected type was provided to snake case converter");
+                    //default:
+                    //    throw new NotImplementedException("Unexpected type was provided to snake case converter");
             }
         }
         private string ConvertKeyToSnake(INpgsqlNameTranslator mapper, string keyName) =>

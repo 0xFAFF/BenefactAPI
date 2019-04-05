@@ -37,5 +37,7 @@ namespace BenefactAPI.Controllers
         public List<CommentData> Comments { get; set; }
         [ReplicateIgnore]
         public List<VoteData> Votes { get; set; }
+        [ReplicateIgnore]
+        public List<AttachmentData> Attachments { get; set; }
     }
 }

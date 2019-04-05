@@ -61,6 +61,7 @@ namespace BenefactAPI.Controllers
                     .Include(card => card.Tags)
                     .Include(card => card.Comments)
                     .Include(card => card.Votes)
+                    .Include(card => card.Attachments)
                     .Where(c => c.BoardId == query.BoardId)
                     .OrderBy(card => card.Index);
                 var cardGroups = new Dictionary<string, List<CardData>>();

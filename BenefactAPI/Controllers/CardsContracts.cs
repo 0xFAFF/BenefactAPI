@@ -58,6 +58,10 @@ namespace BenefactAPI.Controllers
         }
         public ICollection<CommentData> Comments { get; set; } = new AutoSortList<double, CommentData>(c => -c.CreatedTime);
         public List<VoteData> Votes { get; set; } = new List<VoteData>();
+        [ReplicateIgnore]
+        public List<AttachmentData> Attachments { get; set; } = new List<AttachmentData>();
+        [NotMapped]
+        public IEnumerable<int> AttachmentIds => Attachments.Select(a => a.StorageId);
     }
     [ReplicateType]
     public class CommentData

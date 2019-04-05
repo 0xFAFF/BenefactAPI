@@ -193,7 +193,7 @@ namespace BenefactAPI
                             Email = "faff@faff.faff",
                             Name = "FAFF",
                             Password = "fafffaff",
-                        }).GetAwaiter().GetResult();
+                        }, false).GetAwaiter().GetResult();
                         services.DoWithDB(async db =>
                         {
                             var faff = await db.Users.FirstOrDefaultAsync(u => u.Name == "FAFF");
