@@ -12,6 +12,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Net.Mail;
 using System.Threading.Tasks;
 
@@ -44,7 +45,8 @@ namespace BenefactAPI.Controllers
                 return Auth.GenerateToken(user);
             });
         }
-        public async Task<string> Add(UserCreateRequest create, bool sendVerification = true)
+        [ReplicateIgnore]
+        public async Task<string> Add(UserCreateRequest create, bool sendVerification)
         {
             if (create?.Email == null || create?.Password == null) throw new HTTPError("Invalid request", 400);
             var user = await Services.DoWithDB(async db =>
@@ -58,10 +60,12 @@ namespace BenefactAPI.Controllers
                 })).Entity;
                 return _user;
             });
+            // TODO: Handle this failing and roll back the user add, putting this inside recurses the DB instance
             if (sendVerification)
                 await _sendVerification(user).ConfigureAwait(false);
             return Auth.GenerateToken(user);
         }
+        public Task<string> Add(UserCreateRequest create) => Add(create, true);
         private async Task _sendVerification(UserData user)
         {
             await Services.DoWithDB(db =>
@@ -86,9 +90,17 @@ namespace BenefactAPI.Controllers
                 Filename = "logo.png",
                 Type = "image/png",
             });
-            var response = await client.SendEmailAsync(msg).ConfigureAwait(false);
-            if (!(response.StatusCode == HttpStatusCode.OK || response.StatusCode == HttpStatusCode.Accepted))
-                throw new HTTPError($"Failed to send verification email\n{await response.Body.ReadAsStringAsync()}");
+
+            try
+            {
+                var response = await client.SendEmailAsync(msg).ConfigureAwait(false);
+                if (!(response.StatusCode == HttpStatusCode.OK || response.StatusCode == HttpStatusCode.Accepted))
+                    throw new HTTPError($"Failed to send verification email\n{await response.Body.ReadAsStringAsync()}");
+            }
+            catch (HttpRequestException)
+            {
+                throw new HTTPError("Failed to send verification");
+            }
         }
         [AuthRequired(RequireVerified = false)]
         public async Task SendVerification()
