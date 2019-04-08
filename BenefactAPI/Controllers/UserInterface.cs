@@ -80,7 +80,7 @@ namespace BenefactAPI.Controllers
             var subject = "Verify your email address";
             var to = new EmailAddress(user.Email, "Benefact User");
             var htmlContent = await File.ReadAllTextAsync(Path.Combine("Content", "verification.html"));
-            htmlContent = htmlContent.Replace("{{link_target}}", $"https://{baseURL}/api/users/verify?nonce={user.Nonce}");
+            htmlContent = htmlContent.Replace("{{link_target}}", $"https://{baseURL}/login?nonce={user.Nonce}");
             var msg = MailHelper.CreateSingleEmail(from, to, subject, null, htmlContent);
             msg.AddAttachment(new SendGrid.Helpers.Mail.Attachment()
             {
