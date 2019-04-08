@@ -90,7 +90,6 @@ namespace BenefactAPI.Controllers
                 Filename = "logo.png",
                 Type = "image/png",
             });
-
             try
             {
                 var response = await client.SendEmailAsync(msg).ConfigureAwait(false);
@@ -107,18 +106,19 @@ namespace BenefactAPI.Controllers
         {
             await _sendVerification(Auth.CurrentUser).ConfigureAwait(false);
         }
-        public async Task<ActionResult> Verify()
+        public async Task<bool> Verify(UserVerificationRequest request)
         {
-            var nonce = ReplicateController.GetQueryParam("nonce", Guid.Parse);
-            await Services.DoWithDB(async db =>
+            if (!Guid.TryParse(request.Nonce, out var nonce))
+                throw new HTTPError("Failed to parse guid", 400);
+            return await Services.DoWithDB(async db =>
             {
-                var user = await db.Users.Where(u => u.Nonce == nonce).FirstOrDefaultAsync();
-                if (user == null) throw new HTTPError("Authentication error", 401);
+                var user = await db.Users.Where(u => u.Id == request.UserId).FirstOrDefaultAsync();
+                if (user?.EmailVerified ?? false) return false;
+                if (user == null || user.Nonce != nonce) throw new HTTPError("Authentication error", 401);
                 user.EmailVerified = true;
                 user.Nonce = null;
-                return user;
+                return true;
             });
-            return new LocalRedirectResult("/login");
         }
         [AuthRequired]
         public UserData Current()

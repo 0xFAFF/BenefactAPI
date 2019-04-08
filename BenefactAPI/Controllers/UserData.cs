@@ -21,6 +21,12 @@ namespace BenefactAPI.Controllers
         public string Password;
     }
     [ReplicateType]
+    public class UserVerificationRequest
+    {
+        public int UserId;
+        public string Nonce;
+    }
+    [ReplicateType]
     public class UserData
     {
         public int Id { get; set; }

@@ -45,7 +45,7 @@ namespace BenefactAPI.Controllers
             {
                 var existingCard = await db.Tags.FindAsync(tag.Id);
                 if (existingCard == null) throw new HTTPError("Tag not found");
-                Util.UpdateMembersFrom(existingCard, tag, blackList: new[] { nameof(TagData.Id) });
+                Util.UpdateMembersFrom(existingCard, tag, whiteList: new[] { nameof(TagData.Name), nameof(TagData.Character), nameof(TagData.Color) });
                 await db.SaveChangesAsync();
                 return true;
             });

@@ -36,7 +36,7 @@ namespace BenefactAPI.Controllers
             return Services.DoWithDB(async db =>
             {
                 var existingComment = await db.Comments.FirstOrDefaultAsync(c => c.Id == comment.Id);
-                if (existingComment == null) throw new HTTPError("Card not found");
+                if (existingComment == null) throw new HTTPError("Comment not found");
                 if (existingComment.UserId != Auth.CurrentUser.Id)
                     return false;
                 existingComment.Text = comment.Text;
