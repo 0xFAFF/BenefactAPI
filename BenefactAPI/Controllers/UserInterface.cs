@@ -44,7 +44,7 @@ namespace BenefactAPI.Controllers
                 return Auth.GenerateToken(user);
             });
         }
-        public async Task<UserData> Add(UserCreateRequest create, bool sendVerification = true)
+        public async Task<string> Add(UserCreateRequest create, bool sendVerification = true)
         {
             if (create?.Email == null || create?.Password == null) throw new HTTPError("Invalid request", 400);
             var user = await Services.DoWithDB(async db =>
@@ -60,7 +60,7 @@ namespace BenefactAPI.Controllers
             });
             if (sendVerification)
                 await _sendVerification(user).ConfigureAwait(false);
-            return user;
+            return Auth.GenerateToken(user);
         }
         private async Task _sendVerification(UserData user)
         {
