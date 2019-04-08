@@ -12,7 +12,7 @@ using Replicate;
 
 namespace BenefactAPI.Controllers
 {
-    [ReplicateType(AutoMethods = AutoAdd.AllPublic)]
+    [ReplicateType]
     [ReplicateRoute(Route = "cards")]
     public class CardsInterface
     {

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace BenefactAPI.Controllers
 {
-    [ReplicateType(AutoMethods = AutoAdd.AllPublic)]
+    [ReplicateType]
     [ReplicateRoute(Route = "comments")]
     public class CommentsInterface
     {

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace BenefactAPI.Controllers
 {
-    [ReplicateType(AutoMethods = AutoAdd.AllPublic)]
+    [ReplicateType]
     [ReplicateRoute(Route = "tags")]
     public class TagsInterface
     {

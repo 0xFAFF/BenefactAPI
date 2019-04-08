@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace BenefactAPI.Controllers
 {
-    [ReplicateType(AutoMethods = AutoAdd.AllPublic)]
+    [ReplicateType]
     [ReplicateRoute(Route = "columns")]
     public class ColumnsInterface
     {
