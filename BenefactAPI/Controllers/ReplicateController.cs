@@ -55,52 +55,17 @@ namespace BenefactAPI.Controllers
     }
     public class ReplicateController : Controller
     {
-        private static AsyncLocal<HttpRequest> currentRequest = new AsyncLocal<HttpRequest>();
-        private static AsyncLocal<RouteData> routeData = new AsyncLocal<RouteData>();
-        public static T GetRouteParam<T>(string key, Func<string, T> converter)
-        {
-            if (routeData.Value.Values.TryGetValue(key, out var value))
-            {
-                try
-                {
-                    return converter((string)value);
-                }
-                catch { }
-            }
-            throw new HTTPError($"Invalid URL param {key}");
-        }
-        public static T GetQueryParam<T>(string key, Func<string, T> converter)
-        {
-            if (currentRequest.Value.Query.TryGetValue(key, out var value))
-            {
-                try
-                {
-                    return converter(value);
-                }
-                catch { }
-            }
-            throw new HTTPError($"Invalid query param {key}");
-        }
+        private static AsyncLocal<ActionContext> context = new AsyncLocal<ActionContext>();
+        public static ActionContext CurrentContext => context.Value;
 
-        public RPCChannel<string, string> Channel;
-        IServiceProvider Services;
+        public readonly RPCChannel<string, string> Channel;
+        protected IServiceProvider Services;
         readonly ILogger logger;
         public ReplicateController(IServiceProvider services)
         {
-            logger = services.GetRequiredService<ILogger<ReplicateController>>();
             Channel = services.GetRequiredService<HTTPChannel>();
-            Channel.RegisterSingleton(new CardsInterface(services));
-            Channel.RegisterSingleton(new CommentsInterface(services));
-            Channel.RegisterSingleton(new ColumnsInterface(services));
-            Channel.RegisterSingleton(new TagsInterface(services));
-            Channel.RegisterSingleton(new UserInterface(services));
-            Channel.Respond<None, string>(Version);
+            logger = services.GetRequiredService<ILogger<RootController>>();
             Services = services;
-        }
-
-        public Task<string> Version(None _)
-        {
-            return Task.FromResult(Environment.GetEnvironmentVariable("GIT_COMMIT"));
         }
 
         // GET api/values
@@ -109,8 +74,7 @@ namespace BenefactAPI.Controllers
         [HttpOptions("{*path}")]
         public virtual async Task<ActionResult> Post(string path)
         {
-            currentRequest.Value = Request;
-            routeData.Value = RouteData;
+            context.Value = ControllerContext;
             try
             {
                 logger.LogInformation($"Beginning request to {path}");
@@ -122,8 +86,7 @@ namespace BenefactAPI.Controllers
             }
             finally
             {
-                currentRequest.Value = null;
-                routeData.Value = null;
+                context.Value = null;
                 logger.LogInformation($"Finished request to {path}");
             }
         }
@@ -131,16 +94,14 @@ namespace BenefactAPI.Controllers
         {
             while (path.Any() && path.Last() == '/')
                 path = path.Substring(0, path.Length - 1);
-            using (var serviceScope = Services.CreateScope())
-            {
-                var bodyText = new StreamReader(Request.Body).ReadToEnd();
-                if (!Channel.TryGetContract(path, out var contract)) return new NotFoundResult();
-                contract.Method?.GetCustomAttribute<AuthRequiredAttribute>()?.ThrowIfUnverified();
-                var result = await Channel.ReceiveRaw(path, string.IsNullOrEmpty(bodyText) ? null : bodyText);
-                if (result.Item1 is ActionResult actionResult)
-                    return actionResult;
-                return new ContentResult() { Content = Channel.Serializer.Serialize(result.Item2.ResponseType, result.Item1), ContentType = "application/json", StatusCode = 200 };
-            }
+
+            var bodyText = new StreamReader(Request.Body).ReadToEnd();
+            if (!Channel.TryGetContract(path, out var contract)) return new NotFoundResult();
+            contract.Method?.GetCustomAttribute<AuthRequiredAttribute>()?.ThrowIfUnverified();
+            var result = await Channel.ReceiveRaw(path, string.IsNullOrEmpty(bodyText) ? null : bodyText);
+            if (result.Item1 is ActionResult actionResult)
+                return actionResult;
+            return new ContentResult() { Content = Channel.Serializer.Serialize(result.Item2.ResponseType, result.Item1), ContentType = "application/json", StatusCode = 200 };
         }
     }
 }

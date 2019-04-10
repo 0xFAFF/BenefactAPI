@@ -56,6 +56,7 @@ namespace BenefactAPI.Controllers
 
             return new FileContentResult(file.Data, new MediaTypeHeaderValue(file.ContentType));
         }
+        // TODO: Authz for board permissions
         [HttpPost("add")]
         public async Task<int> Post()
         {

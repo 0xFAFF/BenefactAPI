@@ -1,6 +1,8 @@
 ﻿using BenefactAPI.Controllers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -17,14 +19,17 @@ namespace BenefactAPI.DataAccess
     public class AuthRequiredAttribute : Attribute
     {
         public bool RequireVerified = true;
+        public Privileges RequirePrivilege = Privileges.None;
         public void ThrowIfUnverified()
         {
-            Auth.ThrowIfUnauthorized(RequireVerified);
+            Auth.ThrowIfUnauthorized(RequireVerified, RequirePrivilege);
         }
     }
 
     public static class Auth
     {
+        private static AsyncLocal<int?> _boardId = new AsyncLocal<int?>();
+        public static int? BoardId => _boardId.Value;
         private static AsyncLocal<UserData> _currentUser = new AsyncLocal<UserData>();
         public static UserData CurrentUser => _currentUser.Value;
         static readonly byte[] key = Convert.FromBase64String("ufbSRUHVCGWsWa1Ny+7oS8Wj9BB2n8m+DqBnLz8PreKH+ykeStpNLo621d3NnvzJRNJjY5yMPTlTkFpZzmmtpg==");
@@ -88,22 +93,36 @@ namespace BenefactAPI.DataAccess
                     var token = bearer.Substring(7, bearer.Length - 7);
                     var email = ValidateUserEmail(token);
                     if (email != null)
-                        return await provider.DoWithDB(async db => await db.Users.FirstOrDefaultAsync(u => u.Email == email));
+                        return await provider.DoWithDB(async db => await db.Users
+                            // TODO: Doing this include might be expensive?
+                            .Include(u => u.Privileges)
+                            .FirstOrDefaultAsync(u => u.Email == email));
                 }
             }
             return null;
         }
-        public static void ThrowIfUnauthorized(bool requireVerified = true)
+        public static void VerifyPrivilege(Privileges privilege)
+        {
+            if (BoardController.CurrentBoard == null)
+                throw new InvalidOperationException("Cannot check privileges without board being set");
+            var userBoardPrivilege = CurrentUser.Privileges.FirstOrDefault(up => up.BoardId == BoardController.CurrentBoard.Id)?.Privilege ?? Privileges.None;
+            if (((userBoardPrivilege | BoardController.CurrentBoard.DefaultPrivileges) & privilege) == 0)
+                throw new HTTPError("Insufficient privilege", 403);
+        }
+        public static void ThrowIfUnauthorized(bool requireVerified = true, Privileges privilege = Privileges.None)
         {
             if (CurrentUser == null)
                 throw new HTTPError("Unauthorized", 401);
             if (requireVerified && !CurrentUser.EmailVerified)
                 throw new HTTPError("Email address unverified", 403);
+            if (privilege != 0)
+                VerifyPrivilege(privilege);
         }
         public static IApplicationBuilder UseAuth(this IApplicationBuilder app)
         {
             return app.Use(async (context, next) =>
             {
+                var routeData = context.GetRouteData();
                 _currentUser.Value = await AuthorizeUser(context.Request, app.ApplicationServices);
                 await next();
             });

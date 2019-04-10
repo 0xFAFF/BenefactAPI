@@ -1,4 +1,8 @@
-﻿using Replicate.MetaData;
+﻿using BenefactAPI.Controllers;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using Replicate.MetaData;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,5 +28,43 @@ namespace BenefactAPI
             }
         }
         public static double Now() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0;
+
+        public static Task<T> HandleDuplicate<T>(this Task<T> task, string key, string message)
+        {
+            return task.HandleError<T, DbUpdateException>(e =>
+            {
+                if (e.InnerException is PostgresException pe && pe.SqlState == "23505" && pe.ConstraintName == key)
+                    throw new HTTPError(message);
+            });
+        }
+
+        public static Task<T> HandleError<T, E>(this Task<T> task, Action<E> handler) where E : Exception
+        {
+            return task.ContinueWith(t =>
+            {
+                try
+                {
+                    return t.GetAwaiter().GetResult();
+                }
+                catch (E e)
+                {
+                    handler(e);
+                    throw;
+                }
+            });
+        }
+
+        public static T GetRouteParam<T>(this ActionContext context, string key, Func<string, T> converter)
+        {
+            if (context.RouteData.Values.TryGetValue(key, out var value))
+            {
+                try
+                {
+                    return converter((string)value);
+                }
+                catch { }
+            }
+            throw new HTTPError($"Invalid URL param {key}");
+        }
     }
 }

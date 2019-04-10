@@ -50,6 +50,7 @@ namespace BenefactAPI.Controllers
             return query;
         }
 
+        [AuthRequired(RequirePrivilege = Privileges.View)]
         [ReplicateRoute(Route = "/")]
         public Task<CardsResponse> Get(CardQuery query)
         {
@@ -81,7 +82,7 @@ namespace BenefactAPI.Controllers
             });
         }
 
-        [AuthRequired]
+        [AuthRequired(RequirePrivilege = Privileges.Modify)]
         public Task Update(CardData update)
         {
             return Services.DoWithDB(async db =>
@@ -102,7 +103,7 @@ namespace BenefactAPI.Controllers
             });
         }
 
-        [AuthRequired]
+        [AuthRequired(RequirePrivilege = Privileges.Modify)]
         public Task<CardData> Add(CardData card)
         {
             return Services.DoWithDB(async db =>
@@ -115,7 +116,7 @@ namespace BenefactAPI.Controllers
             });
         }
 
-        [AuthRequired]
+        [AuthRequired(RequirePrivilege = Privileges.Modify)]
         public Task<bool> Delete(DeleteData card)
         {
             return Services.DoWithDB(
@@ -123,7 +124,7 @@ namespace BenefactAPI.Controllers
                 false);
         }
 
-        [AuthRequired]
+        [AuthRequired(RequirePrivilege = Privileges.Vote)]
         public Task Vote(CardVoteRequest request)
         {
             return Services.DoWithDB(async db =>

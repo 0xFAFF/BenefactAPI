@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 using PasswordSecurity;
 using Replicate;
 using SendGrid;
@@ -45,8 +46,7 @@ namespace BenefactAPI.Controllers
                 return Auth.GenerateToken(user);
             });
         }
-        [ReplicateIgnore]
-        public async Task<string> Add(UserCreateRequest create, bool sendVerification)
+        public async Task<string> Add(UserCreateRequest create, bool sendVerification = true)
         {
             if (create?.Email == null || create?.Password == null) throw new HTTPError("Invalid request", 400);
             var user = await Services.DoWithDB(async db =>
@@ -59,13 +59,12 @@ namespace BenefactAPI.Controllers
                     Hash = PasswordStorage.CreateHash(create.Password),
                 })).Entity;
                 return _user;
-            });
+            }).HandleDuplicate("ak_users_email", "User already exists");
             // TODO: Handle this failing and roll back the user add, putting this inside recurses the DB instance
             if (sendVerification)
                 await _sendVerification(user).ConfigureAwait(false);
             return Auth.GenerateToken(user);
         }
-        public Task<string> Add(UserCreateRequest create) => Add(create, true);
         private async Task _sendVerification(UserData user)
         {
             await Services.DoWithDB(db =>

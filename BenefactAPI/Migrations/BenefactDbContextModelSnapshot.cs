@@ -56,6 +56,11 @@ namespace BenefactAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnName("id");
 
+                    b.Property<int>("DefaultPrivileges")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnName("default_privileges")
+                        .HasDefaultValue(1);
+
                     b.HasKey("Id")
                         .HasName("pk_boards");
 
@@ -249,6 +254,26 @@ namespace BenefactAPI.Migrations
                     b.ToTable("users");
                 });
 
+            modelBuilder.Entity("BenefactAPI.Controllers.UserPrivilege", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnName("user_id");
+
+                    b.Property<int>("BoardId")
+                        .HasColumnName("board_id");
+
+                    b.Property<int>("Privilege")
+                        .HasColumnName("privilege");
+
+                    b.HasKey("UserId", "BoardId")
+                        .HasName("pk_user_privilege");
+
+                    b.HasIndex("BoardId")
+                        .HasName("ix_user_privilege_board_id");
+
+                    b.ToTable("user_privilege");
+                });
+
             modelBuilder.Entity("BenefactAPI.Controllers.VoteData", b =>
                 {
                     b.Property<int>("CardId")
@@ -350,6 +375,21 @@ namespace BenefactAPI.Migrations
                         .WithMany("Tags")
                         .HasForeignKey("BoardId")
                         .HasConstraintName("fk_tags_boards_board_id")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("BenefactAPI.Controllers.UserPrivilege", b =>
+                {
+                    b.HasOne("BenefactAPI.Controllers.BoardData", "Board")
+                        .WithMany("Users")
+                        .HasForeignKey("BoardId")
+                        .HasConstraintName("fk_user_privilege_boards_board_id")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("BenefactAPI.Controllers.UserData", "User")
+                        .WithMany("Privileges")
+                        .HasForeignKey("UserId")
+                        .HasConstraintName("fk_user_privilege_users_user_id")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 

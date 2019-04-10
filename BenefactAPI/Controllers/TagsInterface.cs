@@ -17,7 +17,7 @@ namespace BenefactAPI.Controllers
             Services = services;
         }
 
-        [AuthRequired]
+        [AuthRequired(RequirePrivilege = Privileges.Modify)]
         public Task<TagData> Add(TagData tag)
         {
             return Services.DoWithDB(async db =>
@@ -29,7 +29,7 @@ namespace BenefactAPI.Controllers
             });
         }
 
-        [AuthRequired]
+        [AuthRequired(RequirePrivilege = Privileges.Modify)]
         public Task<bool> Delete(DeleteData tag)
         {
 
@@ -38,7 +38,7 @@ namespace BenefactAPI.Controllers
                 false);
         }
 
-        [AuthRequired]
+        [AuthRequired(RequirePrivilege = Privileges.Modify)]
         public Task Update(TagData tag)
         {
             return Services.DoWithDB(async db =>

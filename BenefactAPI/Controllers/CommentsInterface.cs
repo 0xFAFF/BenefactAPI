@@ -18,7 +18,7 @@ namespace BenefactAPI.Controllers
             Services = services;
         }
 
-        [AuthRequired]
+        [AuthRequired(RequirePrivilege = Privileges.Comment)]
         public Task Add(CommentData comment)
         {
             return Services.DoWithDB(async db =>
@@ -30,7 +30,7 @@ namespace BenefactAPI.Controllers
             });
         }
 
-        [AuthRequired]
+        [AuthRequired(RequirePrivilege = Privileges.Modify)]
         public Task<bool> Update(CommentData comment)
         {
             return Services.DoWithDB(async db =>
@@ -46,7 +46,7 @@ namespace BenefactAPI.Controllers
             });
         }
 
-        [AuthRequired]
+        [AuthRequired(RequirePrivilege = Privileges.Modify)]
         public Task<bool> Delete(CommentData comment)
         {
             return Services.DoWithDB(async db =>

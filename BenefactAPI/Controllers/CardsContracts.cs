@@ -25,6 +25,8 @@ namespace BenefactAPI.Controllers
         public List<CardData> Cards { get; set; }
         public List<ColumnData> Columns { get; set; }
         public List<TagData> Tags { get; set; }
+        public Privileges DefaultPrivileges { get; set; }
+        public List<UserPrivilege> Users { get; set; }
     }
 
     /// <summary>

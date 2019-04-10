@@ -48,6 +48,24 @@ namespace BenefactAPI.DataAccess
                 .WithMany(bo => bo.Columns)
                 .HasForeignKey(co => co.BoardId);
 
+            // Privileges
+            modelBuilder.Entity<UserPrivilege>()
+                .HasKey(u => new { u.UserId, u.BoardId });
+
+            modelBuilder.Entity<BoardData>()
+                .Property(b => b.DefaultPrivileges)
+                .HasDefaultValue(Privileges.View);
+
+            modelBuilder.Entity<BoardData>()
+                .HasMany(b => b.Users)
+                .WithOne(u => u.Board)
+                .HasForeignKey(u => u.BoardId);
+
+            modelBuilder.Entity<UserData>()
+                .HasMany(u => u.Privileges)
+                .WithOne(up => up.User)
+                .HasForeignKey(up => up.UserId);
+
             // Column-Card
             modelBuilder.Entity<CardData>()
                 .HasOne(cd => cd.Column)

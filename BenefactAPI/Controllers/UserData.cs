@@ -26,6 +26,32 @@ namespace BenefactAPI.Controllers
         public int UserId;
         public string Nonce;
     }
+
+    [Flags]
+    public enum Privileges
+    {
+        None = 0,
+        View = 1,
+        Modify = 2,
+        Vote = 4,
+        Comment = 8,
+        Invite = 16,
+        Assignee = 32,
+    }
+
+    [ReplicateType]
+    public class UserPrivilege
+    {
+        public int UserId { get; set; }
+        [ReplicateIgnore]
+        public UserData User { get; set; }
+
+        public int BoardId { get; set; }
+        [ReplicateIgnore]
+        public BoardData Board { get; set; }
+
+        public Privileges Privilege { get; set; }
+    }
     [ReplicateType]
     public class UserData
     {
@@ -45,5 +71,6 @@ namespace BenefactAPI.Controllers
         public List<VoteData> Votes { get; set; }
         [ReplicateIgnore]
         public List<AttachmentData> Attachments { get; set; }
+        public List<UserPrivilege> Privileges { get; set; }
     }
 }
