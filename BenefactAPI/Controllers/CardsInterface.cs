@@ -63,7 +63,7 @@ namespace BenefactAPI.Controllers
                     .Include(card => card.Comments)
                     .Include(card => card.Votes)
                     .Include(card => card.Attachments)
-                    .Where(c => c.BoardId == query.BoardId)
+                    .Where(c => c.BoardId == BoardController.CurrentBoard.Id)
                     .OrderBy(card => card.Index);
                 var cardGroups = new Dictionary<string, List<CardData>>();
                 // TODO: This is derpy and serial, but the EF Core Include seems to have a bug in it when the queries run simultanesouly
@@ -109,6 +109,7 @@ namespace BenefactAPI.Controllers
             return Services.DoWithDB(async db =>
             {
                 card.Id = 0;
+                card.BoardId = BoardController.CurrentBoard.Id;
                 var result = await db.Cards.AddAsync(card);
                 await db.Insert(card, card.Index, db.Cards.Where(c => c.BoardId == card.BoardId));
                 await db.SaveChangesAsync();

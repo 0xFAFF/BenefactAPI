@@ -150,7 +150,6 @@ namespace BenefactAPI.Controllers
     public class CardQuery
     {
         public Dictionary<string, List<CardQueryTerm>> Groups;
-        public int BoardId;
         public int? Limit;
     }
     [ReplicateType]
