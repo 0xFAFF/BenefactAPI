@@ -56,7 +56,7 @@ namespace BenefactAPI.Controllers
         {
             query = query ?? new CardQuery();
             query.Groups = query.Groups ?? new Dictionary<string, List<CardQueryTerm>>() { { "All", null } };
-            var boardId = BoardController.Board.Id;
+            var boardId = BoardExtensions.Board.Id;
             return Services.DoWithDB(async db =>
             {
                 IQueryable<CardData> baseQuery = db.Cards
@@ -110,7 +110,7 @@ namespace BenefactAPI.Controllers
             return Services.DoWithDB(async db =>
             {
                 card.Id = 0;
-                card.BoardId = BoardController.Board.Id;
+                card.BoardId = BoardExtensions.Board.Id;
                 var result = await db.Cards.AddAsync(card);
                 await db.Insert(card, card.Index, db.Cards.Where(c => c.BoardId == card.BoardId));
                 await db.SaveChangesAsync();
@@ -132,8 +132,8 @@ namespace BenefactAPI.Controllers
             return Services.DoWithDB(async db =>
             {
                 var userId = Auth.CurrentUser.Id;
-                var vote = db.Votes.FirstOrDefault(v => v.UserId == userId && v.CardId == request.CardId && v.BoardId == BoardController.Board.Id)
-                ?? (await db.Votes.AddAsync(new VoteData() { CardId = request.CardId, UserId = userId, Count = 0, BoardId = BoardController.Board.Id })).Entity;
+                var vote = db.Votes.FirstOrDefault(v => v.UserId == userId && v.CardId == request.CardId && v.BoardId == BoardExtensions.Board.Id)
+                ?? (await db.Votes.AddAsync(new VoteData() { CardId = request.CardId, UserId = userId, Count = 0, BoardId = BoardExtensions.Board.Id })).Entity;
                 vote.Count += request.Count;
                 if (vote.Count <= 0)
                     db.Votes.Remove(vote);

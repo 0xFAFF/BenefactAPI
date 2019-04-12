@@ -23,7 +23,7 @@ namespace BenefactAPI.Controllers
             return Services.DoWithDB(async db =>
             {
                 column.Id = 0;
-                column.BoardId = BoardController.Board.Id;
+                column.BoardId = BoardExtensions.Board.Id;
                 var result = await db.Columns.AddAsync(column);
                 await db.Insert(column, column.Index, db.Columns.BoardFilter());
                 await db.SaveChangesAsync();
@@ -44,7 +44,7 @@ namespace BenefactAPI.Controllers
         {
             return Services.DoWithDB(async db =>
             {
-                var column = await db.Columns.FindAsync(BoardController.Board.Id, update.Id);
+                var column = await db.Columns.FindAsync(BoardExtensions.Board.Id, update.Id);
                 if (column == null) throw new HTTPError("Column not found");
                 Util.UpdateMembersFrom(column, update, whiteList: new[] { nameof(ColumnData.Title) });
                 if (update.Index.HasValue)

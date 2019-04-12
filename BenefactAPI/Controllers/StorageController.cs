@@ -42,30 +42,33 @@ namespace BenefactAPI.Controllers
         public int UserId { get; set; }
     }
 
-    [Route("api/files/")]
+    [Route("api/board/{boardId:int}/files/")]
     public class StorageController : ControllerBase
     {
-        IServiceProvider services;
+        IServiceProvider Services;
         public StorageController(IServiceProvider services)
         {
-            this.services = services;
+            Services = services;
         }
         [HttpGet("{id}")]
-        public async Task<ActionResult> Get(int? id)
+        public async Task<ActionResult> Get(int? id, int boardId)
         {
+            BoardExtensions.Board = await BoardExtensions.BoardLookup(Services, boardId);
+            Auth.ThrowIfUnauthorized(privilege: Privileges.View);
             if (id == null) throw new HTTPError("Invalid file id");
-            var file = await services.DoWithDB(db =>
+            var file = await Services.DoWithDB(db =>
                db.Files.FirstOrDefaultAsync(f => f.Id == id.Value)
             );
-            if (file == null) return new NotFoundResult();
+            if (file == null) throw new HTTPError("File not found", 404);
 
             return new FileContentResult(file.Data, new MediaTypeHeaderValue(file.ContentType));
         }
         // TODO: Authz for board permissions
         [HttpPost("add")]
-        public async Task<int> Post()
+        public async Task<int> Post(int boardId)
         {
-            Auth.ThrowIfUnauthorized();
+            BoardExtensions.Board = await BoardExtensions.BoardLookup(Services, boardId);
+            Auth.ThrowIfUnauthorized(privilege: Privileges.Modify);
             var file = Request.Form.Files.FirstOrDefault();
             if (file == null) throw new HTTPError("Post contains no files", 401);
             if (!Request.Form.TryGetValue("CardId", out var cardIdString) || !int.TryParse(cardIdString, out var cardId))
@@ -74,6 +77,7 @@ namespace BenefactAPI.Controllers
             await file.CopyToAsync(stream);
             var attachment = new AttachmentData()
             {
+                BoardId = BoardExtensions.Board.Id,
                 Storage = new StorageEntry()
                 {
                     Data = stream.ToArray(),
@@ -82,7 +86,7 @@ namespace BenefactAPI.Controllers
                 CardId = cardId,
                 UserId = Auth.CurrentUser.Id,
             };
-            var id = (await services.DoWithDB(db => db.Attachments.AddAsync(attachment))).Entity.StorageId;
+            var id = (await Services.DoWithDB(db => db.Attachments.AddAsync(attachment))).Entity.StorageId;
             return id;
         }
     }

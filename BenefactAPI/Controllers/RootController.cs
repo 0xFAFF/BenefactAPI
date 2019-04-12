@@ -27,8 +27,6 @@ namespace BenefactAPI.Controllers
     [Route("api/board/{boardId:int}")]
     public class BoardController : ReplicateController
     {
-        private static AsyncLocal<BoardData> _currentBoard = new AsyncLocal<BoardData>();
-        public static BoardData Board => _currentBoard.Value;
         public BoardController(IServiceProvider provider) : base(provider)
         {
             Channel.RegisterSingleton(new CardsInterface(Services));
@@ -38,15 +36,21 @@ namespace BenefactAPI.Controllers
         }
         public override async Task<ActionResult> Handle(string path)
         {
-            _currentBoard.Value = await Services.DoWithDB(db => db.Boards.FirstOrDefaultAsync(b => b.Id == ControllerContext.GetRouteParam("boardId", int.Parse)));
+            BoardExtensions.Board = await BoardExtensions.BoardLookup(Services, ControllerContext.GetRouteParam("boardId", int.Parse));
             return await base.Handle(path);
         }
     }
     public static class BoardExtensions
     {
+        private static AsyncLocal<BoardData> _currentBoard = new AsyncLocal<BoardData>();
+        public static BoardData Board { get => _currentBoard.Value; set => _currentBoard.Value = value; }
         public static IQueryable<T> BoardFilter<T>(this IQueryable<T> set) where T : class, IBoardId
         {
-            return set.Where(e => e.BoardId == BoardController.Board.Id);
+            return set.Where(e => e.BoardId == Board.Id);
+        }
+        public static async Task<BoardData> BoardLookup(IServiceProvider services, int boardId)
+        {
+            return await services.DoWithDB(db => db.Boards.FirstOrDefaultAsync(b => b.Id == boardId)) ?? throw new HTTPError("Board not found", 404);
         }
     }
 }

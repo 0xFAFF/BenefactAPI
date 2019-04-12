@@ -103,10 +103,10 @@ namespace BenefactAPI.DataAccess
         }
         public static void VerifyPrivilege(Privileges privilege)
         {
-            if (BoardController.Board == null)
+            if (BoardExtensions.Board == null)
                 throw new InvalidOperationException("Cannot check privileges without board being set");
-            var userBoardPrivilege = CurrentUser.Privileges.FirstOrDefault(up => up.BoardId == BoardController.Board.Id)?.Privilege ?? Privileges.None;
-            if (((userBoardPrivilege | BoardController.Board.DefaultPrivileges) & privilege) == 0)
+            var userBoardPrivilege = CurrentUser.Privileges.FirstOrDefault(up => up.BoardId == BoardExtensions.Board.Id)?.Privilege ?? Privileges.None;
+            if (((userBoardPrivilege | BoardExtensions.Board.DefaultPrivileges) & privilege) == 0)
                 throw new HTTPError("Insufficient privilege", 403);
         }
         public static void ThrowIfUnauthorized(bool requireVerified = true, Privileges privilege = Privileges.None)

@@ -23,7 +23,7 @@ namespace BenefactAPI.Controllers
             return Services.DoWithDB(async db =>
             {
                 tag.Id = 0;
-                tag.BoardId = BoardController.Board.Id;
+                tag.BoardId = BoardExtensions.Board.Id;
                 var result = await db.Tags.AddAsync(tag);
                 await db.SaveChangesAsync();
                 return result.Entity;
@@ -35,7 +35,7 @@ namespace BenefactAPI.Controllers
         {
 
             return Services.DoWithDB(
-                db => db.Delete(db.Tags, new TagData() { Id = tag.Id, BoardId = BoardController.Board.Id }),
+                db => db.Delete(db.Tags, new TagData() { Id = tag.Id, BoardId = BoardExtensions.Board.Id }),
                 false);
         }
 
@@ -44,7 +44,7 @@ namespace BenefactAPI.Controllers
         {
             return Services.DoWithDB(async db =>
             {
-                var existingTag = await db.Tags.FindAsync(BoardController.Board.Id, tag.Id);
+                var existingTag = await db.Tags.FindAsync(BoardExtensions.Board.Id, tag.Id);
                 if (existingTag == null) throw new HTTPError("Tag not found");
                 Util.UpdateMembersFrom(existingTag, tag, whiteList: new[] { nameof(TagData.Name), nameof(TagData.Character), nameof(TagData.Color) });
                 await db.SaveChangesAsync();

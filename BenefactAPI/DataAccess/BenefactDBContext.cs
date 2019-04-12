@@ -141,10 +141,10 @@ namespace BenefactAPI.DataAccess
         public async Task<bool> DeleteAndOrder<T>(DbSet<T> set, int id, Func<T, Expression<Func<T, bool>>> orderPredicate = null)
             where T : class, IOrdered, IBoardId
         {
-            var existing = await set.FirstOrDefaultAsync(e => e.Id == id && e.BoardId == BoardController.Board.Id);
+            var existing = await set.FirstOrDefaultAsync(e => e.Id == id && e.BoardId == BoardExtensions.Board.Id);
             if (existing == null) return false;
             if (!await Delete(set, existing)) return false;
-            var filteredSet = set.Where(e => e.BoardId == BoardController.Board.Id);
+            var filteredSet = set.Where(e => e.BoardId == BoardExtensions.Board.Id);
             if (orderPredicate != null)
                 filteredSet = filteredSet.Where(orderPredicate(existing));
             await Order(filteredSet);
