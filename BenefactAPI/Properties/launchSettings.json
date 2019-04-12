@@ -21,6 +21,7 @@
       "commandLineArgs": "dbconnection=derp",
       "launchUrl": "api/cards",
       "environmentVariables": {
+        "Logging:Console:LogLevel:Default": "Information",
         "ASPNETCORE_ENVIRONMENT": "Development",
         "BaseURL": "benefact.dev"
       },

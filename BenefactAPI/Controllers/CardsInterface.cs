@@ -56,14 +56,15 @@ namespace BenefactAPI.Controllers
         {
             query = query ?? new CardQuery();
             query.Groups = query.Groups ?? new Dictionary<string, List<CardQueryTerm>>() { { "All", null } };
+            var boardId = BoardController.Board.Id;
             return Services.DoWithDB(async db =>
             {
                 IQueryable<CardData> baseQuery = db.Cards
+                    .BoardFilter()
                     .Include(card => card.Tags)
                     .Include(card => card.Comments)
                     .Include(card => card.Votes)
                     .Include(card => card.Attachments)
-                    .Where(c => c.BoardId == BoardController.CurrentBoard.Id)
                     .OrderBy(card => card.Index);
                 var cardGroups = new Dictionary<string, List<CardData>>();
                 // TODO: This is derpy and serial, but the EF Core Include seems to have a bug in it when the queries run simultanesouly
@@ -75,9 +76,9 @@ namespace BenefactAPI.Controllers
                 return new CardsResponse()
                 {
                     Cards = cardGroups,
-                    Columns = await db.Columns.OrderBy(col => col.Index).ToListAsync(),
-                    Tags = await db.Tags.OrderBy(tag => tag.Id).ToListAsync(),
-                    Users = await db.Users.ToListAsync(),
+                    Columns = await db.Columns.BoardFilter().OrderBy(col => col.Index).ToListAsync(),
+                    Tags = await db.Tags.BoardFilter().OrderBy(tag => tag.Id).ToListAsync(),
+                    Users = await db.Users.Where(u => u.Privileges.Any(p => p.BoardId == boardId)).ToListAsync(),
                 };
             });
         }
@@ -109,7 +110,7 @@ namespace BenefactAPI.Controllers
             return Services.DoWithDB(async db =>
             {
                 card.Id = 0;
-                card.BoardId = BoardController.CurrentBoard.Id;
+                card.BoardId = BoardController.Board.Id;
                 var result = await db.Cards.AddAsync(card);
                 await db.Insert(card, card.Index, db.Cards.Where(c => c.BoardId == card.BoardId));
                 await db.SaveChangesAsync();
@@ -121,7 +122,7 @@ namespace BenefactAPI.Controllers
         public Task<bool> Delete(DeleteData card)
         {
             return Services.DoWithDB(
-                db => db.DeleteAndOrder(db.Cards, card.Id, deleted => c => c.BoardId == deleted.BoardId),
+                db => db.DeleteAndOrder(db.Cards, card.Id),
                 false);
         }
 
@@ -131,8 +132,8 @@ namespace BenefactAPI.Controllers
             return Services.DoWithDB(async db =>
             {
                 var userId = Auth.CurrentUser.Id;
-                var vote = db.Votes.FirstOrDefault(v => v.UserId == userId && v.CardId == request.CardId)
-                ?? (await db.Votes.AddAsync(new VoteData() { CardId = request.CardId, UserId = userId, Count = 0 })).Entity;
+                var vote = db.Votes.FirstOrDefault(v => v.UserId == userId && v.CardId == request.CardId && v.BoardId == BoardController.Board.Id)
+                ?? (await db.Votes.AddAsync(new VoteData() { CardId = request.CardId, UserId = userId, Count = 0, BoardId = BoardController.Board.Id })).Entity;
                 vote.Count += request.Count;
                 if (vote.Count <= 0)
                     db.Votes.Remove(vote);

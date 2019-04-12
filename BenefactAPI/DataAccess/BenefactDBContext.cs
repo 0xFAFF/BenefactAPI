@@ -1,4 +1,5 @@
 ﻿using BenefactAPI.Controllers;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Configuration;
@@ -26,27 +27,36 @@ namespace BenefactAPI.DataAccess
         public DbSet<StorageEntry> Files { get; set; }
         public DbSet<AttachmentData> Attachments { get; set; }
 
-        public BenefactDbContext(DbContextOptions options) : base(options) { }
+        IHostingEnvironment environment;
+        public BenefactDbContext(DbContextOptions options, IHostingEnvironment env) : base(options) { environment = env; }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (environment.IsDevelopment())
+                optionsBuilder.EnableSensitiveDataLogging();
+
+            base.OnConfiguring(optionsBuilder);
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Boards
-            modelBuilder.Entity<CardData>()
-                .HasOne(cd => cd.Board)
-                .WithMany(bo => bo.Cards)
-                .HasForeignKey(cd => cd.BoardId);
+            // Board fields
+            modelBuilder.ConfigureKey(b => b.Cards);
+            modelBuilder.ConfigureKey(b => b.Columns);
+            modelBuilder.ConfigureKey(b => b.Tags);
+            modelBuilder.ConfigureKey(b => b.Comments);
+            modelBuilder.ConfigureKey(b => b.Attachments);
 
-            modelBuilder.Entity<TagData>()
-                .HasOne(t => t.Board)
-                .WithMany(bo => bo.Tags)
-                .HasForeignKey(t => t.BoardId);
+            // Card References
+            modelBuilder.CardReference(c => c.Attachments);
+            modelBuilder.CardReference(c => c.Comments);
+            modelBuilder.CardReference(c => c.Votes);
+            modelBuilder.CardReference(c => c.Tags);
 
-            modelBuilder.Entity<ColumnData>()
-                .HasOne(co => co.Board)
-                .WithMany(bo => bo.Columns)
-                .HasForeignKey(co => co.BoardId);
+            modelBuilder.Entity<UserData>()
+                .HasAlternateKey(ud => ud.Email);
 
             // Privileges
             modelBuilder.Entity<UserPrivilege>()
@@ -70,26 +80,21 @@ namespace BenefactAPI.DataAccess
             modelBuilder.Entity<CardData>()
                 .HasOne(cd => cd.Column)
                 .WithMany(co => co.Cards)
-                .HasForeignKey(cd => cd.ColumnId);
+                .HasForeignKey(cd => new { cd.BoardId, cd.ColumnId });
 
             // Comments
-            modelBuilder.Entity<CardData>()
-                .HasMany(cd => cd.Comments)
-                .WithOne(co => co.Card)
-                .HasForeignKey(co => co.CardId);
-
             modelBuilder.Entity<UserData>()
                 .HasMany(u => u.Comments)
                 .WithOne(co => co.User);
 
             // Votes
             modelBuilder.Entity<VoteData>()
-                .HasKey(v => new { v.CardId, v.UserId });
+                .HasKey(v => new { v.BoardId, v.CardId, v.UserId });
 
-            modelBuilder.Entity<CardData>()
-                .HasMany(cd => cd.Votes)
-                .WithOne(vo => vo.Card)
-                .HasForeignKey(vo => vo.CardId);
+            modelBuilder.Entity<VoteData>()
+                .HasOne(v => v.Board)
+                .WithMany(bo => bo.Votes)
+                .HasForeignKey(v => v.BoardId);
 
             modelBuilder.Entity<UserData>()
                 .HasMany(u => u.Votes)
@@ -98,22 +103,14 @@ namespace BenefactAPI.DataAccess
 
             // Card Tags
             modelBuilder.Entity<CardTag>()
-                .HasKey(c => new { c.CardId, c.TagId });
+                .HasKey(c => new { c.BoardId, c.CardId, c.TagId });
 
             modelBuilder.Entity<CardTag>()
-                .HasOne(cc => cc.Card)
-                .WithMany(ca => ca.Tags)
-                .HasForeignKey(cc => cc.CardId);
-
-            modelBuilder.Entity<UserData>()
-                .HasAlternateKey(ud => ud.Email);
+                .HasOne(ct => ct.Tag)
+                .WithMany(t => t.CardTags)
+                .HasForeignKey(ct => new { ct.BoardId, ct.TagId });
 
             // Attachments
-            modelBuilder.Entity<CardData>()
-                .HasMany(c => c.Attachments)
-                .WithOne(a => a.Card)
-                .HasForeignKey(a => a.CardId);
-
             modelBuilder.Entity<UserData>()
                 .HasMany(u => u.Attachments)
                 .WithOne(a => a.User)
@@ -141,13 +138,16 @@ namespace BenefactAPI.DataAccess
             }
         }
 
-        public async Task<bool> DeleteAndOrder<T>(DbSet<T> set, int id, Func<T, Expression<Func<T, bool>>> orderPredicate)
-            where T : class, IOrdered, IId
+        public async Task<bool> DeleteAndOrder<T>(DbSet<T> set, int id, Func<T, Expression<Func<T, bool>>> orderPredicate = null)
+            where T : class, IOrdered, IBoardId
         {
-            var existing = await set.FirstOrDefaultAsync(e => e.Id == id);
+            var existing = await set.FirstOrDefaultAsync(e => e.Id == id && e.BoardId == BoardController.Board.Id);
             if (existing == null) return false;
             if (!await Delete(set, existing)) return false;
-            await Order(set.Where(orderPredicate(existing)));
+            var filteredSet = set.Where(e => e.BoardId == BoardController.Board.Id);
+            if (orderPredicate != null)
+                filteredSet = filteredSet.Where(orderPredicate(existing));
+            await Order(filteredSet);
             return true;
         }
 

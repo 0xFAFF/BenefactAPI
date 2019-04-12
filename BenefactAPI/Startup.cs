@@ -30,7 +30,7 @@ namespace BenefactAPI
             services.AddCors();
             services.AddMvc();
             services.AddEntityFrameworkNpgsql()
-               .AddDbContext<BenefactDbContext>(c => c.UseNpgsql(Configuration.GetConnectionString("BenefactDatabase")))
+               .AddDbContext<BenefactDbContext>(c => c.UseNpgsql(Configuration.GetConnectionString("BenefactDatabase")).EnableSensitiveDataLogging())
                .BuildServiceProvider();
             services.AddTransient<HTTPChannel>();
         }
@@ -100,11 +100,13 @@ namespace BenefactAPI
                             db.Database.Migrate();
                         break;
                     case "mockdata":
+                        var users = new UserInterface(services);
                         using (var db = services.GetService<BenefactDbContext>())
                         {
                             db.Database.EnsureDeleted();
                             db.Database.Migrate();
-                            db.Boards.Add(new BoardData());
+                            (db.Boards.FirstOrDefault() ?? db.Boards.Add(new BoardData()).Entity).DefaultPrivileges = (Privileges)255;
+                            var board2 = db.Boards.Skip(1).FirstOrDefault() ?? db.Boards.Add(new BoardData()).Entity;
                             db.Tags.Add(new TagData()
                             {
                                 Name = "Story",
@@ -137,57 +139,63 @@ namespace BenefactAPI
                                 BoardId = 1,
                             });
                             db.SaveChanges();
+                            db.Columns.Add(new ColumnData()
+                            {
+                                Title = "To Do",
+                                Index = 1,
+                                BoardId = 1,
+                            });
+                            db.Columns.Add(new ColumnData()
+                            {
+                                Title = "In Progress",
+                                Index = 2,
+                                BoardId = 1,
+                            });
+                            db.Columns.Add(new ColumnData()
+                            {
+                                Title = "Done",
+                                Index = 3,
+                                BoardId = 1,
+                            });
+                            db.SaveChanges();
+                            db.Cards.Add(new CardData()
+                            {
+                                Title = "Get MD Working",
+                                Description = "Some Markdown\n=====\n\n```csharp\n var herp = \"derp\";\n```",
+                                ColumnId = 2,
+                                TagIds = new[] { 1, 2, 3, 4, 5 }.ToList(),
+                                BoardId = 1,
+                                Index = 1,
+                            });
+                            db.Cards.Add(new CardData()
+                            {
+                                Title = "Make sure UTF8 works 😑",
+                                Description = "😈😈😈😈😈😈",
+                                ColumnId = 1,
+                                TagIds = new[] { 1 }.ToList(),
+                                BoardId = 1,
+                                Index = 2,
+                            });
+                            db.Cards.Add(new CardData()
+                            {
+                                Title = "Some Bug",
+                                Description = "There was a bug",
+                                ColumnId = 2,
+                                TagIds = new[] { 4, 2 }.ToList(),
+                                BoardId = 1,
+                                Index = 3,
+                            });
+                            db.Cards.Add(new CardData()
+                            {
+                                Title = "Fixed Bug",
+                                Description = "There was a bug",
+                                ColumnId = 3,
+                                TagIds = new[] { 4 }.ToList(),
+                                BoardId = 1,
+                                Index = 4,
+                            });
+                            db.SaveChanges();
                         }
-                        var cards = new CardsInterface(services);
-                        var users = new UserInterface(services);
-                        var columns = new ColumnsInterface(services);
-                        var todo = columns.Add(new ColumnData()
-                        {
-                            Title = "To Do",
-                            BoardId = 1,
-                        }).GetAwaiter().GetResult();
-                        var inp = columns.Add(new ColumnData()
-                        {
-                            Title = "In Progress",
-                            BoardId = 1,
-                        }).GetAwaiter().GetResult();
-                        var done = columns.Add(new ColumnData()
-                        {
-                            Title = "Done",
-                            BoardId = 1,
-                        }).GetAwaiter().GetResult();
-                        cards.Add(new CardData()
-                        {
-                            Title = "Get MD Working",
-                            Description = "Some Markdown\n=====\n\n```csharp\n var herp = \"derp\";\n```",
-                            ColumnId = 2,
-                            TagIds = new[] { 1, 2, 3, 4, 5 }.ToList(),
-                            BoardId = 1,
-                        }).GetAwaiter().GetResult();
-                        cards.Add(new CardData()
-                        {
-                            Title = "Make sure UTF8 works 😑",
-                            Description = "😈😈😈😈😈😈",
-                            ColumnId = 1,
-                            TagIds = new[] { 1 }.ToList(),
-                            BoardId = 1,
-                        }).GetAwaiter().GetResult();
-                        cards.Add(new CardData()
-                        {
-                            Title = "Some Bug",
-                            Description = "There was a bug",
-                            ColumnId = 2,
-                            TagIds = new[] { 4, 2 }.ToList(),
-                            BoardId = 1,
-                        }).GetAwaiter().GetResult();
-                        cards.Add(new CardData()
-                        {
-                            Title = "Fixed Bug",
-                            Description = "There was a bug",
-                            ColumnId = 3,
-                            TagIds = new[] { 4 }.ToList(),
-                            BoardId = 1,
-                        }).GetAwaiter().GetResult();
                         users.Add(new UserCreateRequest()
                         {
                             Email = "faff@faff.faff",

@@ -28,7 +28,7 @@ namespace BenefactAPI.Controllers
     public class BoardController : ReplicateController
     {
         private static AsyncLocal<BoardData> _currentBoard = new AsyncLocal<BoardData>();
-        public static BoardData CurrentBoard => _currentBoard.Value;
+        public static BoardData Board => _currentBoard.Value;
         public BoardController(IServiceProvider provider) : base(provider)
         {
             Channel.RegisterSingleton(new CardsInterface(Services));
@@ -40,6 +40,13 @@ namespace BenefactAPI.Controllers
         {
             _currentBoard.Value = await Services.DoWithDB(db => db.Boards.FirstOrDefaultAsync(b => b.Id == ControllerContext.GetRouteParam("boardId", int.Parse)));
             return await base.Handle(path);
+        }
+    }
+    public static class BoardExtensions
+    {
+        public static IQueryable<T> BoardFilter<T>(this IQueryable<T> set) where T : class, IBoardId
+        {
+            return set.Where(e => e.BoardId == BoardController.Board.Id);
         }
     }
 }

@@ -20,9 +20,14 @@ namespace BenefactAPI.Controllers
         public string ContentType { get; set; }
         public AttachmentData Attachment { get; set; }
     }
-    public class AttachmentData
+    public class AttachmentData : IBoardId, ICardReference
     {
         public int Id { get; set; }
+
+        [ReplicateIgnore]
+        public int BoardId { get; set; }
+        [ReplicateIgnore]
+        public BoardData Board { get; set; }
         [ReplicateIgnore]
         [Required]
         public StorageEntry Storage { get; set; }

@@ -13,9 +13,18 @@ namespace BenefactAPI.Controllers
         int? Index { get; set; }
     }
 
-    public interface IId
+    public interface IBoardId
     {
         int Id { get; }
+        int BoardId { get; }
+        BoardData Board { get; }
+    }
+
+    public interface ICardReference
+    {
+        int BoardId { get; }
+        int CardId { get; }
+        CardData Card { get; }
     }
 
     [ReplicateType]
@@ -23,10 +32,13 @@ namespace BenefactAPI.Controllers
     {
         public int Id { get; set; }
         public List<CardData> Cards { get; set; }
+        public List<CommentData> Comments { get; set; }
+        public List<VoteData> Votes { get; set; }
         public List<ColumnData> Columns { get; set; }
         public List<TagData> Tags { get; set; }
         public Privileges DefaultPrivileges { get; set; }
         public List<UserPrivilege> Users { get; set; }
+        public List<AttachmentData> Attachments { get; set; }
     }
 
     /// <summary>
@@ -34,7 +46,7 @@ namespace BenefactAPI.Controllers
     /// and specifying a non-null default will make it clear fields!
     /// </summary>
     [ReplicateType]
-    public class CardData : IOrdered, IId
+    public class CardData : IOrdered, IBoardId
     {
         public int Id { get; set; }
         [Required]
@@ -44,6 +56,7 @@ namespace BenefactAPI.Controllers
         public string Description { get; set; }
         [ReplicateIgnore]
         public BoardData Board { get; set; }
+        [ReplicateIgnore]
         public int BoardId { get; set; }
         [ReplicateIgnore]
         public ColumnData Column { get; set; }
@@ -66,7 +79,7 @@ namespace BenefactAPI.Controllers
         public IEnumerable<int> AttachmentIds { get => Attachments.Select(a => a.StorageId); /*TODO: Remove this*/set => value = null; }
     }
     [ReplicateType]
-    public class CommentData
+    public class CommentData : IBoardId, ICardReference
     {
         public int Id { get; set; }
         public string Text { get; set; }
@@ -75,6 +88,10 @@ namespace BenefactAPI.Controllers
         [ReplicateIgnore]
         public UserData User { get; set; }
         public int CardId { get; set; }
+        [ReplicateIgnore]
+        public BoardData Board { get; set; }
+        [ReplicateIgnore]
+        public int BoardId { get; set; }
         [Required]
         [ReplicateIgnore]
         public CardData Card { get; set; }
@@ -88,7 +105,7 @@ namespace BenefactAPI.Controllers
         public int CardId;
     }
     [ReplicateType]
-    public class VoteData
+    public class VoteData : ICardReference
     {
         public int Count { get; set; }
         public int UserId { get; set; }
@@ -99,16 +116,22 @@ namespace BenefactAPI.Controllers
         [Required]
         [ReplicateIgnore]
         public CardData Card { get; set; }
+        [ReplicateIgnore]
+        public int BoardId { get; set; }
+        [ReplicateIgnore]
+        public BoardData Board { get; set; }
     }
-    public class CardTag
+    public class CardTag : ICardReference
     {
+        public int BoardId { get; set; }
+        public BoardData Board { get; set; }
         public int CardId { get; set; }
         public CardData Card { get; set; }
         public int TagId { get; set; }
         public TagData Tag { get; set; }
     }
     [ReplicateType]
-    public class ColumnData : IOrdered, IId
+    public class ColumnData : IOrdered, IBoardId
     {
         public int Id { get; set; }
         public int? Index { get; set; }
@@ -116,13 +139,14 @@ namespace BenefactAPI.Controllers
 
         [ReplicateIgnore]
         public BoardData Board { get; set; }
+        [ReplicateIgnore]
         public int BoardId { get; set; }
 
         [ReplicateIgnore]
         public List<CardData> Cards { get; set; }
     }
     [ReplicateType]
-    public class TagData
+    public class TagData : IBoardId
     {
         public int Id { get; set; }
         public string Name { get; set; }
@@ -131,7 +155,11 @@ namespace BenefactAPI.Controllers
 
         [ReplicateIgnore]
         public BoardData Board { get; set; }
+        [ReplicateIgnore]
         public int BoardId { get; set; }
+
+        [ReplicateIgnore]
+        public List<CardTag> CardTags { get; set; }
     }
     [ReplicateType]
     public struct CardsResponse

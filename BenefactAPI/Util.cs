@@ -6,6 +6,7 @@ using Replicate.MetaData;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace BenefactAPI
@@ -65,6 +66,26 @@ namespace BenefactAPI
                 catch { }
             }
             throw new HTTPError($"Invalid URL param {key}");
+        }
+
+        public static void ConfigureKey<T>(this ModelBuilder modelBuilder,
+            Expression<Func<BoardData, IEnumerable<T>>> boardProperty) where T : class, IBoardId
+        {
+            modelBuilder.Entity<T>().HasKey(c => new { c.BoardId, c.Id });
+            modelBuilder.Entity<T>().Property(c => c.Id).ValueGeneratedOnAdd();
+            modelBuilder.Entity<T>()
+                .HasOne(e => e.Board)
+                .WithMany(boardProperty)
+                .HasForeignKey(e => e.BoardId);
+        }
+
+        public static void CardReference<T>(this ModelBuilder modelBuilder,
+            Expression<Func<CardData, IEnumerable<T>>> cardProperty) where T : class, ICardReference
+        {
+            modelBuilder.Entity<CardData>()
+                .HasMany(cardProperty)
+                .WithOne(e => e.Card)
+                .HasForeignKey(e => new { e.BoardId, e.CardId });
         }
     }
 }
