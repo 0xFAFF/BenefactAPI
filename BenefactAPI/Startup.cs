@@ -30,7 +30,7 @@ namespace BenefactAPI
             services.AddCors();
             services.AddMvc();
             services.AddEntityFrameworkNpgsql()
-               .AddDbContext<BenefactDbContext>(c => c.UseNpgsql(Configuration.GetConnectionString("BenefactDatabase")).EnableSensitiveDataLogging())
+               .AddDbContext<BenefactDbContext>(c => c.UseNpgsql(Configuration.GetConnectionString("BenefactDatabase")))
                .BuildServiceProvider();
             services.AddTransient<HTTPChannel>();
         }
