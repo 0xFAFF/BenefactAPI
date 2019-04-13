@@ -44,11 +44,14 @@ namespace BenefactAPI.Controllers
     {
         private static AsyncLocal<BoardData> _currentBoard = new AsyncLocal<BoardData>();
         public static BoardData Board { get => _currentBoard.Value; set => _currentBoard.Value = value; }
-        public static IQueryable<T> BoardFilter<T>(this IQueryable<T> set) where T : class, IBoardId
+        public static IQueryable<T> BoardFilter<T>(this IQueryable<T> set, int? setId = null) where T : class, IBoardId
         {
-            return set.Where(e => e.BoardId == Board.Id);
+            var filter = set.Where(e => e.BoardId == Board.Id);
+            if (setId.HasValue)
+                filter = filter.Where(e => e.Id == setId.Value);
+            return filter;
         }
-        public static async Task<BoardData> BoardLookup(IServiceProvider services, int boardId)
+        public static async Task<BoardData> BoardLookup(this IServiceProvider services, int boardId)
         {
             return await services.DoWithDB(db => db.Boards.FirstOrDefaultAsync(b => b.Id == boardId)) ?? throw new HTTPError("Board not found", 404);
         }

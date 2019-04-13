@@ -33,8 +33,7 @@ namespace BenefactAPI.Controllers
     }
     public class HTTPChannel : RPCChannel<string, string>
     {
-        public override IReplicateSerializer<string> Serializer { get; }
-            = new JSONGraphSerializer(new ReplicationModel() { DictionaryAsObject = true });
+        public HTTPChannel(IReplicateSerializer<string> serializer) : base(serializer) { }
 
         public override string GetEndpoint(MethodInfo endpoint)
         {

@@ -88,8 +88,8 @@ namespace BenefactAPI.Controllers
         {
             return Services.DoWithDB(async db =>
             {
-                var card = await db.Cards.Include(c => c.Tags).FirstOrDefaultAsync(c => c.Id == update.Id);
-                if (card == null) throw new HTTPError("Card not found");
+                var card = await db.Cards.Include(c => c.Tags).BoardFilter(update.Id).FirstOrDefaultAsync();
+                if (card == null) throw new HTTPError("Card not found", 404);
                 Util.UpdateMembersFrom(card, update,
                     whiteList: new[] { nameof(CardData.Title), nameof(CardData.Description), nameof(CardData.ColumnId) });
                 if (update.TagIds != null)

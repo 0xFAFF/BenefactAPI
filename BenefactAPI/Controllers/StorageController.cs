@@ -55,7 +55,7 @@ namespace BenefactAPI.Controllers
         {
             BoardExtensions.Board = await BoardExtensions.BoardLookup(Services, boardId);
             Auth.ThrowIfUnauthorized(privilege: Privileges.View);
-            if (id == null) throw new HTTPError("Invalid file id");
+            if (id == null) throw new HTTPError("Invalid file id", 400);
             var file = await Services.DoWithDB(db =>
                db.Files.FirstOrDefaultAsync(f => f.Id == id.Value)
             );

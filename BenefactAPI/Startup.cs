@@ -12,6 +12,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Replicate.MetaData;
+using Replicate.Serialization;
 
 namespace BenefactAPI
 {
@@ -27,6 +29,8 @@ namespace BenefactAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            ReplicationModel.Default.DictionaryAsObject = true;
+            services.AddSingleton<IReplicateSerializer<string>>(new JSONGraphSerializer(ReplicationModel.Default));
             services.AddCors();
             services.AddMvc();
             services.AddEntityFrameworkNpgsql()
@@ -34,55 +38,14 @@ namespace BenefactAPI
                .BuildServiceProvider();
             services.AddTransient<HTTPChannel>();
         }
-        ContentResult FromException(Exception exception)
-        {
-            // TODO: Turn off stack traces in production probably eventually
-            switch (exception)
-            {
-                case HTTPError httpError:
-                    return new ContentResult() { Content = httpError.Message, ContentType = "text/plain", StatusCode = httpError.Status };
-                default:
-                    if (exception.InnerException != null)
-                        return FromException(exception.InnerException);
-                    return new ContentResult() { Content = exception.ToString(), ContentType = "text/plain", StatusCode = 500 };
-            }
-        }
-
-        void AddCors(HttpResponse response)
-        {
-            response.Headers.Add("Access-Control-Allow-Methods", "GET, POST");
-            response.Headers.Add("Access-Control-Allow-Origin", "*");
-            response.Headers.Add("Access-Control-Allow-Headers", "*");
-            response.Headers.Add("Access-Control-Allow-Credentials", "true");
-        }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, IServiceProvider services)
         {
-            var logger = services.GetRequiredService<ILogger<Startup>>();
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
-            app.Use(async (context, next) =>
-            {
-                AddCors(context.Response);
-                if (context.Request.Method != "OPTIONS")
-                {
-                    try
-                    {
-                        await next.Invoke();
-                    }
-                    catch (Exception e)
-                    {
-                        logger.LogError(e, "Handler exception");
-                        var result = FromException(e);
-                        context.Response.Clear();
-                        AddCors(context.Response);
-                        context.Response.StatusCode = result.StatusCode ?? 500;
-                        await context.Response.WriteAsync(result.Content);
-                    }
-                }
-            });
+            app.UseHandling(services.GetRequiredService<ILogger<Startup>>(), services.GetRequiredService<IReplicateSerializer<string>>());
             app.UseAuth();
             app.UseMvc();
 
