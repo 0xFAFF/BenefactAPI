@@ -105,15 +105,16 @@ namespace BenefactAPI.Controllers
         {
             await _sendVerification(Auth.CurrentUser).ConfigureAwait(false);
         }
+        [AuthRequired(RequireVerified = false)]
         public async Task<bool> Verify(UserVerificationRequest request)
         {
             if (!Guid.TryParse(request.Nonce, out var nonce))
                 throw new HTTPError("Failed to parse guid", 400);
             return await Services.DoWithDB(async db =>
             {
-                var user = await db.Users.Where(u => u.Id == request.UserId).FirstOrDefaultAsync();
+                var user = await db.Users.Where(u => u.Id == Auth.CurrentUser.Id).FirstOrDefaultAsync();
                 if (user?.EmailVerified ?? false) return false;
-                if (user == null || user.Nonce != nonce) throw new HTTPError("Authentication error", 401);
+                if (user == null || user.Nonce != nonce) throw new HTTPError("Email verification failed", 401);
                 user.EmailVerified = true;
                 user.Nonce = null;
                 return true;

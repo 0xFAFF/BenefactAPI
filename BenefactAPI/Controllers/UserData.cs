@@ -23,7 +23,6 @@ namespace BenefactAPI.Controllers
     [ReplicateType]
     public class UserVerificationRequest
     {
-        public int UserId;
         public string Nonce;
     }
 
