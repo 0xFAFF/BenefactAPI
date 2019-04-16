@@ -28,8 +28,6 @@ namespace BenefactAPI.DataAccess
 
     public static class Auth
     {
-        private static AsyncLocal<int?> _boardId = new AsyncLocal<int?>();
-        public static int? BoardId => _boardId.Value;
         private static AsyncLocal<UserData> _currentUser = new AsyncLocal<UserData>();
         public static UserData CurrentUser => _currentUser.Value;
         static readonly byte[] key = Convert.FromBase64String("ufbSRUHVCGWsWa1Ny+7oS8Wj9BB2n8m+DqBnLz8PreKH+ykeStpNLo621d3NnvzJRNJjY5yMPTlTkFpZzmmtpg==");

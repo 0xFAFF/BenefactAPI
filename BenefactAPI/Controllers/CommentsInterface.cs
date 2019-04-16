@@ -24,6 +24,7 @@ namespace BenefactAPI.Controllers
             return Services.DoWithDB(async db =>
             {
                 comment.UserId = Auth.CurrentUser.Id;
+                comment.BoardId = BoardExtensions.Board.Id;
                 await db.Comments.AddAsync(comment);
                 await db.SaveChangesAsync();
                 return true;
@@ -35,7 +36,7 @@ namespace BenefactAPI.Controllers
         {
             return Services.DoWithDB(async db =>
             {
-                var existingComment = await db.Comments.FirstOrDefaultAsync(c => c.Id == comment.Id);
+                var existingComment = await db.Comments.BoardFilter(comment.Id).FirstOrDefaultAsync();
                 if (existingComment == null) throw new HTTPError("Comment not found", 404);
                 if (existingComment.UserId != Auth.CurrentUser.Id)
                     return false;
@@ -51,7 +52,7 @@ namespace BenefactAPI.Controllers
         {
             return Services.DoWithDB(async db =>
             {
-                var existingComment = await db.Comments.FirstOrDefaultAsync(c => c.Id == comment.Id);
+                var existingComment = await db.Comments.BoardFilter(comment.Id).FirstOrDefaultAsync();
                 if (existingComment.UserId != Auth.CurrentUser.Id)
                     return false;
                 if (await db.Delete(db.Comments, existingComment))
