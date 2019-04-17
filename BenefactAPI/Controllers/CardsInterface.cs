@@ -78,7 +78,9 @@ namespace BenefactAPI.Controllers
                     Cards = cardGroups,
                     Columns = await db.Columns.BoardFilter().OrderBy(col => col.Index).ToListAsync(),
                     Tags = await db.Tags.BoardFilter().OrderBy(tag => tag.Id).ToListAsync(),
-                    Users = await db.Users.Where(u => u.Privileges.Any(p => p.BoardId == boardId)).ToListAsync(),
+                    Users = await db.Users
+                    .Where(u => u.Privileges.Any(p => p.BoardId == boardId) || u.Votes.Any(v => v.BoardId == boardId) || u.Comments.Any(c => c.BoardId == boardId))
+                    .ToListAsync(),
                 };
             });
         }
