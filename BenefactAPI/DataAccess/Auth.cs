@@ -83,19 +83,23 @@ namespace BenefactAPI.DataAccess
         }
         public static async Task<UserData> AuthorizeUser(HttpRequest request, IServiceProvider provider)
         {
+            string token = null;
             if (request.Headers.ContainsKey("Authorization"))
             {
                 var bearer = request.Headers["Authorization"].FirstOrDefault(h => h.Substring(0, 6) == "Bearer");
                 if (bearer != null && bearer.Length > 7)
-                {
-                    var token = bearer.Substring(7, bearer.Length - 7);
-                    var email = ValidateUserEmail(token);
-                    if (email != null)
-                        return await provider.DoWithDB(async db => await db.Users
-                            // TODO: Doing this include might be expensive?
-                            .Include(u => u.Privileges)
-                            .FirstOrDefaultAsync(u => u.Email == email));
-                }
+                    token = bearer.Substring(7, bearer.Length - 7);
+            }
+            if (token == null)
+                request.Cookies.TryGetValue("token", out token);
+            if (token != null)
+            {
+                var email = ValidateUserEmail(token);
+                if (email != null)
+                    return await provider.DoWithDB(async db => await db.Users
+                        // TODO: Doing this include might be expensive?
+                        .Include(u => u.Privileges)
+                        .FirstOrDefaultAsync(u => u.Email == email));
             }
             return null;
         }

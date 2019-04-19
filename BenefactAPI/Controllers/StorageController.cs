@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,14 +17,19 @@ namespace BenefactAPI.Controllers
     public class StorageEntry
     {
         public int Id { get; set; }
+        [Required]
         public byte[] Data { get; set; }
-        public string ContentType { get; set; }
+        [Required]
         public AttachmentData Attachment { get; set; }
     }
+    [ReplicateType]
     public class AttachmentData : IBoardId, ICardReference
     {
         public int Id { get; set; }
-
+        [Required]
+        public string Name { get; set; }
+        [Required]
+        public string ContentType { get; set; }
         [ReplicateIgnore]
         public int BoardId { get; set; }
         [ReplicateIgnore]
@@ -56,12 +62,12 @@ namespace BenefactAPI.Controllers
             BoardExtensions.Board = await BoardExtensions.BoardLookup(Services, boardId);
             Auth.ThrowIfUnauthorized(privilege: Privileges.View);
             if (id == null) throw new HTTPError("Invalid file id", 400);
-            var file = await Services.DoWithDB(db =>
-               db.Files.FirstOrDefaultAsync(f => f.Id == id.Value)
-            );
-            if (file == null) throw new HTTPError("File not found", 404);
+            var attachment = (await Services.DoWithDB(db =>
+               db.Attachments.Include(a => a.Storage).BoardFilter(id.Value).FirstOrDefaultAsync()
+            ));
+            if (attachment == null) throw new HTTPError("File not found", 404);
 
-            return new FileContentResult(file.Data, new MediaTypeHeaderValue(file.ContentType));
+            return new FileContentResult(attachment.Storage.Data, new MediaTypeHeaderValue(attachment.ContentType));
         }
         // TODO: Authz for board permissions
         [HttpPost("add")]
@@ -81,12 +87,13 @@ namespace BenefactAPI.Controllers
                 Storage = new StorageEntry()
                 {
                     Data = stream.ToArray(),
-                    ContentType = file.ContentType,
                 },
+                Name = file.FileName,
+                ContentType = file.ContentType,
                 CardId = cardId,
                 UserId = Auth.CurrentUser.Id,
             };
-            var id = (await Services.DoWithDB(db => db.Attachments.AddAsync(attachment))).Entity.StorageId;
+            var id = (await Services.DoWithDB(db => db.Attachments.AddAsync(attachment))).Entity.Id;
             return id;
         }
     }
