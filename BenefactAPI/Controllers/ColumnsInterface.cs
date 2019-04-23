@@ -17,7 +17,7 @@ namespace BenefactAPI.Controllers
             Services = services;
         }
 
-        [AuthRequired(RequirePrivilege = Privileges.Modify)]
+        [AuthRequired(RequirePrivilege = Privilege.Admin)]
         public Task<ColumnData> Add(ColumnData column)
         {
             return Services.DoWithDB(async db =>
@@ -31,7 +31,7 @@ namespace BenefactAPI.Controllers
             });
         }
 
-        [AuthRequired(RequirePrivilege = Privileges.Modify)]
+        [AuthRequired(RequirePrivilege = Privilege.Admin)]
         public Task<bool> Delete(DeleteData column)
         {
             return Services.DoWithDB(
@@ -39,7 +39,7 @@ namespace BenefactAPI.Controllers
                 false);
         }
 
-        [AuthRequired(RequirePrivilege = Privileges.Modify)]
+        [AuthRequired(RequirePrivilege = Privilege.Admin)]
         public Task Update(ColumnData update)
         {
             return Services.DoWithDB(async db =>

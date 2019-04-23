@@ -22,76 +22,15 @@ namespace BenefactAPI.Controllers
             Services = services;
         }
 
-        Expression<Func<CardData, bool>> termCardExpression(CardQueryTerm term)
-        {
-            var andTerms = new List<Expression<Func<CardData, bool>>>();
-            if (term.Tags != null)
-            {
-                andTerms.AddRange(term.Tags.SelectExp<int, CardData, bool>(
-                    tagId => card => card.Tags.Any(cardTag => cardTag.TagId == tagId)));
-            }
-            if (term.Title != null)
-                andTerms.Add(card => card.Title.ToLower().Contains(term.Title.ToLower()));
-            if (term.ColumnId.HasValue)
-                andTerms.Add(card => card.Column.Id == term.ColumnId);
-            if (!andTerms.Any())
-                andTerms.Add(c => true);
-            return andTerms.BinaryCombinator(Expression.And);
-        }
-
-        IQueryable<CardData> FilterCards(IQueryable<CardData> baseQuery, List<CardQueryTerm> terms)
-        {
-            var query = baseQuery;
-            if (terms != null)
-            {
-                var exp = terms.SelectExp(termCardExpression).BinaryCombinator(Expression.Or);
-                query = query.Where(exp);
-            }
-            return query;
-        }
-
-        [AuthRequired(RequirePrivilege = Privileges.View)]
-        [ReplicateRoute(Route = "/")]
-        public Task<CardsResponse> Get(CardQuery query)
-        {
-            query = query ?? new CardQuery();
-            query.Groups = query.Groups ?? new Dictionary<string, List<CardQueryTerm>>() { { "All", null } };
-            var boardId = BoardExtensions.Board.Id;
-            return Services.DoWithDB(async db =>
-            {
-                IQueryable<CardData> baseQuery = db.Cards
-                    .BoardFilter()
-                    .Include(card => card.Tags)
-                    .Include(card => card.Comments)
-                    .Include(card => card.Votes)
-                    .Include(card => card.Attachments)
-                    .OrderBy(card => card.Index);
-                var cardGroups = new Dictionary<string, List<CardData>>();
-                // TODO: This is derpy and serial, but the EF Core Include seems to have a bug in it when the queries run simultanesouly
-                // which duplicates Tags in CardData
-                foreach (var group in query.Groups)
-                {
-                    cardGroups[group.Key] = await FilterCards(baseQuery, group.Value).ToListAsync();
-                }
-                return new CardsResponse()
-                {
-                    Cards = cardGroups,
-                    Columns = await db.Columns.BoardFilter().OrderBy(col => col.Index).ToListAsync(),
-                    Tags = await db.Tags.BoardFilter().OrderBy(tag => tag.Id).ToListAsync(),
-                    Users = await db.Users
-                    .Where(u => u.Privileges.Any(p => p.BoardId == boardId) || u.Votes.Any(v => v.BoardId == boardId) || u.Comments.Any(c => c.BoardId == boardId))
-                    .ToListAsync(),
-                };
-            });
-        }
-
-        [AuthRequired(RequirePrivilege = Privileges.Modify)]
+        [AuthRequired]
         public Task Update(CardData update)
         {
             return Services.DoWithDB(async db =>
             {
                 var card = await db.Cards.Include(c => c.Tags).BoardFilter(update.Id).FirstOrDefaultAsync();
                 if (card == null) throw new HTTPError("Card not found", 404);
+                if (card.AuthorId != Auth.CurrentUser.Id)
+                    Auth.VerifyPrivilege(Privilege.Developer);
                 Util.UpdateMembersFrom(card, update,
                     whiteList: new[] { nameof(CardData.Title), nameof(CardData.Description), nameof(CardData.ColumnId) });
                 if (update.TagIds != null)
@@ -106,13 +45,19 @@ namespace BenefactAPI.Controllers
             });
         }
 
-        [AuthRequired(RequirePrivilege = Privileges.Modify)]
+        [AuthRequired(RequirePrivilege = Privilege.Contribute)]
         public Task<CardData> Add(CardData card)
         {
             return Services.DoWithDB(async db =>
             {
                 card.Id = 0;
                 card.BoardId = BoardExtensions.Board.Id;
+                card.AuthorId = Auth.CurrentUser.Id;
+                var column = db.Columns.BoardFilter().FirstOrDefault(col => col.Id == card.ColumnId);
+                if (column == null)
+                    throw new HTTPError("Invalid column id", 400);
+                if (!column.AllowContribution)
+                    Auth.VerifyPrivilege(Privilege.Developer);
                 var result = await db.Cards.AddAsync(card);
                 await db.Insert(card, card.Index, db.Cards.Where(c => c.BoardId == card.BoardId));
                 await db.SaveChangesAsync();
@@ -120,7 +65,7 @@ namespace BenefactAPI.Controllers
             });
         }
 
-        [AuthRequired(RequirePrivilege = Privileges.Modify)]
+        [AuthRequired(RequirePrivilege = Privilege.Admin)]
         public Task<bool> Delete(DeleteData card)
         {
             return Services.DoWithDB(
@@ -128,7 +73,7 @@ namespace BenefactAPI.Controllers
                 false);
         }
 
-        [AuthRequired(RequirePrivilege = Privileges.Vote)]
+        [AuthRequired(RequirePrivilege = Privilege.Contribute)]
         public Task Vote(CardVoteRequest request)
         {
             return Services.DoWithDB(async db =>

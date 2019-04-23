@@ -63,7 +63,7 @@ namespace BenefactAPI.Controllers
         public ReplicateController(IServiceProvider services)
         {
             Channel = services.GetRequiredService<HTTPChannel>();
-            logger = services.GetRequiredService<ILogger<RootController>>();
+            logger = services.GetService<ILogger<RootController>>();
             Services = services;
         }
 
@@ -76,7 +76,7 @@ namespace BenefactAPI.Controllers
             context.Value = ControllerContext;
             try
             {
-                logger.LogInformation($"Beginning request to {path}");
+                logger?.LogInformation($"Beginning request to {path}");
                 return await Handle(path);
             }
             catch (ContractNotFoundError)
@@ -86,11 +86,12 @@ namespace BenefactAPI.Controllers
             finally
             {
                 context.Value = null;
-                logger.LogInformation($"Finished request to {path}");
+                logger?.LogInformation($"Finished request to {path}");
             }
         }
         public virtual async Task<ActionResult> Handle(string path)
         {
+            path = path ?? "";
             while (path.Any() && path.Last() == '/')
                 path = path.Substring(0, path.Length - 1);
 

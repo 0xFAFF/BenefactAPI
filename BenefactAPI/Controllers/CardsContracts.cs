@@ -31,14 +31,14 @@ namespace BenefactAPI.Controllers
     public class BoardData
     {
         public int Id { get; set; }
-        public List<CardData> Cards { get; set; }
-        public List<CommentData> Comments { get; set; }
-        public List<VoteData> Votes { get; set; }
-        public List<ColumnData> Columns { get; set; }
-        public List<TagData> Tags { get; set; }
-        public Privileges DefaultPrivileges { get; set; }
-        public List<UserPrivilege> Users { get; set; }
-        public List<AttachmentData> Attachments { get; set; }
+        public List<CardData> Cards { get; set; } = new List<CardData>();
+        public List<CommentData> Comments { get; set; } = new List<CommentData>();
+        public List<VoteData> Votes { get; set; } = new List<VoteData>();
+        public List<ColumnData> Columns { get; set; } = new List<ColumnData>();
+        public List<TagData> Tags { get; set; } = new List<TagData>();
+        public List<UserBoardRole> Users { get; set; } = new List<UserBoardRole>();
+        public List<BoardRole> Roles { get; set; } = new List<BoardRole>();
+        public List<AttachmentData> Attachments { get; set; } = new List<AttachmentData>();
     }
 
     /// <summary>
@@ -49,6 +49,10 @@ namespace BenefactAPI.Controllers
     public class CardData : IOrdered, IBoardId
     {
         public int Id { get; set; }
+        public int AuthorId { get; set; }
+        [ReplicateIgnore]
+        [Required]
+        public UserData Author { get; set; }
         [Required]
         public int? Index { get; set; }
         [Required]
@@ -133,7 +137,7 @@ namespace BenefactAPI.Controllers
         public int Id { get; set; }
         public int? Index { get; set; }
         public string Title { get; set; }
-
+        public bool AllowContribution { get; set; }
         [ReplicateIgnore]
         public BoardData Board { get; set; }
         [ReplicateIgnore]

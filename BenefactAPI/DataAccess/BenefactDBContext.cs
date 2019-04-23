@@ -48,6 +48,7 @@ namespace BenefactAPI.DataAccess
             modelBuilder.ConfigureKey(b => b.Tags);
             modelBuilder.ConfigureKey(b => b.Comments);
             modelBuilder.ConfigureKey(b => b.Attachments);
+            modelBuilder.ConfigureKey(b => b.Roles);
 
             // Card References
             modelBuilder.CardReference(c => c.Attachments);
@@ -58,13 +59,23 @@ namespace BenefactAPI.DataAccess
             modelBuilder.Entity<UserData>()
                 .HasAlternateKey(ud => ud.Email);
 
-            // Privileges
-            modelBuilder.Entity<UserPrivilege>()
-                .HasKey(u => new { u.UserId, u.BoardId });
+            modelBuilder.Entity<CardData>()
+                .HasOne(cd => cd.Author)
+                .WithMany(u => u.CreatedCards)
+                .HasForeignKey(cd => cd.AuthorId);
 
-            modelBuilder.Entity<BoardData>()
-                .Property(b => b.DefaultPrivileges)
-                .HasDefaultValue(Privileges.View);
+            // Privileges
+            modelBuilder.Entity<UserBoardRole>()
+                .HasKey(ur => new { ur.UserId, ur.BoardId });
+
+            modelBuilder.Entity<UserBoardRole>()
+                .HasOne(ur => ur.User)
+                .WithMany(u => u.Roles)
+                .HasForeignKey(ur => ur.UserId);
+
+            modelBuilder.Entity<UserBoardRole>()
+                .HasOne(ur => ur.BoardRole)
+                .WithMany(b => b.Users);
 
             modelBuilder.Entity<BoardData>()
                 .HasMany(b => b.Users)
@@ -72,7 +83,7 @@ namespace BenefactAPI.DataAccess
                 .HasForeignKey(u => u.BoardId);
 
             modelBuilder.Entity<UserData>()
-                .HasMany(u => u.Privileges)
+                .HasMany(u => u.Roles)
                 .WithOne(up => up.User)
                 .HasForeignKey(up => up.UserId);
 

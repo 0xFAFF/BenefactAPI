@@ -60,7 +60,7 @@ namespace BenefactAPI.Controllers
         public async Task<ActionResult> Get(int? id, int boardId)
         {
             BoardExtensions.Board = await BoardExtensions.BoardLookup(Services, boardId);
-            Auth.ThrowIfUnauthorized(privilege: Privileges.View);
+            Auth.ThrowIfUnauthorized(privilege: Privilege.Read);
             if (id == null) throw new HTTPError("Invalid file id", 400);
             var attachment = (await Services.DoWithDB(db =>
                db.Attachments.Include(a => a.Storage).BoardFilter(id.Value).FirstOrDefaultAsync()
@@ -74,7 +74,7 @@ namespace BenefactAPI.Controllers
         public async Task<int> Post(int boardId)
         {
             BoardExtensions.Board = await BoardExtensions.BoardLookup(Services, boardId);
-            Auth.ThrowIfUnauthorized(privilege: Privileges.Modify);
+            Auth.ThrowIfUnauthorized(privilege: Privilege.Contribute);
             var file = Request.Form.Files.FirstOrDefault();
             if (file == null) throw new HTTPError("Post contains no files", 401);
             if (!Request.Form.TryGetValue("CardId", out var cardIdString) || !int.TryParse(cardIdString, out var cardId))

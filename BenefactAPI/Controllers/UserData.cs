@@ -26,31 +26,6 @@ namespace BenefactAPI.Controllers
         public string Nonce;
     }
 
-    [Flags]
-    public enum Privileges
-    {
-        None = 0,
-        View = 1,
-        Modify = 2,
-        Vote = 4,
-        Comment = 8,
-        Invite = 16,
-        Assignee = 32,
-    }
-
-    [ReplicateType]
-    public class UserPrivilege
-    {
-        public int UserId { get; set; }
-        [ReplicateIgnore]
-        public UserData User { get; set; }
-
-        public int BoardId { get; set; }
-        [ReplicateIgnore]
-        public BoardData Board { get; set; }
-
-        public Privileges Privilege { get; set; }
-    }
     [ReplicateType]
     public class UserData
     {
@@ -65,11 +40,13 @@ namespace BenefactAPI.Controllers
         [ReplicateIgnore]
         public string Hash { get; set; }
         [ReplicateIgnore]
-        public List<CommentData> Comments { get; set; }
+        public List<CommentData> Comments { get; set; } = new List<CommentData>();
         [ReplicateIgnore]
-        public List<VoteData> Votes { get; set; }
+        public List<VoteData> Votes { get; set; } = new List<VoteData>();
         [ReplicateIgnore]
-        public List<AttachmentData> Attachments { get; set; }
-        public List<UserPrivilege> Privileges { get; set; }
+        public List<AttachmentData> Attachments { get; set; } = new List<AttachmentData>();
+        public List<UserBoardRole> Roles { get; set; } = new List<UserBoardRole>();
+        [ReplicateIgnore]
+        public List<CardData> CreatedCards { get; set; } = new List<CardData>();
     }
 }

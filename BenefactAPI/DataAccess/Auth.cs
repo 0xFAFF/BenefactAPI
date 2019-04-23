@@ -19,7 +19,7 @@ namespace BenefactAPI.DataAccess
     public class AuthRequiredAttribute : Attribute
     {
         public bool RequireVerified = true;
-        public Privileges RequirePrivilege = Privileges.None;
+        public Privilege RequirePrivilege = 0;
         public void ThrowIfUnverified()
         {
             Auth.ThrowIfUnauthorized(RequireVerified, RequirePrivilege);
@@ -29,7 +29,7 @@ namespace BenefactAPI.DataAccess
     public static class Auth
     {
         private static AsyncLocal<UserData> _currentUser = new AsyncLocal<UserData>();
-        public static UserData CurrentUser => _currentUser.Value;
+        public static UserData CurrentUser { get => _currentUser.Value; set => _currentUser.Value = value; }
         static readonly byte[] key = Convert.FromBase64String("ufbSRUHVCGWsWa1Ny+7oS8Wj9BB2n8m+DqBnLz8PreKH+ykeStpNLo621d3NnvzJRNJjY5yMPTlTkFpZzmmtpg==");
         public static string GenerateToken(UserData user)
         {
@@ -81,7 +81,7 @@ namespace BenefactAPI.DataAccess
                 return null;
             }
         }
-        public static async Task<UserData> AuthorizeUser(HttpRequest request, IServiceProvider provider)
+        public static async Task<UserData> Authenticate(HttpRequest request, IServiceProvider services)
         {
             string token = null;
             if (request.Headers.ContainsKey("Authorization"))
@@ -96,22 +96,27 @@ namespace BenefactAPI.DataAccess
             {
                 var email = ValidateUserEmail(token);
                 if (email != null)
-                    return await provider.DoWithDB(async db => await db.Users
-                        // TODO: Doing this include might be expensive?
-                        .Include(u => u.Privileges)
-                        .FirstOrDefaultAsync(u => u.Email == email));
+                    return await GetUser(services, email);
             }
             return null;
         }
-        public static void VerifyPrivilege(Privileges privilege)
+        public static async Task<UserData> GetUser(IServiceProvider services, string email)
+        {
+            return await services.DoWithDB(async db => await db.Users
+                // TODO: Doing this include might be expensive?
+                .Include(u => u.Roles)
+                .ThenInclude(r => r.BoardRole)
+                .FirstOrDefaultAsync(u => u.Email == email));
+        }
+        public static void VerifyPrivilege(Privilege privilege)
         {
             if (BoardExtensions.Board == null)
                 throw new InvalidOperationException("Cannot check privileges without board being set");
-            var userBoardPrivilege = CurrentUser.Privileges.FirstOrDefault(up => up.BoardId == BoardExtensions.Board.Id)?.Privilege ?? Privileges.None;
-            if (((userBoardPrivilege | BoardExtensions.Board.DefaultPrivileges) & privilege) == 0)
+            var userPrivilege = CurrentUser.Roles.FirstOrDefault(up => up.BoardId == BoardExtensions.Board.Id)?.BoardRole?.Privilege ?? Privilege.None;
+            if(userPrivilege < privilege)
                 throw new HTTPError("Insufficient privilege", 403);
         }
-        public static void ThrowIfUnauthorized(bool requireVerified = true, Privileges privilege = Privileges.None)
+        public static void ThrowIfUnauthorized(bool requireVerified = true, Privilege privilege = 0)
         {
             if (CurrentUser == null)
                 throw new HTTPError("Unauthorized", 401);
@@ -120,12 +125,12 @@ namespace BenefactAPI.DataAccess
             if (privilege != 0)
                 VerifyPrivilege(privilege);
         }
-        public static IApplicationBuilder UseAuth(this IApplicationBuilder app)
+        public static IApplicationBuilder UseAuthn(this IApplicationBuilder app)
         {
             return app.Use(async (context, next) =>
             {
                 var routeData = context.GetRouteData();
-                _currentUser.Value = await AuthorizeUser(context.Request, app.ApplicationServices);
+                _currentUser.Value = await Authenticate(context.Request, app.ApplicationServices);
                 await next();
             });
         }

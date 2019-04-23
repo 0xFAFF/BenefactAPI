@@ -34,8 +34,7 @@ namespace BenefactAPI
             services.AddCors();
             services.AddMvc();
             services.AddEntityFrameworkNpgsql()
-               .AddDbContext<BenefactDbContext>(c => c.UseNpgsql(Configuration.GetConnectionString("BenefactDatabase")))
-               .BuildServiceProvider();
+               .AddDbContext<BenefactDbContext>(c => c.UseNpgsql(Configuration.GetConnectionString("BenefactDatabase")));
             services.AddTransient<HTTPChannel>();
         }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -46,7 +45,7 @@ namespace BenefactAPI
                 app.UseDeveloperExceptionPage();
             }
             app.UseHandling(services.GetRequiredService<ILogger<Startup>>(), services.GetRequiredService<IReplicateSerializer<string>>());
-            app.UseAuth();
+            app.UseAuthn();
             app.UseMvc();
 
             var command = Configuration.GetValue<string>("action");
@@ -63,114 +62,12 @@ namespace BenefactAPI
                             db.Database.Migrate();
                         break;
                     case "mockdata":
-                        var users = new UserInterface(services);
-                        using (var db = services.GetService<BenefactDbContext>())
+                        using(var db = services.GetService<BenefactDbContext>())
                         {
                             db.Database.EnsureDeleted();
                             db.Database.Migrate();
-                            (db.Boards.FirstOrDefault() ?? db.Boards.Add(new BoardData()).Entity).DefaultPrivileges = (Privileges)255;
-                            var board2 = db.Boards.Skip(1).FirstOrDefault() ?? db.Boards.Add(new BoardData()).Entity;
-                            db.Tags.Add(new TagData()
-                            {
-                                Name = "Story",
-                                Color = "#001f3f",
-                                BoardId = 1,
-                            });
-                            db.Tags.Add(new TagData()
-                            {
-                                Name = "Dev Task",
-                                Color = "#2ECC40",
-                                BoardId = 1,
-                            });
-                            db.Tags.Add(new TagData()
-                            {
-                                Name = "Business Boiz",
-                                Color = "#FF851B",
-                                BoardId = 1,
-                            });
-                            db.Tags.Add(new TagData()
-                            {
-                                Name = "Bug",
-                                Character = "bug",
-                                BoardId = 1,
-                            });
-                            db.Tags.Add(new TagData()
-                            {
-                                Name = "Star",
-                                Color = "#F012BE",
-                                Character = "star",
-                                BoardId = 1,
-                            });
-                            db.SaveChanges();
-                            db.Columns.Add(new ColumnData()
-                            {
-                                Title = "To Do",
-                                Index = 1,
-                                BoardId = 1,
-                            });
-                            db.Columns.Add(new ColumnData()
-                            {
-                                Title = "In Progress",
-                                Index = 2,
-                                BoardId = 1,
-                            });
-                            db.Columns.Add(new ColumnData()
-                            {
-                                Title = "Done",
-                                Index = 3,
-                                BoardId = 1,
-                            });
-                            db.SaveChanges();
-                            db.Cards.Add(new CardData()
-                            {
-                                Title = "Get MD Working",
-                                Description = "Some Markdown\n=====\n\n```csharp\n var herp = \"derp\";\n```",
-                                ColumnId = 2,
-                                TagIds = new[] { 1, 2, 3, 4, 5 }.ToList(),
-                                BoardId = 1,
-                                Index = 1,
-                            });
-                            db.Cards.Add(new CardData()
-                            {
-                                Title = "Make sure UTF8 works 😑",
-                                Description = "😈😈😈😈😈😈",
-                                ColumnId = 1,
-                                TagIds = new[] { 1 }.ToList(),
-                                BoardId = 1,
-                                Index = 2,
-                            });
-                            db.Cards.Add(new CardData()
-                            {
-                                Title = "Some Bug",
-                                Description = "There was a bug",
-                                ColumnId = 2,
-                                TagIds = new[] { 4, 2 }.ToList(),
-                                BoardId = 1,
-                                Index = 3,
-                            });
-                            db.Cards.Add(new CardData()
-                            {
-                                Title = "Fixed Bug",
-                                Description = "There was a bug",
-                                ColumnId = 3,
-                                TagIds = new[] { 4 }.ToList(),
-                                BoardId = 1,
-                                Index = 4,
-                            });
-                            db.SaveChanges();
                         }
-                        users.Add(new UserCreateRequest()
-                        {
-                            Email = "faff@faff.faff",
-                            Name = "FAFF",
-                            Password = "fafffaff",
-                        }, false).GetAwaiter().GetResult();
-                        services.DoWithDB(async db =>
-                        {
-                            var faff = await db.Users.FirstOrDefaultAsync(u => u.Name == "FAFF");
-                            faff.EmailVerified = true;
-                            return true;
-                        }).GetAwaiter().GetResult();
+                        MockData.AddToDb(services);
                         break;
                 }
                 Environment.Exit(0);

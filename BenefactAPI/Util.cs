@@ -1,6 +1,7 @@
 ﻿using BenefactAPI.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql;
 using Replicate.MetaData;
 using System;
@@ -86,6 +87,14 @@ namespace BenefactAPI
                 .HasMany(cardProperty)
                 .WithOne(e => e.Card)
                 .HasForeignKey(e => new { e.BoardId, e.CardId });
+        }
+
+        public static void DeleteData(this MigrationBuilder builder, string table)
+        {
+            builder.DeleteData(
+                table: table,
+                keyColumns: new string[] { },
+                keyValues: new object[] { });
         }
     }
 }

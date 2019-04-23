@@ -33,6 +33,7 @@ namespace BenefactAPI.Controllers
             Channel.RegisterSingleton(new CommentsInterface(Services));
             Channel.RegisterSingleton(new ColumnsInterface(Services));
             Channel.RegisterSingleton(new TagsInterface(Services));
+            Channel.RegisterSingleton(new BoardsInterface(Services));
         }
         public override async Task<ActionResult> Handle(string path)
         {

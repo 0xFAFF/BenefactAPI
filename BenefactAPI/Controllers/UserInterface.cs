@@ -26,11 +26,9 @@ namespace BenefactAPI.Controllers
         IServiceProvider Services;
         string baseURL;
         string sendKey;
-        ILogger logger;
         public UserInterface(IServiceProvider services)
         {
             Services = services;
-            logger = services.GetRequiredService<ILogger<UserInterface>>();
             var config = services.GetService<IConfiguration>();
             baseURL = config.GetValue<string>("BaseURL");
             sendKey = config.GetValue<string>("SendKey");
