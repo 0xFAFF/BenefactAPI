@@ -135,7 +135,7 @@ namespace BenefactAPI.DataAccess
             FixSnakeCaseNames(modelBuilder);
         }
 
-        public async Task<bool> Delete<T>(DbSet<T> set, T delete) where T : class
+        public async Task<bool> DeleteAsync<T>(DbSet<T> set, T delete) where T : class
         {
             Remove(delete);
             try
@@ -149,12 +149,12 @@ namespace BenefactAPI.DataAccess
             }
         }
 
-        public async Task<bool> DeleteAndOrder<T>(DbSet<T> set, int id, Func<T, Expression<Func<T, bool>>> orderPredicate = null)
+        public async Task<bool> DeleteOrderAsync<T>(DbSet<T> set, int id, Func<T, Expression<Func<T, bool>>> orderPredicate = null)
             where T : class, IOrdered, IBoardId
         {
             var existing = await set.FirstOrDefaultAsync(e => e.Id == id && e.BoardId == BoardExtensions.Board.Id);
             if (existing == null) return false;
-            if (!await Delete(set, existing)) return false;
+            if (!await DeleteAsync(set, existing)) return false;
             var filteredSet = set.Where(e => e.BoardId == BoardExtensions.Board.Id);
             if (orderPredicate != null)
                 filteredSet = filteredSet.Where(orderPredicate(existing));

@@ -35,7 +35,7 @@ namespace BenefactAPI.Controllers
         public Task<bool> Delete(DeleteData column)
         {
             return Services.DoWithDB(
-                db => db.DeleteAndOrder(db.Columns, column.Id),
+                db => db.DeleteOrderAsync(db.Columns, column.Id),
                 false);
         }
 

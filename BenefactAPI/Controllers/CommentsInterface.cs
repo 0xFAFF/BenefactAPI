@@ -55,7 +55,7 @@ namespace BenefactAPI.Controllers
                 var existingComment = await db.Comments.BoardFilter(comment.Id).FirstOrDefaultAsync();
                 if (existingComment.UserId != Auth.CurrentUser.Id)
                     return false;
-                if (await db.Delete(db.Comments, existingComment))
+                if (await db.DeleteAsync(db.Comments, existingComment))
                 {
                     await db.SaveChangesAsync();
                     return true;

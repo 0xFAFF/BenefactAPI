@@ -35,7 +35,7 @@ namespace BenefactAPI.Controllers
         {
 
             return Services.DoWithDB(
-                db => db.Delete(db.Tags, new TagData() { Id = tag.Id, BoardId = BoardExtensions.Board.Id }),
+                db => db.DeleteAsync(db.Tags, new TagData() { Id = tag.Id, BoardId = BoardExtensions.Board.Id }),
                 false);
         }
 

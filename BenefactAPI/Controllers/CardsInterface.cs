@@ -69,7 +69,7 @@ namespace BenefactAPI.Controllers
         public Task<bool> Delete(DeleteData card)
         {
             return Services.DoWithDB(
-                db => db.DeleteAndOrder(db.Cards, card.Id),
+                db => db.DeleteOrderAsync(db.Cards, card.Id),
                 false);
         }
 

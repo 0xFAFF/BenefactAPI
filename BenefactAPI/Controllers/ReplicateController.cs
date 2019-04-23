@@ -58,12 +58,12 @@ namespace BenefactAPI.Controllers
         public static ActionContext CurrentContext => context.Value;
 
         public readonly RPCChannel<string, string> Channel;
-        protected IServiceProvider Services;
+        public static IServiceProvider Services { get; protected set; }
         readonly ILogger logger;
         public ReplicateController(IServiceProvider services)
         {
             Channel = services.GetRequiredService<HTTPChannel>();
-            logger = services.GetService<ILogger<RootController>>();
+            logger = services.GetService<ILogger<ReplicateController>>();
             Services = services;
         }
 

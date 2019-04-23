@@ -49,6 +49,7 @@ namespace BenefactAPI.Controllers
     }
 
     [Route("api/board/{boardId:int}/files/")]
+    [ReplicateRoute(Route = "files")]
     public class StorageController : ControllerBase
     {
         IServiceProvider Services;
@@ -69,9 +70,8 @@ namespace BenefactAPI.Controllers
 
             return new FileContentResult(attachment.Storage.Data, new MediaTypeHeaderValue(attachment.ContentType));
         }
-        // TODO: Authz for board permissions
         [HttpPost("add")]
-        public async Task<int> Post(int boardId)
+        public async Task<int> Add(int boardId)
         {
             BoardExtensions.Board = await BoardExtensions.BoardLookup(Services, boardId);
             Auth.ThrowIfUnauthorized(privilege: Privilege.Contribute);
@@ -95,6 +95,16 @@ namespace BenefactAPI.Controllers
             };
             var id = (await Services.DoWithDB(db => db.Attachments.AddAsync(attachment))).Entity.Id;
             return id;
+        }
+        public static Task<bool> Delete(DeleteData delete)
+        {
+            return ReplicateController.Services.DoWithDB(async db =>
+            {
+                var existing = await db.Attachments.Include(a => a.Storage).BoardFilter(delete.Id).FirstOrDefaultAsync();
+                if (existing == null)
+                    throw new HTTPError("Attachment not found", 404);
+                return await db.DeleteAsync(db.Files, existing.Storage);
+            }, false);
         }
     }
 }
