@@ -55,7 +55,7 @@ namespace BenefactAPITests
 
         JSONGraphSerializer Serializer = new JSONGraphSerializer(ReplicationModel.Default);
         DbContextOptions dbOptions = new DbContextOptionsBuilder<BenefactDbContext>()
-            .UseInMemoryDatabase("faff").Options;
+            .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
         public ConfigurationBuilder Config = new ConfigurationBuilder();
         public object GetService(Type serviceType)
         {

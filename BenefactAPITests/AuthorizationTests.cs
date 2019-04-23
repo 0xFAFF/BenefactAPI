@@ -18,6 +18,18 @@ namespace BenefactAPITests
     [TestClass]
     public class AuthorizationTests
     {
+        MockServiceProvider services;
+        [TestInitialize]
+        public void Setup()
+        {
+            services = new MockServiceProvider();
+            MockData.AddToDb(services);
+        }
+        [TestCleanup]
+        public void Cleanup()
+        {
+            services.DoWithDB(db => db.Database.EnsureDeletedAsync()).GetAwaiter().GetResult();
+        }
         static ControllerContext CreateContext(string body)
         {
             RouteData routeData = new RouteData();
@@ -35,11 +47,9 @@ namespace BenefactAPITests
         [TestMethod]
         public async Task CommentingFail()
         {
-            MockServiceProvider services = new MockServiceProvider();
-            MockData.AddToDb(services);
+            await services.DoWithDB(async db => (await db.Boards.Include(b => b.Roles).FirstOrDefaultAsync()).Roles[0].Privilege = Privilege.Read);
             BoardExtensions.Board = await services.BoardLookup(1);
             var user = Auth.CurrentUser = await Auth.GetUser(services, "faff@faff.faff");
-            user.Roles.Add(new UserBoardRole() { BoardId = 1, UserId = user.Id, BoardRole = new BoardRole() { Privilege = Privilege.Read } });
             var rpc = new BoardController(services);
             rpc.ControllerContext = CreateContext("{\"CardId\": 1, \"Text\": \"This is a test commment!\"}");
             var error = await Assert.ThrowsExceptionAsync<HTTPError>(
@@ -48,11 +58,9 @@ namespace BenefactAPITests
         [TestMethod]
         public async Task CommentingSuccess()
         {
-            MockServiceProvider services = new MockServiceProvider();
-            MockData.AddToDb(services);
+            await services.DoWithDB(async db => (await db.Boards.Include(b => b.Roles).FirstOrDefaultAsync()).Roles[0].Privilege = Privilege.Admin);
             BoardExtensions.Board = await services.BoardLookup(1);
             var user = Auth.CurrentUser = await Auth.GetUser(services, "faff@faff.faff");
-            user.Roles.Add(new UserBoardRole() { BoardId = 1, UserId = user.Id, BoardRole = new BoardRole() { Privilege = Privilege.Contribute } });
             var rpc = new BoardController(services);
             rpc.ControllerContext = CreateContext("{\"CardId\": 1, \"Text\": \"This is a test commment!\"}");
             var result = await rpc.Post("comments/add");

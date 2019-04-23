@@ -9,6 +9,11 @@ namespace BenefactAPI
 {
     public static class DependencyInjection
     {
+        public static Task DoWithDB(this IServiceProvider Services, Func<BenefactDbContext, Task> func,
+            bool autoSave = true)
+        {
+            return DoWithDB(Services, async db => { await func(db); return true; }, autoSave);
+        }
         public static async Task<T> DoWithDB<T>(this IServiceProvider Services, Func<BenefactDbContext, Task<T>> func,
             bool autoSave = true)
         {
