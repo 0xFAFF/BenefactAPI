@@ -10,6 +10,7 @@ using Replicate;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -19,6 +20,12 @@ using System.Threading.Tasks;
 
 namespace BenefactAPI.Controllers
 {
+    [ReplicateType]
+    public class UserResponse
+    {
+        public UserData User;
+        public List<BoardRole> Roles;
+    }
     [ReplicateType]
     [ReplicateRoute(Route = "users")]
     public class UserInterface
@@ -119,9 +126,15 @@ namespace BenefactAPI.Controllers
             });
         }
         [AuthRequired]
-        public UserData Current()
+        public async Task<UserResponse> Current()
         {
-            return Auth.CurrentUser;
+            var boards = await Services.DoWithDB(db =>
+                db.Roles.Include(r => r.Board).Where(b => b.Users.Any(u => u.UserId == Auth.CurrentUser.Id)).ToListAsync());
+            return new UserResponse()
+            {
+                User = Auth.CurrentUser,
+                Roles = boards
+            };
         }
     }
 }

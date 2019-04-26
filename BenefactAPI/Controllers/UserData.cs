@@ -45,6 +45,7 @@ namespace BenefactAPI.Controllers
         public List<VoteData> Votes { get; set; } = new List<VoteData>();
         [ReplicateIgnore]
         public List<AttachmentData> Attachments { get; set; } = new List<AttachmentData>();
+        [ReplicateIgnore]
         public List<UserBoardRole> Roles { get; set; } = new List<UserBoardRole>();
         [ReplicateIgnore]
         public List<CardData> CreatedCards { get; set; } = new List<CardData>();

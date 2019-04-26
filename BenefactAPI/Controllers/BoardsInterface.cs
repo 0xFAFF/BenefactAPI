@@ -22,13 +22,16 @@ namespace BenefactAPI.Controllers
         public string UrlName;
     }
 
-    [ReplicateType]
+    [ReplicateType(AutoMembers = AutoAdd.None)]
     public class BoardData
     {
+        [Replicate]
         public int Id { get; set; }
         [Required]
+        [Replicate]
         public string Title { get; set; }
         [Required]
+        [Replicate]
         public string UrlName { get; set; }
         public List<CardData> Cards { get; set; } = new List<CardData>();
         public List<CommentData> Comments { get; set; } = new List<CommentData>();

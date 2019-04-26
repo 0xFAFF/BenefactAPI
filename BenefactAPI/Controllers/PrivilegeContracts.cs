@@ -24,7 +24,6 @@ namespace BenefactAPI.Controllers
         public string Name { get; set; }
         [ReplicateIgnore]
         public int BoardId { get; set; }
-        [ReplicateIgnore]
         public BoardData Board { get; set; }
         [ReplicateIgnore]
         public List<UserBoardRole> Users { get; set; }

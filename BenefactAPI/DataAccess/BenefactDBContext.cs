@@ -18,6 +18,7 @@ namespace BenefactAPI.DataAccess
     public class BenefactDbContext : DbContext
     {
         public DbSet<BoardData> Boards { get; set; }
+        public DbSet<BoardRole> Roles { get; set; }
         public DbSet<UserData> Users { get; set; }
         public DbSet<CardData> Cards { get; set; }
         public DbSet<CommentData> Comments { get; set; }
