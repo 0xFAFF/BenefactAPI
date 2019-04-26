@@ -30,6 +30,9 @@ namespace BenefactAPI.DataAccess
     {
         private static AsyncLocal<UserData> _currentUser = new AsyncLocal<UserData>();
         public static UserData CurrentUser { get => _currentUser.Value; set => _currentUser.Value = value; }
+        private static AsyncLocal<BoardRole> _currentRole = new AsyncLocal<BoardRole>();
+        public static BoardRole CurrentRole { get => _currentRole.Value; set => _currentRole.Value = value; }
+
         static readonly byte[] key = Convert.FromBase64String("ufbSRUHVCGWsWa1Ny+7oS8Wj9BB2n8m+DqBnLz8PreKH+ykeStpNLo621d3NnvzJRNJjY5yMPTlTkFpZzmmtpg==");
         public static string GenerateToken(UserData user)
         {
@@ -113,7 +116,7 @@ namespace BenefactAPI.DataAccess
             if (BoardExtensions.Board == null)
                 throw new InvalidOperationException("Cannot check privileges without board being set");
             var userPrivilege = CurrentUser.Roles.FirstOrDefault(up => up.BoardId == BoardExtensions.Board.Id)?.BoardRole?.Privilege ?? Privilege.None;
-            if(userPrivilege < privilege)
+            if((userPrivilege & (privilege | Privilege.Admin)) == 0)
                 throw new HTTPError("Insufficient privilege", 403);
         }
         public static void ThrowIfUnauthorized(bool requireVerified = true, Privilege privilege = 0)

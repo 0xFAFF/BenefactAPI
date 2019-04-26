@@ -163,14 +163,6 @@ namespace BenefactAPI.Controllers
         public List<CardTag> CardTags { get; set; }
     }
     [ReplicateType]
-    public struct CardsResponse
-    {
-        public Dictionary<string, List<CardData>> Cards;
-        public List<ColumnData> Columns;
-        public List<TagData> Tags;
-        public List<UserData> Users;
-    }
-    [ReplicateType]
     public class DeleteData
     {
         public int Id { get; set; }

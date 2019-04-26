@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using BenefactAPI.DataAccess;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Replicate;
@@ -39,6 +40,8 @@ namespace BenefactAPI.Controllers
         public override async Task<ActionResult> Handle(string path)
         {
             BoardExtensions.Board = await BoardExtensions.BoardLookup(Services, ControllerContext.GetRouteParam("boardId", int.Parse));
+            if (Auth.CurrentUser != null)
+                Auth.CurrentRole = Auth.CurrentUser.Roles.FirstOrDefault(ur => ur.BoardId == BoardExtensions.Board.Id)?.BoardRole;
             return await base.Handle(path);
         }
     }

@@ -45,9 +45,30 @@ namespace BenefactAPITests
             };
         }
         [TestMethod]
+        public async Task HigherValueFails()
+        {
+            await services.DoWithDB(async db => (await db.Boards.Include(b => b.Roles).FirstOrDefaultAsync()).Roles[0].Privilege = Privilege.Developer);
+            BoardExtensions.Board = await services.BoardLookup(1);
+            var user = Auth.CurrentUser = await Auth.GetUser(services, "faff@faff.faff");
+            var rpc = new BoardController(services);
+            rpc.ControllerContext = CreateContext("{\"CardId\": 1, \"Text\": \"This is a test commment!\"}");
+            var error = await Assert.ThrowsExceptionAsync<HTTPError>(
+                () => rpc.Post("comments/add"));
+        }
+        [TestMethod]
+        public async Task AdminSucceeds()
+        {
+            await services.DoWithDB(async db => (await db.Boards.Include(b => b.Roles).FirstOrDefaultAsync()).Roles[0].Privilege = Privilege.Admin);
+            BoardExtensions.Board = await services.BoardLookup(1);
+            var user = Auth.CurrentUser = await Auth.GetUser(services, "faff@faff.faff");
+            var rpc = new BoardController(services);
+            rpc.ControllerContext = CreateContext("{\"CardId\": 1, \"Text\": \"This is a test commment!\"}");
+            var result = rpc.Post("comments/add");
+        }
+        [TestMethod]
         public async Task CommentingFail()
         {
-            await services.DoWithDB(async db => (await db.Boards.Include(b => b.Roles).FirstOrDefaultAsync()).Roles[0].Privilege = Privilege.Read);
+            await services.DoWithDB(async db => (await db.Boards.Include(b => b.Roles).FirstOrDefaultAsync()).Roles[0].Privilege = Privilege.Contribute);
             BoardExtensions.Board = await services.BoardLookup(1);
             var user = Auth.CurrentUser = await Auth.GetUser(services, "faff@faff.faff");
             var rpc = new BoardController(services);
@@ -58,7 +79,7 @@ namespace BenefactAPITests
         [TestMethod]
         public async Task CommentingSuccess()
         {
-            await services.DoWithDB(async db => (await db.Boards.Include(b => b.Roles).FirstOrDefaultAsync()).Roles[0].Privilege = Privilege.Admin);
+            await services.DoWithDB(async db => (await db.Boards.Include(b => b.Roles).FirstOrDefaultAsync()).Roles[0].Privilege = Privilege.Comment);
             BoardExtensions.Board = await services.BoardLookup(1);
             var user = Auth.CurrentUser = await Auth.GetUser(services, "faff@faff.faff");
             var rpc = new BoardController(services);

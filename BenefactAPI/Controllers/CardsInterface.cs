@@ -73,7 +73,7 @@ namespace BenefactAPI.Controllers
                 false);
         }
 
-        [AuthRequired(RequirePrivilege = Privilege.Contribute)]
+        [AuthRequired(RequirePrivilege = Privilege.Vote)]
         public Task Vote(CardVoteRequest request)
         {
             return Services.DoWithDB(async db =>

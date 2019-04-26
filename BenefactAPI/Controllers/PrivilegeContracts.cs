@@ -11,8 +11,10 @@ namespace BenefactAPI.Controllers
         None = 0,
         Read = 1,
         Contribute = 2,
-        Developer = 3,
-        Admin = 255,
+        Vote = 4,
+        Comment = 8,
+        Developer = 16,
+        Admin = 128,
     }
 
     [ReplicateType]
@@ -24,6 +26,7 @@ namespace BenefactAPI.Controllers
         public int BoardId { get; set; }
         [ReplicateIgnore]
         public BoardData Board { get; set; }
+        [ReplicateIgnore]
         public List<UserBoardRole> Users { get; set; }
         public Privilege Privilege { get; set; }
     }

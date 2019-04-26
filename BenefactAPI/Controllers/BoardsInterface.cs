@@ -10,6 +10,15 @@ using System.Threading.Tasks;
 namespace BenefactAPI.Controllers
 {
     [ReplicateType]
+    public struct BoardResponse
+    {
+        public Dictionary<string, List<CardData>> Cards;
+        public BoardRole UserRole;
+        public List<ColumnData> Columns;
+        public List<TagData> Tags;
+        public List<UserData> Users;
+    }
+    [ReplicateType]
     [ReplicateRoute(Route = "")]
     public class BoardsInterface
     {
@@ -49,7 +58,7 @@ namespace BenefactAPI.Controllers
 
         [AuthRequired(RequirePrivilege = Privilege.Read)]
         [ReplicateRoute(Route = "/")]
-        public Task<CardsResponse> Get(CardQuery query)
+        public Task<BoardResponse> Get(CardQuery query)
         {
             query = query ?? new CardQuery();
             query.Groups = query.Groups ?? new Dictionary<string, List<CardQueryTerm>>() { { "All", null } };
@@ -70,11 +79,12 @@ namespace BenefactAPI.Controllers
                 {
                     cardGroups[group.Key] = await FilterCards(baseQuery, group.Value).ToListAsync();
                 }
-                return new CardsResponse()
+                return new BoardResponse()
                 {
                     Cards = cardGroups,
                     Columns = await db.Columns.BoardFilter().OrderBy(col => col.Index).ToListAsync(),
                     Tags = await db.Tags.BoardFilter().OrderBy(tag => tag.Id).ToListAsync(),
+                    UserRole = Auth.CurrentRole,
                     Users = await db.Users
                     .Where(u => u.Roles.Any(p => p.BoardId == boardId) || u.Votes.Any(v => v.BoardId == boardId) || u.Comments.Any(c => c.BoardId == boardId))
                     .ToListAsync(),
