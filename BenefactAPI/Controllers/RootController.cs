@@ -25,7 +25,7 @@ namespace BenefactAPI.Controllers
             return Task.FromResult(Environment.GetEnvironmentVariable("GIT_COMMIT"));
         }
     }
-    [Route("api/board/{boardId:int}")]
+    [Route("api/board/{boardId}")]
     public class BoardController : ReplicateController
     {
         public BoardController(IServiceProvider provider) : base(provider)
@@ -39,7 +39,7 @@ namespace BenefactAPI.Controllers
         }
         public override async Task<ActionResult> Handle(string path)
         {
-            BoardExtensions.Board = await BoardExtensions.BoardLookup(Services, ControllerContext.GetRouteParam("boardId", int.Parse));
+            BoardExtensions.Board = await BoardExtensions.BoardLookup(Services, ControllerContext.GetRouteParam("boardId", s => s));
             if (Auth.CurrentUser != null)
                 Auth.CurrentRole = Auth.CurrentUser.Roles.FirstOrDefault(ur => ur.BoardId == BoardExtensions.Board.Id)?.BoardRole;
             return await base.Handle(path);
@@ -56,9 +56,9 @@ namespace BenefactAPI.Controllers
                 filter = filter.Where(e => e.Id == setId.Value);
             return filter;
         }
-        public static async Task<BoardData> BoardLookup(this IServiceProvider services, int boardId)
+        public static async Task<BoardData> BoardLookup(this IServiceProvider services, string urlName)
         {
-            return await services.DoWithDB(db => db.Boards.FirstOrDefaultAsync(b => b.Id == boardId)) ?? throw new HTTPError("Board not found", 404);
+            return await services.DoWithDB(db => db.Boards.FirstOrDefaultAsync(b => b.UrlName == urlName)) ?? throw new HTTPError("Board not found", 404);
         }
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Replicate;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -10,14 +11,35 @@ using System.Threading.Tasks;
 namespace BenefactAPI.Controllers
 {
     [ReplicateType]
-    public struct BoardResponse
+    public class BoardResponse
     {
         public Dictionary<string, List<CardData>> Cards;
         public BoardRole UserRole;
         public List<ColumnData> Columns;
         public List<TagData> Tags;
         public List<UserData> Users;
+        public string Title;
+        public string UrlName;
     }
+
+    [ReplicateType]
+    public class BoardData
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Title { get; set; }
+        [Required]
+        public string UrlName { get; set; }
+        public List<CardData> Cards { get; set; } = new List<CardData>();
+        public List<CommentData> Comments { get; set; } = new List<CommentData>();
+        public List<VoteData> Votes { get; set; } = new List<VoteData>();
+        public List<ColumnData> Columns { get; set; } = new List<ColumnData>();
+        public List<TagData> Tags { get; set; } = new List<TagData>();
+        public List<UserBoardRole> Users { get; set; } = new List<UserBoardRole>();
+        public List<BoardRole> Roles { get; set; } = new List<BoardRole>();
+        public List<AttachmentData> Attachments { get; set; } = new List<AttachmentData>();
+    }
+
     [ReplicateType]
     [ReplicateRoute(Route = "")]
     public class BoardsInterface
@@ -79,7 +101,7 @@ namespace BenefactAPI.Controllers
                 {
                     cardGroups[group.Key] = await FilterCards(baseQuery, group.Value).ToListAsync();
                 }
-                return new BoardResponse()
+                var response = new BoardResponse()
                 {
                     Cards = cardGroups,
                     Columns = await db.Columns.BoardFilter().OrderBy(col => col.Index).ToListAsync(),
@@ -89,6 +111,9 @@ namespace BenefactAPI.Controllers
                     .Where(u => u.Roles.Any(p => p.BoardId == boardId) || u.Votes.Any(v => v.BoardId == boardId) || u.Comments.Any(c => c.BoardId == boardId))
                     .ToListAsync(),
                 };
+                TypeUtil.UpdateMembersFrom(response, BoardExtensions.Board, blackList:
+                    new string[] { nameof(BoardResponse.Tags), nameof(BoardResponse.Columns), nameof(BoardResponse.Users), nameof(BoardResponse.Cards) });
+                return response;
             });
         }
     }

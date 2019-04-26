@@ -46,7 +46,7 @@ namespace BenefactAPI.Controllers
             {
                 var existingTag = await db.Tags.FindAsync(BoardExtensions.Board.Id, tag.Id);
                 if (existingTag == null) throw new HTTPError("Tag not found", 404);
-                Util.UpdateMembersFrom(existingTag, tag, whiteList: new[] { nameof(TagData.Name), nameof(TagData.Character), nameof(TagData.Color) });
+                TypeUtil.UpdateMembersFrom(existingTag, tag, whiteList: new[] { nameof(TagData.Name), nameof(TagData.Character), nameof(TagData.Color) });
                 await db.SaveChangesAsync();
                 return true;
             });

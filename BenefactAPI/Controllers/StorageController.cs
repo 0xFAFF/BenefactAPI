@@ -48,7 +48,7 @@ namespace BenefactAPI.Controllers
         public int UserId { get; set; }
     }
 
-    [Route("api/board/{boardId:int}/files/")]
+    [Route("api/board/{boardId}/files/")]
     [ReplicateRoute(Route = "files")]
     public class StorageController : ControllerBase
     {
@@ -58,7 +58,7 @@ namespace BenefactAPI.Controllers
             Services = services;
         }
         [HttpGet("{id}")]
-        public async Task<ActionResult> Get(int? id, int boardId)
+        public async Task<ActionResult> Get(int? id, string boardId)
         {
             BoardExtensions.Board = await BoardExtensions.BoardLookup(Services, boardId);
             Auth.ThrowIfUnauthorized(privilege: Privilege.Read);
@@ -71,7 +71,7 @@ namespace BenefactAPI.Controllers
             return new FileContentResult(attachment.Storage.Data, new MediaTypeHeaderValue(attachment.ContentType));
         }
         [HttpPost("add")]
-        public async Task<int> Add(int boardId)
+        public async Task<int> Add(string boardId)
         {
             BoardExtensions.Board = await BoardExtensions.BoardLookup(Services, boardId);
             Auth.ThrowIfUnauthorized(privilege: Privilege.Contribute);

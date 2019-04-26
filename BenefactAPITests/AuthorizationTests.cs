@@ -33,7 +33,7 @@ namespace BenefactAPITests
         static ControllerContext CreateContext(string body)
         {
             RouteData routeData = new RouteData();
-            routeData.Values["boardId"] = "1";
+            routeData.Values["boardId"] = "benefact";
             HttpContext httpContextMock = new DefaultHttpContext();
             var bytes = Encoding.UTF8.GetBytes(body);
             (httpContextMock.Request.Body = new MemoryStream()).Write(bytes, 0, bytes.Length);
@@ -48,7 +48,6 @@ namespace BenefactAPITests
         public async Task HigherValueFails()
         {
             await services.DoWithDB(async db => (await db.Boards.Include(b => b.Roles).FirstOrDefaultAsync()).Roles[0].Privilege = Privilege.Developer);
-            BoardExtensions.Board = await services.BoardLookup(1);
             var user = Auth.CurrentUser = await Auth.GetUser(services, "faff@faff.faff");
             var rpc = new BoardController(services);
             rpc.ControllerContext = CreateContext("{\"CardId\": 1, \"Text\": \"This is a test commment!\"}");
@@ -59,7 +58,6 @@ namespace BenefactAPITests
         public async Task AdminSucceeds()
         {
             await services.DoWithDB(async db => (await db.Boards.Include(b => b.Roles).FirstOrDefaultAsync()).Roles[0].Privilege = Privilege.Admin);
-            BoardExtensions.Board = await services.BoardLookup(1);
             var user = Auth.CurrentUser = await Auth.GetUser(services, "faff@faff.faff");
             var rpc = new BoardController(services);
             rpc.ControllerContext = CreateContext("{\"CardId\": 1, \"Text\": \"This is a test commment!\"}");
@@ -69,7 +67,6 @@ namespace BenefactAPITests
         public async Task CommentingFail()
         {
             await services.DoWithDB(async db => (await db.Boards.Include(b => b.Roles).FirstOrDefaultAsync()).Roles[0].Privilege = Privilege.Contribute);
-            BoardExtensions.Board = await services.BoardLookup(1);
             var user = Auth.CurrentUser = await Auth.GetUser(services, "faff@faff.faff");
             var rpc = new BoardController(services);
             rpc.ControllerContext = CreateContext("{\"CardId\": 1, \"Text\": \"This is a test commment!\"}");
@@ -80,7 +77,6 @@ namespace BenefactAPITests
         public async Task CommentingSuccess()
         {
             await services.DoWithDB(async db => (await db.Boards.Include(b => b.Roles).FirstOrDefaultAsync()).Roles[0].Privilege = Privilege.Comment);
-            BoardExtensions.Board = await services.BoardLookup(1);
             var user = Auth.CurrentUser = await Auth.GetUser(services, "faff@faff.faff");
             var rpc = new BoardController(services);
             rpc.ControllerContext = CreateContext("{\"CardId\": 1, \"Text\": \"This is a test commment!\"}");

@@ -50,6 +50,10 @@ namespace BenefactAPI.DataAccess
             modelBuilder.ConfigureKey(b => b.Attachments);
             modelBuilder.ConfigureKey(b => b.Roles);
 
+            modelBuilder.Entity<BoardData>()
+                .HasIndex(bd => bd.UrlName)
+                .IsUnique();
+
             // Card References
             modelBuilder.CardReference(c => c.Attachments);
             modelBuilder.CardReference(c => c.Comments);

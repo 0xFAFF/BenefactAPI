@@ -27,20 +27,6 @@ namespace BenefactAPI.Controllers
         CardData Card { get; }
     }
 
-    [ReplicateType]
-    public class BoardData
-    {
-        public int Id { get; set; }
-        public List<CardData> Cards { get; set; } = new List<CardData>();
-        public List<CommentData> Comments { get; set; } = new List<CommentData>();
-        public List<VoteData> Votes { get; set; } = new List<VoteData>();
-        public List<ColumnData> Columns { get; set; } = new List<ColumnData>();
-        public List<TagData> Tags { get; set; } = new List<TagData>();
-        public List<UserBoardRole> Users { get; set; } = new List<UserBoardRole>();
-        public List<BoardRole> Roles { get; set; } = new List<BoardRole>();
-        public List<AttachmentData> Attachments { get; set; } = new List<AttachmentData>();
-    }
-
     /// <summary>
     /// All fields on this must have null defaults since it's used in CardUpdate
     /// and specifying a non-null default will make it clear fields!

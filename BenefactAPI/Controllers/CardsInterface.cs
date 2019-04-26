@@ -31,7 +31,7 @@ namespace BenefactAPI.Controllers
                 if (card == null) throw new HTTPError("Card not found", 404);
                 if (card.AuthorId != Auth.CurrentUser.Id)
                     Auth.VerifyPrivilege(Privilege.Developer);
-                Util.UpdateMembersFrom(card, update,
+                TypeUtil.UpdateMembersFrom(card, update,
                     whiteList: new[] { nameof(CardData.Title), nameof(CardData.Description), nameof(CardData.ColumnId) });
                 if (update.TagIds != null)
                 {
