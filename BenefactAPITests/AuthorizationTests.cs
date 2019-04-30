@@ -49,7 +49,7 @@ namespace BenefactAPITests
         {
             await services.DoWithDB(async db => (await db.Boards.Include(b => b.Roles).FirstOrDefaultAsync()).Roles[0].Privilege = Privilege.Developer);
             var user = Auth.CurrentUser = await Auth.GetUser(services, "faff@faff.faff");
-            var rpc = new BoardController(services);
+            var rpc = new RootController(services);
             rpc.ControllerContext = CreateContext("{\"CardId\": 1, \"Text\": \"This is a test commment!\"}");
             var error = await Assert.ThrowsExceptionAsync<HTTPError>(
                 () => rpc.Post("comments/add"));
@@ -59,7 +59,7 @@ namespace BenefactAPITests
         {
             await services.DoWithDB(async db => (await db.Boards.Include(b => b.Roles).FirstOrDefaultAsync()).Roles[0].Privilege = Privilege.Admin);
             var user = Auth.CurrentUser = await Auth.GetUser(services, "faff@faff.faff");
-            var rpc = new BoardController(services);
+            var rpc = new RootController(services);
             rpc.ControllerContext = CreateContext("{\"CardId\": 1, \"Text\": \"This is a test commment!\"}");
             var result = rpc.Post("comments/add");
         }
@@ -68,7 +68,7 @@ namespace BenefactAPITests
         {
             await services.DoWithDB(async db => (await db.Boards.Include(b => b.Roles).FirstOrDefaultAsync()).Roles[0].Privilege = Privilege.Contribute);
             var user = Auth.CurrentUser = await Auth.GetUser(services, "faff@faff.faff");
-            var rpc = new BoardController(services);
+            var rpc = new RootController(services);
             rpc.ControllerContext = CreateContext("{\"CardId\": 1, \"Text\": \"This is a test commment!\"}");
             var error = await Assert.ThrowsExceptionAsync<HTTPError>(
                 () => rpc.Post("comments/add"));
@@ -78,7 +78,7 @@ namespace BenefactAPITests
         {
             await services.DoWithDB(async db => (await db.Boards.Include(b => b.Roles).FirstOrDefaultAsync()).Roles[0].Privilege = Privilege.Comment);
             var user = Auth.CurrentUser = await Auth.GetUser(services, "faff@faff.faff");
-            var rpc = new BoardController(services);
+            var rpc = new RootController(services);
             rpc.ControllerContext = CreateContext("{\"CardId\": 1, \"Text\": \"This is a test commment!\"}");
             var result = await rpc.Post("comments/add");
         }

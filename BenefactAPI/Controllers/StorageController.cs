@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using BenefactAPI.DataAccess;
+using BenefactAPI.RPCInterfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,40 +15,6 @@ using Replicate;
 
 namespace BenefactAPI.Controllers
 {
-    public class StorageEntry
-    {
-        public int Id { get; set; }
-        [Required]
-        public byte[] Data { get; set; }
-        [Required]
-        public AttachmentData Attachment { get; set; }
-    }
-    [ReplicateType]
-    public class AttachmentData : IBoardId, ICardReference
-    {
-        public int Id { get; set; }
-        [Required]
-        public string Name { get; set; }
-        [Required]
-        public string ContentType { get; set; }
-        [ReplicateIgnore]
-        public int BoardId { get; set; }
-        [ReplicateIgnore]
-        public BoardData Board { get; set; }
-        [ReplicateIgnore]
-        [Required]
-        public StorageEntry Storage { get; set; }
-        public int StorageId { get; set; }
-        [Required]
-        [ReplicateIgnore]
-        public CardData Card { get; set; }
-        public int CardId { get; set; }
-        [Required]
-        [ReplicateIgnore]
-        public UserData User { get; set; }
-        public int UserId { get; set; }
-    }
-
     [Route("api/board/{boardId}/files/")]
     [ReplicateRoute(Route = "files")]
     public class StorageController : ControllerBase
@@ -71,7 +38,7 @@ namespace BenefactAPI.Controllers
             return new FileContentResult(attachment.Storage.Data, new MediaTypeHeaderValue(attachment.ContentType));
         }
         [HttpPost("add")]
-        public async Task<int> Add(string boardId)
+        public async Task<AttachmentData> Add(string boardId)
         {
             BoardExtensions.Board = await BoardExtensions.BoardLookup(Services, boardId);
             Auth.ThrowIfUnauthorized(privilege: Privilege.Contribute);
@@ -93,8 +60,11 @@ namespace BenefactAPI.Controllers
                 CardId = cardId,
                 UserId = Auth.CurrentUser.Id,
             };
-            var id = (await Services.DoWithDB(db => db.Attachments.AddAsync(attachment))).Entity.Id;
-            return id;
+            return await Services.DoWithDB(async db =>
+            {
+                await db.Attachments.AddAsync(attachment);
+                return attachment;
+            });
         }
         public static Task<bool> Delete(DeleteData delete)
         {

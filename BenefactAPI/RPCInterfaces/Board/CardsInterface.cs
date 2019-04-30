@@ -10,8 +10,14 @@ using System.Threading.Tasks;
 using System.Linq.Expressions;
 using Replicate;
 
-namespace BenefactAPI.Controllers
+namespace BenefactAPI.RPCInterfaces.Board
 {
+    [ReplicateType]
+    public class CardVoteRequest
+    {
+        public int Count;
+        public int CardId;
+    }
     [ReplicateType]
     [ReplicateRoute(Route = "cards")]
     public class CardsInterface

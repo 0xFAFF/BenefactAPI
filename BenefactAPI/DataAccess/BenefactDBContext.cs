@@ -55,6 +55,11 @@ namespace BenefactAPI.DataAccess
                 .HasIndex(bd => bd.UrlName)
                 .IsUnique();
 
+            modelBuilder.Entity<BoardData>()
+                .HasOne(bd => bd.Creator)
+                .WithMany(u => u.CreatedBoards)
+                .HasForeignKey(bd => bd.CreatorId);
+
             // Card References
             modelBuilder.CardReference(c => c.Attachments);
             modelBuilder.CardReference(c => c.Comments);

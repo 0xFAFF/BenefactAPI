@@ -1,4 +1,6 @@
 ﻿using BenefactAPI.DataAccess;
+using BenefactAPI.RPCInterfaces;
+using BenefactAPI.RPCInterfaces.Board;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -17,18 +19,13 @@ namespace BenefactAPI.Controllers
         public RootController(IServiceProvider provider) : base(provider)
         {
             Channel.RegisterSingleton(new UserInterface(Services));
+            Channel.RegisterSingleton(new MetaInterface(Services));
             Channel.Respond<None, string>(Version);
-            Channel.Respond<TrelloBoard, string>(Trello_Import);
         }
 
         public Task<string> Version(None _)
         {
             return Task.FromResult(Environment.GetEnvironmentVariable("GIT_COMMIT"));
-        }
-
-        public Task<string> Trello_Import(TrelloBoard trellBoard)
-        {
-            return TrelloImport.Import(trellBoard, Services);
         }
     }
     [Route("api/board/{boardId}")]

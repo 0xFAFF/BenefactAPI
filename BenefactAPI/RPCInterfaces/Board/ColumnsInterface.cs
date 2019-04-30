@@ -1,11 +1,12 @@
-﻿using BenefactAPI.DataAccess;
+﻿using BenefactAPI.Controllers;
+using BenefactAPI.DataAccess;
 using Replicate;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace BenefactAPI.Controllers
+namespace BenefactAPI.RPCInterfaces.Board
 {
     [ReplicateType]
     [ReplicateRoute(Route = "columns")]

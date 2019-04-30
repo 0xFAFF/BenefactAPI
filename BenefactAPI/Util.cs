@@ -1,4 +1,5 @@
 ﻿using BenefactAPI.Controllers;
+using BenefactAPI.DataAccess;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -51,7 +52,7 @@ namespace BenefactAPI
                 }
                 catch { }
             }
-            throw new HTTPError($"Invalid URL param {key}");
+            return default(T);
         }
 
         public static void ConfigureKey<T>(this ModelBuilder modelBuilder,

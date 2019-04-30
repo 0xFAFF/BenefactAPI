@@ -1,4 +1,5 @@
-﻿using BenefactAPI.DataAccess;
+﻿using BenefactAPI.Controllers;
+using BenefactAPI.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Replicate;
 using System;
@@ -8,8 +9,21 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
-namespace BenefactAPI.Controllers
+namespace BenefactAPI.RPCInterfaces.Board
 {
+    [ReplicateType]
+    public class CardQuery
+    {
+        public Dictionary<string, List<CardQueryTerm>> Groups;
+        public int? Limit;
+    }
+    [ReplicateType]
+    public class CardQueryTerm
+    {
+        public List<int> Tags;
+        public int? ColumnId;
+        public string Title;
+    }
     [ReplicateType]
     public class BoardResponse
     {
@@ -20,27 +34,6 @@ namespace BenefactAPI.Controllers
         public List<UserData> Users;
         public string Title;
         public string UrlName;
-    }
-
-    [ReplicateType(AutoMembers = AutoAdd.None)]
-    public class BoardData
-    {
-        [Replicate]
-        public int Id { get; set; }
-        [Required]
-        [Replicate]
-        public string Title { get; set; }
-        [Required]
-        [Replicate]
-        public string UrlName { get; set; }
-        public List<CardData> Cards { get; set; } = new List<CardData>();
-        public List<CommentData> Comments { get; set; } = new List<CommentData>();
-        public List<VoteData> Votes { get; set; } = new List<VoteData>();
-        public List<ColumnData> Columns { get; set; } = new List<ColumnData>();
-        public List<TagData> Tags { get; set; } = new List<TagData>();
-        public List<UserBoardRole> Users { get; set; } = new List<UserBoardRole>();
-        public List<BoardRole> Roles { get; set; } = new List<BoardRole>();
-        public List<AttachmentData> Attachments { get; set; } = new List<AttachmentData>();
     }
 
     [ReplicateType]

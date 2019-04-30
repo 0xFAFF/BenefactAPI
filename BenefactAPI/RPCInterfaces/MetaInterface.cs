@@ -1,68 +1,58 @@
 ﻿using BenefactAPI.Controllers;
-using Microsoft.Extensions.DependencyInjection;
+using BenefactAPI.DataAccess;
 using Replicate;
-using Replicate.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace BenefactAPI.DataAccess
+namespace BenefactAPI.RPCInterfaces
 {
     [ReplicateType]
-    public class TrelloCard
+    public class CreateBoardRequest
     {
-        public string id;
-        public bool closed;
-        public List<string> idLabels;
-        public string idList;
-        public string desc;
-        public string name;
-
-        [ReplicateIgnore]
-        public CardData Card;
+        public string Title;
+        public string UrlName;
     }
     [ReplicateType]
-    public class TrelloList
+    public class TrelloImportRequest
     {
-        public string id;
-        public string name;
-
-        [ReplicateIgnore]
-        public ColumnData Column;
+        public string UrlName;
+        public TrelloBoard Board;
     }
     [ReplicateType]
-    public class TrelloLabel
+    public class MetaInterface
     {
-        public string id;
-        public string name;
-        public string color;
-
-        [ReplicateIgnore]
-        public TagData Tag;
-    }
-    [ReplicateType]
-    public class TrelloBoard
-    {
-        public string id;
-        public string name;
-        public List<TrelloLabel> labels;
-        public List<TrelloCard> cards;
-        public List<TrelloList> lists;
-
-        [ReplicateIgnore]
-        public BoardData Board;
-    }
-    public class TrelloImport
-    {
-        public static Task<string> Import(TrelloBoard board, IServiceProvider services)
+        IServiceProvider services;
+        public MetaInterface(IServiceProvider services)
         {
+            this.services = services;
+        }
+        [AuthRequired]
+        [ReplicateRoute(Route = "create_board")]
+        public Task<string> Create(CreateBoardRequest request)
+        {
+            return services.DoWithDB(async db =>
+            {
+                var board = new BoardData();
+                TypeUtil.UpdateMembersFrom(board, request);
+                board.CreatorId = Auth.CurrentUser.Id;
+                await db.AddAsync(board);
+                return board.UrlName;
+            }).HandleDuplicate("ix_boards_url_name", "A board with that URL already exists");
+        }
+        [AuthRequired]
+        [ReplicateRoute(Route = "trello_import")]
+        public Task<string> Import(TrelloImportRequest request)
+        {
+            var board = request.Board;
             return services.DoWithDB(async db =>
             {
                 board.Board = new BoardData()
                 {
                     Title = board.name,
-                    UrlName = board.name.ToLower(),
+                    UrlName = request.UrlName,
+                    CreatorId = Auth.CurrentUser.Id,
                 };
                 await db.AddAsync(board.Board);
                 foreach (var label in board.labels)
@@ -101,13 +91,25 @@ namespace BenefactAPI.DataAccess
                         AuthorId = Auth.CurrentUser.Id,
                     };
                     await db.AddAsync(card.Card);
+                    foreach (var attachment in card.attachments)
+                    {
+                        await db.AddAsync(new AttachmentData()
+                        {
+                            BoardId = board.Board.Id,
+                            CardId = card.Card.Id,
+                            Name = attachment.name,
+                            Url = attachment.url,
+                            Preview = attachment.previews.FirstOrDefault(p => p.width == 150)?.url,
+                            UserId = Auth.CurrentUser.Id,
+                        });
+                    }
                 }
                 var role = new BoardRole() { Name = "Admin", Privilege = (Privilege)255, BoardId = board.Board.Id };
                 await db.AddAsync(role);
                 var userRole = new UserBoardRole() { BoardId = board.Board.Id, UserId = Auth.CurrentUser.Id, BoardRole = role };
                 await db.AddAsync(userRole);
                 return board.Board.UrlName;
-            });
+            }).HandleDuplicate("ix_boards_url_name", "A board with that URL already exists");
         }
     }
 }

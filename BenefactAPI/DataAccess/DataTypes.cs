@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace BenefactAPI.Controllers
+namespace BenefactAPI.DataAccess
 {
     public interface IOrdered
     {
@@ -25,6 +25,29 @@ namespace BenefactAPI.Controllers
         int BoardId { get; }
         int CardId { get; }
         CardData Card { get; }
+    }
+
+    [ReplicateType(AutoMembers = AutoAdd.None)]
+    public class BoardData
+    {
+        [Replicate]
+        public int Id { get; set; }
+        [Required]
+        [Replicate]
+        public string Title { get; set; }
+        [Required]
+        [Replicate]
+        public string UrlName { get; set; }
+        public UserData Creator { get; set; }
+        public int? CreatorId { get; set; }
+        public List<CardData> Cards { get; set; } = new List<CardData>();
+        public List<CommentData> Comments { get; set; } = new List<CommentData>();
+        public List<VoteData> Votes { get; set; } = new List<VoteData>();
+        public List<ColumnData> Columns { get; set; } = new List<ColumnData>();
+        public List<TagData> Tags { get; set; } = new List<TagData>();
+        public List<UserBoardRole> Users { get; set; } = new List<UserBoardRole>();
+        public List<BoardRole> Roles { get; set; } = new List<BoardRole>();
+        public List<AttachmentData> Attachments { get; set; } = new List<AttachmentData>();
     }
 
     /// <summary>
@@ -86,12 +109,6 @@ namespace BenefactAPI.Controllers
         public double? EditedTime { get; set; }
     }
     [ReplicateType]
-    public class CardVoteRequest
-    {
-        public int Count;
-        public int CardId;
-    }
-    [ReplicateType]
     public class VoteData : ICardReference
     {
         public int Count { get; set; }
@@ -149,21 +166,29 @@ namespace BenefactAPI.Controllers
         public List<CardTag> CardTags { get; set; }
     }
     [ReplicateType]
-    public class DeleteData
+    public class UserData
     {
         public int Id { get; set; }
-    }
-    [ReplicateType]
-    public class CardQuery
-    {
-        public Dictionary<string, List<CardQueryTerm>> Groups;
-        public int? Limit;
-    }
-    [ReplicateType]
-    public class CardQueryTerm
-    {
-        public List<int> Tags;
-        public int? ColumnId;
-        public string Title;
+        [Required]
+        public string Email { get; set; }
+        [Required]
+        public string Name { get; set; }
+        [ReplicateIgnore]
+        public Guid? Nonce { get; set; }
+        public bool EmailVerified { get; set; }
+        [ReplicateIgnore]
+        public string Hash { get; set; }
+        [ReplicateIgnore]
+        public List<CommentData> Comments { get; set; } = new List<CommentData>();
+        [ReplicateIgnore]
+        public List<VoteData> Votes { get; set; } = new List<VoteData>();
+        [ReplicateIgnore]
+        public List<AttachmentData> Attachments { get; set; } = new List<AttachmentData>();
+        [ReplicateIgnore]
+        public List<UserBoardRole> Roles { get; set; } = new List<UserBoardRole>();
+        [ReplicateIgnore]
+        public List<CardData> CreatedCards { get; set; } = new List<CardData>();
+        [ReplicateIgnore]
+        public List<BoardData> CreatedBoards { get; set; } = new List<BoardData>();
     }
 }
