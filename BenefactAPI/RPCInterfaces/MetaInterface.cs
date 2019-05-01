@@ -28,6 +28,13 @@ namespace BenefactAPI.RPCInterfaces
         {
             this.services = services;
         }
+        static async Task addAdminRole(BenefactDbContext db, BoardData board)
+        {
+            var role = new BoardRole() { Name = "Admin", Privilege = (Privilege)255, BoardId = board.Id };
+            await db.AddAsync(role);
+            var userRole = new UserBoardRole() { BoardId = board.Id, UserId = Auth.CurrentUser.Id, BoardRole = role };
+            await db.AddAsync(userRole);
+        }
         [AuthRequired]
         [ReplicateRoute(Route = "create_board")]
         public Task<string> Create(CreateBoardRequest request)
@@ -38,6 +45,7 @@ namespace BenefactAPI.RPCInterfaces
                 TypeUtil.UpdateMembersFrom(board, request);
                 board.CreatorId = Auth.CurrentUser.Id;
                 await db.AddAsync(board);
+                await addAdminRole(db, board);
                 return board.UrlName;
             }).HandleDuplicate("ix_boards_url_name", "A board with that URL already exists");
         }
@@ -104,10 +112,7 @@ namespace BenefactAPI.RPCInterfaces
                         });
                     }
                 }
-                var role = new BoardRole() { Name = "Admin", Privilege = (Privilege)255, BoardId = board.Board.Id };
-                await db.AddAsync(role);
-                var userRole = new UserBoardRole() { BoardId = board.Board.Id, UserId = Auth.CurrentUser.Id, BoardRole = role };
-                await db.AddAsync(userRole);
+                await addAdminRole(db, board.Board);
                 return board.Board.UrlName;
             }).HandleDuplicate("ix_boards_url_name", "A board with that URL already exists");
         }

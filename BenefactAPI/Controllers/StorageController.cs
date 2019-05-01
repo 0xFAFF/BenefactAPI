@@ -24,7 +24,7 @@ namespace BenefactAPI.Controllers
         {
             Services = services;
         }
-        [HttpGet("{id}")]
+        [HttpGet("{id}/{name}")]
         public async Task<ActionResult> Get(int? id, string boardId)
         {
             BoardExtensions.Board = await BoardExtensions.BoardLookup(Services, boardId);
@@ -73,7 +73,9 @@ namespace BenefactAPI.Controllers
                 var existing = await db.Attachments.Include(a => a.Storage).BoardFilter(delete.Id).FirstOrDefaultAsync();
                 if (existing == null)
                     throw new HTTPError("Attachment not found", 404);
-                return await db.DeleteAsync(db.Files, existing.Storage);
+                if(existing.Storage != null)
+                    await db.DeleteAsync(db.Files, existing.Storage);
+                return await db.DeleteAsync(db.Attachments, existing);
             }, false);
         }
     }
