@@ -84,8 +84,14 @@ namespace BenefactAPI.DataAccess
                 .HasForeignKey(ur => ur.UserId);
 
             modelBuilder.Entity<UserBoardRole>()
+                .HasIndex(ubr => new { ubr.BoardId, ubr.BoardRoleId })
+                .HasName("ik_board_role");
+
+            modelBuilder.Entity<UserBoardRole>()
                 .HasOne(ur => ur.BoardRole)
-                .WithMany(b => b.Users);
+                .WithMany(b => b.Users)
+                .HasForeignKey(ubr => new { ubr.BoardId, ubr.BoardRoleId })
+                .HasConstraintName("fk_board_role");
 
             modelBuilder.Entity<BoardData>()
                 .HasMany(b => b.Users)

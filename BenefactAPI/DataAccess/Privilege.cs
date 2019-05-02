@@ -39,6 +39,8 @@ namespace BenefactAPI.DataAccess
         public int BoardId { get; set; }
         [ReplicateIgnore]
         public BoardData Board { get; set; }
+        [ReplicateIgnore]
+        public int BoardRoleId { get; set; }
         public BoardRole BoardRole { get; set; }
     }
 }

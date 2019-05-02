@@ -284,20 +284,14 @@ namespace BenefactAPI.Migrations
                     b.Property<int>("BoardId")
                         .HasColumnName("board_id");
 
-                    b.Property<int?>("BoardRoleBoardId")
-                        .HasColumnName("board_role_board_id");
-
-                    b.Property<int?>("BoardRoleId")
+                    b.Property<int>("BoardRoleId")
                         .HasColumnName("board_role_id");
 
                     b.HasKey("UserId", "BoardId")
                         .HasName("pk_user_board_role");
 
-                    b.HasIndex("BoardId")
-                        .HasName("ix_user_board_role_board_id");
-
-                    b.HasIndex("BoardRoleBoardId", "BoardRoleId")
-                        .HasName("ix_user_board_role_board_role_board_id_board_role_id");
+                    b.HasIndex("BoardId", "BoardRoleId")
+                        .HasName("ik_board_role");
 
                     b.ToTable("user_board_role");
                 });
@@ -497,8 +491,9 @@ namespace BenefactAPI.Migrations
 
                     b.HasOne("BenefactAPI.DataAccess.BoardRole", "BoardRole")
                         .WithMany("Users")
-                        .HasForeignKey("BoardRoleBoardId", "BoardRoleId")
-                        .HasConstraintName("fk_user_board_role_roles_board_role_board_id_board_role_id");
+                        .HasForeignKey("BoardId", "BoardRoleId")
+                        .HasConstraintName("fk_board_role")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("BenefactAPI.DataAccess.VoteData", b =>
