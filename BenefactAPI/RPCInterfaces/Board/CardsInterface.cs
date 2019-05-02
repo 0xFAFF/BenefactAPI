@@ -35,7 +35,7 @@ namespace BenefactAPI.RPCInterfaces.Board
             {
                 var card = await db.Cards.Include(c => c.Tags).BoardFilter(update.Id).FirstOrDefaultAsync();
                 if (card == null) throw new HTTPError("Card not found", 404);
-                if (card.AuthorId != Auth.CurrentUser.Id)
+                if (card.AuthorId != Auth.CurrentUser.Id || update.Index.HasValue)
                     Auth.VerifyPrivilege(Privilege.Developer);
                 TypeUtil.UpdateMembersFrom(card, update,
                     whiteList: new[] { nameof(CardData.Title), nameof(CardData.Description), nameof(CardData.ColumnId) });
