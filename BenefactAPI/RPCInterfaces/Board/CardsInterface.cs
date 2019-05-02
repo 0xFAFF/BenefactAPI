@@ -35,7 +35,8 @@ namespace BenefactAPI.RPCInterfaces.Board
             {
                 var card = await db.Cards.Include(c => c.Tags).BoardFilter(update.Id).FirstOrDefaultAsync();
                 if (card == null) throw new HTTPError("Card not found", 404);
-                if (card.AuthorId != Auth.CurrentUser.Id || update.Index.HasValue)
+                // Only developers can edit cards they don't own, or move cards
+                if (card.AuthorId != Auth.CurrentUser.Id || update.Index.HasValue || update.ColumnId.HasValue)
                     Auth.VerifyPrivilege(Privilege.Developer);
                 TypeUtil.UpdateMembersFrom(card, update,
                     whiteList: new[] { nameof(CardData.Title), nameof(CardData.Description), nameof(CardData.ColumnId) });
@@ -71,11 +72,17 @@ namespace BenefactAPI.RPCInterfaces.Board
             });
         }
 
-        [AuthRequired(RequirePrivilege = Privilege.Admin)]
+        [AuthRequired]
         public Task<bool> Delete(DeleteData card)
         {
             return Services.DoWithDB(
-                db => db.DeleteOrderAsync(db.Cards, card.Id),
+                async db =>
+                {
+                    var existing = await db.Cards.FirstOrDefaultAsync(c => c.Id == card.Id);
+                    if (existing.AuthorId != Auth.CurrentUser.Id)
+                        Auth.VerifyPrivilege(Privilege.Developer);
+                    return await db.DeleteOrderAsync(db.Cards, card.Id);
+                },
                 false);
         }
 

@@ -19,7 +19,7 @@ namespace BenefactAPI.RPCInterfaces.Board
             Services = services;
         }
 
-        [AuthRequired(RequirePrivilege = Privilege.Comment | Privilege.Vote)]
+        [AuthRequired]
         public Task Add(CommentData comment)
         {
             return Services.DoWithDB(async db =>
@@ -32,7 +32,7 @@ namespace BenefactAPI.RPCInterfaces.Board
             });
         }
 
-        [AuthRequired(RequirePrivilege = Privilege.Comment)]
+        [AuthRequired]
         public Task<bool> Update(CommentData comment)
         {
             return Services.DoWithDB(async db =>
@@ -40,7 +40,7 @@ namespace BenefactAPI.RPCInterfaces.Board
                 var existingComment = await db.Comments.BoardFilter(comment.Id).FirstOrDefaultAsync();
                 if (existingComment == null) throw new HTTPError("Comment not found", 404);
                 if (existingComment.UserId != Auth.CurrentUser.Id)
-                    return false;
+                    Auth.VerifyPrivilege(Privilege.Developer);
                 existingComment.Text = comment.Text;
                 existingComment.EditedTime = Util.Now();
                 await db.SaveChangesAsync();
@@ -48,13 +48,14 @@ namespace BenefactAPI.RPCInterfaces.Board
             });
         }
 
+        [AuthRequired]
         public Task<bool> Delete(CommentData comment)
         {
             return Services.DoWithDB(async db =>
             {
                 var existingComment = await db.Comments.BoardFilter(comment.Id).FirstOrDefaultAsync();
                 if (existingComment.UserId != Auth.CurrentUser.Id)
-                    return false;
+                    Auth.VerifyPrivilege(Privilege.Developer);
                 if (await db.DeleteAsync(db.Comments, existingComment))
                 {
                     await db.SaveChangesAsync();
