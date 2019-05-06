@@ -10,6 +10,12 @@ using System.Threading.Tasks;
 namespace BenefactAPI.RPCInterfaces.Board
 {
     [ReplicateType]
+    public class CommentRequest
+    {
+        public int CardId;
+        public string Text;
+    }
+    [ReplicateType]
     [ReplicateRoute(Route = "comments")]
     public class CommentsInterface
     {
@@ -20,14 +26,18 @@ namespace BenefactAPI.RPCInterfaces.Board
         }
 
         [AuthRequired]
-        public Task Add(CommentData comment)
+        public Task Add(CommentRequest request)
         {
             return Services.DoWithDB(async db =>
             {
+                var comment = new CommentData();
+                TypeUtil.UpdateMembersFrom(comment, request);
+                var card = await db.Cards.BoardFilter(request.CardId).FirstOr404();
+                if (card.AuthorId != Auth.CurrentUser.Id)
+                    Auth.VerifyPrivilege(Privilege.Comment);
                 comment.UserId = Auth.CurrentUser.Id;
                 comment.BoardId = BoardExtensions.Board.Id;
                 await db.Comments.AddAsync(comment);
-                await db.SaveChangesAsync();
                 return true;
             });
         }
@@ -37,8 +47,7 @@ namespace BenefactAPI.RPCInterfaces.Board
         {
             return Services.DoWithDB(async db =>
             {
-                var existingComment = await db.Comments.BoardFilter(comment.Id).FirstOrDefaultAsync();
-                if (existingComment == null) throw new HTTPError("Comment not found", 404);
+                var existingComment = await db.Comments.BoardFilter(comment.Id).FirstOr404();
                 if (existingComment.UserId != Auth.CurrentUser.Id)
                     Auth.VerifyPrivilege(Privilege.Developer);
                 existingComment.Text = comment.Text;
@@ -53,7 +62,7 @@ namespace BenefactAPI.RPCInterfaces.Board
         {
             return Services.DoWithDB(async db =>
             {
-                var existingComment = await db.Comments.BoardFilter(comment.Id).FirstOrDefaultAsync();
+                var existingComment = await db.Comments.BoardFilter(comment.Id).FirstOr404();
                 if (existingComment.UserId != Auth.CurrentUser.Id)
                     Auth.VerifyPrivilege(Privilege.Developer);
                 if (await db.DeleteAsync(db.Comments, existingComment))

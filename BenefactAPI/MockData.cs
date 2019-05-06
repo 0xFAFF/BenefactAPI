@@ -20,23 +20,34 @@ namespace BenefactAPI
                 Name = "FAFF",
                 Password = "fafffaff",
             }, false).GetAwaiter().GetResult();
+            users.Add(new UserCreateRequest()
+            {
+                Email = "a@a.a",
+                Name = "A",
+                Password = "a",
+            }, false).GetAwaiter().GetResult();
             BoardData board1 = null;
             services.DoWithDB(async db =>
             {
                 board1 = db.Boards.FirstOrDefault() ?? db.Boards.Add(new BoardData() { Id = 1, Title = "Benefact", UrlName = "benefact" }).Entity;
-
-                board1.Roles = new List<BoardRole>() {
-                    new BoardRole() { BoardId = 1, Name = "Admin", Privilege = Privilege.Admin },
-                };
+                
                 var board2 = db.Boards.Skip(1).FirstOrDefault() ?? db.Boards.Add(new BoardData() { Id = 2, Title = "FAFF", UrlName = "faff" }).Entity;
 
                 var faff = await db.Users.FirstOrDefaultAsync(u => u.Name == "FAFF");
+                var aUser = await db.Users.FirstOrDefaultAsync(u => u.Name == "A");
+                aUser.EmailVerified = true;
                 faff.EmailVerified = true;
-                faff.Roles.Add(new UserBoardRole()
+                faff.Roles.Add(new UserRole()
                 {
                     BoardId = 1,
                     UserId = faff.Id,
-                    BoardRole = board1.Roles[0]
+                    Privilege = Privilege.Admin,
+                });
+                aUser.Roles.Add(new UserRole()
+                {
+                    BoardId = 1,
+                    UserId = aUser.Id,
+                    Privilege = Privilege.Read,
                 });
                 db.Tags.Add(new TagData()
                 {
@@ -97,7 +108,7 @@ namespace BenefactAPI
                     TagIds = new[] { 1, 2, 3, 4, 5 }.ToList(),
                     BoardId = 1,
                     Index = 1,
-                    AuthorId = 1,
+                    AuthorId = faff.Id,
                 });
                 db.Cards.Add(new CardData()
                 {
@@ -107,7 +118,7 @@ namespace BenefactAPI
                     TagIds = new[] { 1 }.ToList(),
                     BoardId = 1,
                     Index = 2,
-                    AuthorId = 1,
+                    AuthorId = faff.Id,
                 });
                 db.Cards.Add(new CardData()
                 {
@@ -117,7 +128,7 @@ namespace BenefactAPI
                     TagIds = new[] { 4, 2 }.ToList(),
                     BoardId = 1,
                     Index = 3,
-                    AuthorId = 1,
+                    AuthorId = faff.Id,
                 });
                 db.Cards.Add(new CardData()
                 {
@@ -127,7 +138,7 @@ namespace BenefactAPI
                     TagIds = new[] { 4 }.ToList(),
                     BoardId = 1,
                     Index = 4,
-                    AuthorId = 1,
+                    AuthorId = faff.Id,
                 });
                 db.SaveChanges();
                 return true;

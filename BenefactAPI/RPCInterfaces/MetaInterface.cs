@@ -30,9 +30,7 @@ namespace BenefactAPI.RPCInterfaces
         }
         static async Task addAdminRole(BenefactDbContext db, BoardData board)
         {
-            var role = new BoardRole() { Name = "Admin", Privilege = (Privilege)255, BoardId = board.Id };
-            await db.AddAsync(role);
-            var userRole = new UserBoardRole() { BoardId = board.Id, UserId = Auth.CurrentUser.Id, BoardRole = role };
+            var userRole = new UserRole() { BoardId = board.Id, UserId = Auth.CurrentUser.Id, Privilege = (Privilege)255 };
             await db.AddAsync(userRole);
         }
         [AuthRequired]

@@ -18,7 +18,7 @@ namespace BenefactAPI.DataAccess
     public class BenefactDbContext : DbContext
     {
         public DbSet<BoardData> Boards { get; set; }
-        public DbSet<BoardRole> Roles { get; set; }
+        public DbSet<UserRole> Roles { get; set; }
         public DbSet<UserData> Users { get; set; }
         public DbSet<CardData> Cards { get; set; }
         public DbSet<CommentData> Comments { get; set; }
@@ -49,7 +49,6 @@ namespace BenefactAPI.DataAccess
             modelBuilder.ConfigureKey(b => b.Tags);
             modelBuilder.ConfigureKey(b => b.Comments);
             modelBuilder.ConfigureKey(b => b.Attachments);
-            modelBuilder.ConfigureKey(b => b.Roles);
 
             modelBuilder.Entity<BoardData>()
                 .HasIndex(bd => bd.UrlName)
@@ -75,27 +74,17 @@ namespace BenefactAPI.DataAccess
                 .HasForeignKey(cd => cd.AuthorId);
 
             // Privileges
-            modelBuilder.Entity<UserBoardRole>()
+            modelBuilder.Entity<UserRole>()
                 .HasKey(ur => new { ur.UserId, ur.BoardId });
 
-            modelBuilder.Entity<UserBoardRole>()
+            modelBuilder.Entity<UserRole>()
                 .HasOne(ur => ur.User)
                 .WithMany(u => u.Roles)
                 .HasForeignKey(ur => ur.UserId);
 
-            modelBuilder.Entity<UserBoardRole>()
-                .HasIndex(ubr => new { ubr.BoardId, ubr.BoardRoleId })
-                .HasName("ik_board_role");
-
-            modelBuilder.Entity<UserBoardRole>()
-                .HasOne(ur => ur.BoardRole)
-                .WithMany(b => b.Users)
-                .HasForeignKey(ubr => new { ubr.BoardId, ubr.BoardRoleId })
-                .HasConstraintName("fk_board_role");
-
-            modelBuilder.Entity<BoardData>()
-                .HasMany(b => b.Users)
-                .WithOne(u => u.Board)
+            modelBuilder.Entity<UserRole>()
+                .HasOne(u => u.Board)
+                .WithMany(b => b.Roles)
                 .HasForeignKey(u => u.BoardId);
 
             modelBuilder.Entity<UserData>()

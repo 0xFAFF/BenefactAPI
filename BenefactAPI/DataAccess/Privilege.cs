@@ -18,20 +18,7 @@ namespace BenefactAPI.DataAccess
     }
 
     [ReplicateType]
-    public class BoardRole : IBoardId
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        [ReplicateIgnore]
-        public int BoardId { get; set; }
-        public BoardData Board { get; set; }
-        [ReplicateIgnore]
-        public List<UserBoardRole> Users { get; set; }
-        public Privilege Privilege { get; set; }
-    }
-
-    [ReplicateType]
-    public class UserBoardRole
+    public class UserRole
     {
         public int UserId { get; set; }
         public UserData User { get; set; }
@@ -39,8 +26,6 @@ namespace BenefactAPI.DataAccess
         public int BoardId { get; set; }
         [ReplicateIgnore]
         public BoardData Board { get; set; }
-        [ReplicateIgnore]
-        public int BoardRoleId { get; set; }
-        public BoardRole BoardRole { get; set; }
+        public Privilege Privilege { get; set; }
     }
 }

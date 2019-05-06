@@ -28,16 +28,21 @@ namespace BenefactAPI.RPCInterfaces.Board
     public class BoardResponse
     {
         public Dictionary<string, List<CardData>> Cards;
-        public BoardRole UserRole;
+        public UserRole UserRole;
         public List<ColumnData> Columns;
         public List<TagData> Tags;
         public List<UserData> Users;
         public string Title;
         public string UrlName;
     }
+    [ReplicateType]
+    public class SetPrivilegeRequest
+    {
+        public int UserId;
+        public Privilege Privilege;
+    }
 
     [ReplicateType]
-    [ReplicateRoute(Route = "")]
     public class BoardsInterface
     {
         IServiceProvider Services;
@@ -110,6 +115,31 @@ namespace BenefactAPI.RPCInterfaces.Board
                 TypeUtil.UpdateMembersFrom(response, BoardExtensions.Board, blackList:
                     new string[] { nameof(BoardResponse.Tags), nameof(BoardResponse.Columns), nameof(BoardResponse.Users), nameof(BoardResponse.Cards) });
                 return response;
+            });
+        }
+
+        [AuthRequired(RequirePrivilege = Privilege.Admin)]
+        public async Task<bool> SetPrivilege(SetPrivilegeRequest request)
+        {
+            if (request.UserId == BoardExtensions.Board.CreatorId)
+                throw new HTTPError("Cannot set the privilege of the board's creator", 400);
+            return await Services.DoWithDB(async db =>
+            {
+                var existingRole = await db.Roles.Where(r => r.BoardId == BoardExtensions.Board.Id && r.UserId == request.UserId).FirstOrDefaultAsync();
+                if (existingRole != null)
+                {
+                    if (existingRole.Privilege == request.Privilege)
+                        return false;
+                    existingRole.Privilege = request.Privilege;
+                }
+                else
+                    existingRole = (await db.Roles.AddAsync(new UserRole()
+                    {
+                        BoardId = BoardExtensions.Board.Id,
+                        Privilege = request.Privilege,
+                        UserId = request.UserId
+                    })).Entity;
+                return true;
             });
         }
     }

@@ -24,7 +24,7 @@ namespace BenefactAPI.Controllers
     public class UserResponse
     {
         public UserData User;
-        public List<BoardRole> Roles;
+        public List<UserRole> Roles;
     }
     [ReplicateType]
     [ReplicateRoute(Route = "users")]
@@ -129,7 +129,7 @@ namespace BenefactAPI.Controllers
         public async Task<UserResponse> Current()
         {
             var boards = await Services.DoWithDB(db =>
-                db.Roles.Include(r => r.Board).Where(b => b.Users.Any(u => u.UserId == Auth.CurrentUser.Id)).ToListAsync());
+                db.Roles.Include(r => r.Board).Where(r => r.UserId == Auth.CurrentUser.Id).ToListAsync());
             return new UserResponse()
             {
                 User = Auth.CurrentUser,

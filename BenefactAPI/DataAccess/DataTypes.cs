@@ -45,8 +45,7 @@ namespace BenefactAPI.DataAccess
         public List<VoteData> Votes { get; set; } = new List<VoteData>();
         public List<ColumnData> Columns { get; set; } = new List<ColumnData>();
         public List<TagData> Tags { get; set; } = new List<TagData>();
-        public List<UserBoardRole> Users { get; set; } = new List<UserBoardRole>();
-        public List<BoardRole> Roles { get; set; } = new List<BoardRole>();
+        public List<UserRole> Roles { get; set; } = new List<UserRole>();
         public List<AttachmentData> Attachments { get; set; } = new List<AttachmentData>();
     }
 
@@ -185,7 +184,7 @@ namespace BenefactAPI.DataAccess
         [ReplicateIgnore]
         public List<AttachmentData> Attachments { get; set; } = new List<AttachmentData>();
         [ReplicateIgnore]
-        public List<UserBoardRole> Roles { get; set; } = new List<UserBoardRole>();
+        public List<UserRole> Roles { get; set; } = new List<UserRole>();
         [ReplicateIgnore]
         public List<CardData> CreatedCards { get; set; } = new List<CardData>();
         [ReplicateIgnore]

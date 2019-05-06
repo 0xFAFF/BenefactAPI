@@ -44,7 +44,7 @@ namespace BenefactAPI.Controllers
         {
             BoardExtensions.Board = await BoardExtensions.BoardLookup(Services, ControllerContext.GetRouteParam("boardId", s => s));
             if (Auth.CurrentUser != null)
-                Auth.CurrentRole = Auth.CurrentUser.Roles.FirstOrDefault(ur => ur.BoardId == BoardExtensions.Board.Id)?.BoardRole;
+                Auth.CurrentRole = Auth.CurrentUser.Roles.FirstOrDefault(ur => ur.BoardId == BoardExtensions.Board.Id);
             return await base.Handle(path);
         }
     }
