@@ -3,14 +3,11 @@ vars:
   default:
     name: db
 cmds:
-  build:
+  init:
     - cmd: docker build -t {name} .
-  clean:
-    - steps: [stop]
-    - cmd: docker image rm {name}
-  run:
     - cmd: docker run -itd --name {name} {name}
     - cmd: docker network connect --ip {ip} {network} {name}
-  stop:
+  destroy:
     - cmd: docker stop {name}
     - cmd: docker container rm {name}
+    - cmd: docker image rm {name}
