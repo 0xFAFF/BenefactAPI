@@ -1,4 +1,5 @@
-﻿using BenefactAPI.DataAccess;
+﻿using BenefactAPI.Controllers;
+using BenefactAPI.DataAccess;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -18,13 +19,14 @@ using System.Net.Http;
 using System.Net.Mail;
 using System.Threading.Tasks;
 
-namespace BenefactAPI.Controllers
+namespace BenefactAPI.RPCInterfaces
 {
     [ReplicateType]
     public class UserResponse
     {
         public UserData User;
         public List<UserRole> Roles;
+        public List<CardData> Cards;
     }
     [ReplicateType]
     [ReplicateRoute(Route = "users")]
@@ -128,13 +130,15 @@ namespace BenefactAPI.Controllers
         [AuthRequired]
         public async Task<UserResponse> Current()
         {
-            var boards = await Services.DoWithDB(db =>
-                db.Roles.Include(r => r.Board).Where(r => r.UserId == Auth.CurrentUser.Id).ToListAsync());
-            return new UserResponse()
+            return await Services.DoWithDB(async db =>
             {
-                User = Auth.CurrentUser,
-                Roles = boards
-            };
+                return new UserResponse()
+                {
+                    User = Auth.CurrentUser,
+                    Roles = await db.Roles.Include(r => r.Board).Where(r => r.UserId == Auth.CurrentUser.Id).ToListAsync(),
+                    Cards = await db.Cards.Where(c => c.AuthorId == Auth.CurrentUser.Id).ToListAsync(),
+                };
+            });
         }
     }
 }

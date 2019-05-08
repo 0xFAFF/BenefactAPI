@@ -1,5 +1,6 @@
 ﻿using BenefactAPI.Controllers;
 using BenefactAPI.DataAccess;
+using BenefactAPI.RPCInterfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
