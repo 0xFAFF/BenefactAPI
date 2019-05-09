@@ -34,7 +34,7 @@ namespace BenefactAPI.RPCInterfaces
             await db.AddAsync(userRole);
         }
         [AuthRequired]
-        [ReplicateRoute(Route = "create_board")]
+        [ReplicateRoute(Route = "board/create")]
         public Task<string> Create(CreateBoardRequest request)
         {
             return services.DoWithDB(async db =>
@@ -48,7 +48,7 @@ namespace BenefactAPI.RPCInterfaces
             }).HandleDuplicate("ix_boards_url_name", "A board with that URL already exists");
         }
         [AuthRequired]
-        [ReplicateRoute(Route = "trello_import")]
+        [ReplicateRoute(Route = "board/trello_import")]
         public Task<string> Import(TrelloImportRequest request)
         {
             var board = request.Board;

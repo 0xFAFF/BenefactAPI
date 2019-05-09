@@ -28,7 +28,7 @@ namespace BenefactAPI.Controllers
             return Task.FromResult(Environment.GetEnvironmentVariable("GIT_COMMIT"));
         }
     }
-    [Route("api/board/{boardId}")]
+    [Route("api/boards/{boardId}")]
     public class BoardController : ReplicateController
     {
         public BoardController(IServiceProvider provider) : base(provider)
