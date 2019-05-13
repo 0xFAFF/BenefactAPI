@@ -27,6 +27,7 @@ namespace BenefactAPI.DataAccess
         public DbSet<TagData> Tags { get; set; }
         public DbSet<StorageEntry> Files { get; set; }
         public DbSet<AttachmentData> Attachments { get; set; }
+        public DbSet<InviteData> Invites { get; set; }
 
         IHostingEnvironment environment;
         public BenefactDbContext(DbContextOptions options, IHostingEnvironment env) : base(options) { environment = env; }
@@ -49,6 +50,7 @@ namespace BenefactAPI.DataAccess
             modelBuilder.ConfigureKey(b => b.Tags);
             modelBuilder.ConfigureKey(b => b.Comments);
             modelBuilder.ConfigureKey(b => b.Attachments);
+            modelBuilder.ConfigureKey(b => b.Invites);
 
             modelBuilder.Entity<BoardData>()
                 .HasIndex(bd => bd.UrlName)
@@ -58,6 +60,10 @@ namespace BenefactAPI.DataAccess
                 .HasOne(bd => bd.Creator)
                 .WithMany(u => u.CreatedBoards)
                 .HasForeignKey(bd => bd.CreatorId);
+
+            modelBuilder.Entity<InviteData>()
+                .HasIndex(i => i.Key)
+                .IsUnique();
 
             // Card References
             modelBuilder.CardReference(c => c.Attachments);

@@ -83,10 +83,15 @@ namespace BenefactAPI
                 keyValues: new object[] { });
         }
 
-        public static async Task<T> FirstOr404<T>(this IQueryable<T> query, string name = null) where T : class
+        public static Task<T> FirstOr404<T>(this IQueryable<T> query, string name = null) where T : class
+        {
+            return query.FirstOrError((name ?? typeof(T).Name.Replace("Data", "")) + " not found", 404);
+        }
+
+        public static async Task<T> FirstOrError<T>(this IQueryable<T> query, string message, int status = 500) where T : class
         {
             return (await query.FirstOrDefaultAsync()) ??
-                throw new HTTPError((name ?? typeof(T).Name.Replace("Data", "")) + " not found", 404);
+                throw new HTTPError(message, status);
         }
     }
 }

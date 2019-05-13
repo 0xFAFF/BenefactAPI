@@ -16,44 +16,16 @@ using System.Threading.Tasks;
 namespace BenefactAPITests
 {
     [TestClass]
-    public class CommentTests
+    public class CommentTests : BaseTest
     {
-        MockServiceProvider services;
-        [TestInitialize]
-        public void Setup()
-        {
-            services = new MockServiceProvider();
-            MockData.AddToDb(services);
-        }
-        [TestCleanup]
-        public void Cleanup()
-        {
-            services.DoWithDB(db => db.Database.EnsureDeletedAsync()).GetAwaiter().GetResult();
-        }
-        static ControllerContext CreateContext(string body)
-        {
-            RouteData routeData = new RouteData();
-            routeData.Values["boardId"] = "benefact";
-            HttpContext httpContextMock = new DefaultHttpContext();
-            var bytes = Encoding.UTF8.GetBytes(body);
-            (httpContextMock.Request.Body = new MemoryStream()).Write(bytes, 0, bytes.Length);
-            httpContextMock.Request.Body.Position = 0;
-            return new ControllerContext()
-            {
-                RouteData = routeData,
-                HttpContext = httpContextMock,
-            };
-        }
         [TestMethod]
         public async Task HigherValueFails()
         {
-            await services.DoWithDB(async db => (await db.Boards.Include(b => b.Roles).FirstOrDefaultAsync()).Roles[0].Privilege = Privilege.Developer);
             var cardId = (await services.DoWithDB(db => db.Cards.FirstAsync())).Id;
-            var user = Auth.CurrentUser = await Auth.GetUser(services, "a@a.a");
-            var rpc = new BoardController(services);
-            rpc.ControllerContext = CreateContext($"{{\"CardId\": {cardId}, \"Text\": \"same user\"}}");
+            user = Auth.CurrentUser = await GetUser("a@a.a", Privilege.Developer);
+            SetContext($"{{\"CardId\": {cardId}, \"Text\": \"same user\"}}");
             var error = await Assert.ThrowsExceptionAsync<HTTPError>(
-                () => rpc.Post("comments/add"));
+                () => boardRPC.Post("comments/add"));
         }
         [TestMethod]
         public async Task AdminSucceeds()
@@ -62,7 +34,7 @@ namespace BenefactAPITests
             var cardId = (await services.DoWithDB(db => db.Cards.FirstAsync())).Id;
             var user = Auth.CurrentUser = await Auth.GetUser(services, "faff@faff.faff");
             var rpc = new BoardController(services);
-            rpc.ControllerContext = CreateContext($"{{\"CardId\": {cardId}, \"Text\": \"same user\"}}");
+            rpc.ControllerContext = SetContext($"{{\"CardId\": {cardId}, \"Text\": \"same user\"}}");
             var result = await rpc.Post("comments/add");
         }
         [TestMethod]
@@ -72,7 +44,7 @@ namespace BenefactAPITests
             var cardId = (await services.DoWithDB(db => db.Cards.FirstAsync())).Id;
             foreach (var role in user.Roles) role.Privilege = Privilege.None;
             var rpc = new BoardController(services);
-            rpc.ControllerContext = CreateContext($"{{\"CardId\": {cardId}, \"Text\": \"same user\"}}");
+            rpc.ControllerContext = SetContext($"{{\"CardId\": {cardId}, \"Text\": \"same user\"}}");
             var result = await rpc.Post("comments/add");
             var card = await services.DoWithDB(db => db.Cards.Include(c => c.Comments).Where(c => c.Id == cardId).FirstOr404());
             Assert.AreEqual("same user", card.Comments.First().Text);
@@ -83,7 +55,7 @@ namespace BenefactAPITests
             var user = Auth.CurrentUser = await Auth.GetUser(services, "a@a.a");
             foreach (var role in user.Roles) role.Privilege = Privilege.Contribute;
             var rpc = new BoardController(services);
-            rpc.ControllerContext = CreateContext("{\"CardId\": 999999, \"Text\": \"This is a test commment!\"}");
+            rpc.ControllerContext = SetContext("{\"CardId\": 999999, \"Text\": \"This is a test commment!\"}");
             var error = await Assert.ThrowsExceptionAsync<HTTPError>(
                 () => rpc.Post("comments/add"));
             Assert.AreEqual(404, error.Status);
@@ -95,7 +67,7 @@ namespace BenefactAPITests
             var cardId = (await services.DoWithDB(db => db.Cards.FirstAsync())).Id;
             foreach (var role in user.Roles) role.Privilege = Privilege.Contribute;
             var rpc = new BoardController(services);
-            rpc.ControllerContext = CreateContext($"{{\"CardId\": {cardId}, \"Text\": \"same user\"}}");
+            rpc.ControllerContext = SetContext($"{{\"CardId\": {cardId}, \"Text\": \"same user\"}}");
             var error = await Assert.ThrowsExceptionAsync<HTTPError>(
                 () => rpc.Post("comments/add"));
         }
@@ -106,7 +78,7 @@ namespace BenefactAPITests
             var user = Auth.CurrentUser = await Auth.GetUser(services, "a@a.a");
             foreach (var role in user.Roles) role.Privilege = Privilege.Comment;
             var rpc = new BoardController(services);
-            rpc.ControllerContext = CreateContext($"{{\"CardId\": {cardId}, \"Text\": \"different user\"}}");
+            rpc.ControllerContext = SetContext($"{{\"CardId\": {cardId}, \"Text\": \"different user\"}}");
             var result = await rpc.Post("comments/add");
             var card = await services.DoWithDB(db => db.Cards.Include(c => c.Comments).Where(c => c.Id == cardId).FirstOr404());
             Assert.AreEqual("different user", card.Comments.First().Text);

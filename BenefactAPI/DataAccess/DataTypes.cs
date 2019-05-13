@@ -38,7 +38,13 @@ namespace BenefactAPI.DataAccess
         [Required]
         [Replicate]
         public string UrlName { get; set; }
+        [Replicate]
+        public Privilege? DefaultPrivilege { get; set; }
+        [Replicate]
+        public string Description { get; set; }
+        [Replicate]
         public UserData Creator { get; set; }
+        [Replicate]
         public int? CreatorId { get; set; }
         public List<CardData> Cards { get; set; } = new List<CardData>();
         public List<CommentData> Comments { get; set; } = new List<CommentData>();
@@ -47,6 +53,18 @@ namespace BenefactAPI.DataAccess
         public List<TagData> Tags { get; set; } = new List<TagData>();
         public List<UserRole> Roles { get; set; } = new List<UserRole>();
         public List<AttachmentData> Attachments { get; set; } = new List<AttachmentData>();
+        public List<InviteData> Invites { get; set; } = new List<InviteData>();
+    }
+
+    public class InviteData : IBoardId
+    {
+        public int Id { get; set; }
+        [MaxLength(10)]
+        [Required]
+        public string Key { get; set; }
+        public BoardData Board { get; set; }
+        public int BoardId { get; set; }
+        public Privilege Privilege { get; set; }
     }
 
     /// <summary>

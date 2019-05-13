@@ -30,8 +30,14 @@ namespace BenefactAPI
             BoardData board1 = null;
             services.DoWithDB(async db =>
             {
-                board1 = db.Boards.FirstOrDefault() ?? db.Boards.Add(new BoardData() { Id = 1, Title = "Benefact", UrlName = "benefact" }).Entity;
-                
+                board1 = db.Boards.FirstOrDefault() ?? db.Boards.Add(new BoardData()
+                {
+                    Id = 1,
+                    Title = "Benefact",
+                    UrlName = "benefact",
+                    Description = "Benefact board",
+                }).Entity;
+
                 var board2 = db.Boards.Skip(1).FirstOrDefault() ?? db.Boards.Add(new BoardData() { Id = 2, Title = "FAFF", UrlName = "faff" }).Entity;
 
                 var faff = await db.Users.FirstOrDefaultAsync(u => u.Name == "FAFF");

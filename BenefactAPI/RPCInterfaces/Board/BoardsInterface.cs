@@ -28,10 +28,12 @@ namespace BenefactAPI.RPCInterfaces.Board
     public class BoardResponse
     {
         public Dictionary<string, List<CardData>> Cards;
+        public string Description;
         public UserRole UserRole;
         public List<ColumnData> Columns;
         public List<TagData> Tags;
         public List<UserData> Users;
+        public Privilege? DefaultPrivilege;
         public string Title;
         public string UrlName;
     }
@@ -39,6 +41,12 @@ namespace BenefactAPI.RPCInterfaces.Board
     public class SetPrivilegeRequest
     {
         public int UserId;
+        public Privilege Privilege;
+    }
+
+    [ReplicateType]
+    public class CreateInviteRequest
+    {
         public Privilege Privilege;
     }
 
@@ -79,10 +87,15 @@ namespace BenefactAPI.RPCInterfaces.Board
             return query;
         }
 
-        [AuthRequired(RequirePrivilege = Privilege.Read)]
+        [AuthRequired]
         [ReplicateRoute(Route = "/")]
         public Task<BoardResponse> Get(CardQuery query)
         {
+            var response = new BoardResponse();
+            TypeUtil.UpdateMembersFrom(response, BoardExtensions.Board, blackList:
+                new string[] { nameof(BoardResponse.Tags), nameof(BoardResponse.Columns), nameof(BoardResponse.Users), nameof(BoardResponse.Cards) });
+            if (Auth.CurrentRole == null)
+                return Task.FromResult(response);
             query = query ?? new CardQuery();
             query.Groups = query.Groups ?? new Dictionary<string, List<CardQueryTerm>>() { { "All", null } };
             var boardId = BoardExtensions.Board.Id;
@@ -102,44 +115,81 @@ namespace BenefactAPI.RPCInterfaces.Board
                 {
                     cardGroups[group.Key] = await FilterCards(baseQuery, group.Value).ToListAsync();
                 }
-                var response = new BoardResponse()
-                {
-                    Cards = cardGroups,
-                    Columns = await db.Columns.BoardFilter().OrderBy(col => col.Index).ToListAsync(),
-                    Tags = await db.Tags.BoardFilter().OrderBy(tag => tag.Id).ToListAsync(),
-                    UserRole = Auth.CurrentRole,
-                    Users = await db.Users
-                    .Where(u => u.Roles.Any(p => p.BoardId == boardId) || u.Votes.Any(v => v.BoardId == boardId) || u.Comments.Any(c => c.BoardId == boardId))
-                    .ToListAsync(),
-                };
-                TypeUtil.UpdateMembersFrom(response, BoardExtensions.Board, blackList:
-                    new string[] { nameof(BoardResponse.Tags), nameof(BoardResponse.Columns), nameof(BoardResponse.Users), nameof(BoardResponse.Cards) });
+                response.Cards = cardGroups;
+                response.Columns = await db.Columns.BoardFilter().OrderBy(col => col.Index).ToListAsync();
+                response.Tags = await db.Tags.BoardFilter().OrderBy(tag => tag.Id).ToListAsync();
+                response.UserRole = Auth.CurrentRole;
+                response.Users = await db.Users
+                .Where(u => u.Roles.Any(p => p.BoardId == boardId) || u.Votes.Any(v => v.BoardId == boardId) || u.Comments.Any(c => c.BoardId == boardId))
+                .ToListAsync();
                 return response;
             });
         }
-
+        public static async Task<UserRole> GetOrCreateRole(BenefactDbContext db, int userId)
+        {
+            if (userId == BoardExtensions.Board.CreatorId)
+                throw new HTTPError("Cannot set the privilege of the board's creator", 400);
+            var existingRole = await db.Roles.Where(r => r.BoardId == BoardExtensions.Board.Id && r.UserId == userId).FirstOrDefaultAsync();
+            if (existingRole == null)
+                existingRole = (await db.Roles.AddAsync(new UserRole()
+                {
+                    BoardId = BoardExtensions.Board.Id,
+                    Privilege = Privilege.None,
+                    UserId = userId
+                })).Entity;
+            return existingRole;
+        }
         [AuthRequired(RequirePrivilege = Privilege.Admin)]
         public async Task<bool> SetPrivilege(SetPrivilegeRequest request)
         {
-            if (request.UserId == BoardExtensions.Board.CreatorId)
-                throw new HTTPError("Cannot set the privilege of the board's creator", 400);
             return await Services.DoWithDB(async db =>
             {
-                var existingRole = await db.Roles.Where(r => r.BoardId == BoardExtensions.Board.Id && r.UserId == request.UserId).FirstOrDefaultAsync();
-                if (existingRole != null)
-                {
-                    if (existingRole.Privilege == request.Privilege)
-                        return false;
-                    existingRole.Privilege = request.Privilege;
-                }
-                else
-                    existingRole = (await db.Roles.AddAsync(new UserRole()
-                    {
-                        BoardId = BoardExtensions.Board.Id,
-                        Privilege = request.Privilege,
-                        UserId = request.UserId
-                    })).Entity;
+                var role = await GetOrCreateRole(db, request.UserId);
+                if (role.Privilege == request.Privilege)
+                    return false;
+                role.Privilege = request.Privilege;
                 return true;
+            });
+        }
+        const string alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        [AuthRequired(RequirePrivilege = Privilege.Admin)]
+        public async Task<string> Invite(CreateInviteRequest request)
+        {
+            return await Services.DoWithDB(async db =>
+            {
+                var existingInvite = await db.Invites.Where(i => i.BoardId == BoardExtensions.Board.Id && i.Privilege == request.Privilege).FirstOrDefaultAsync();
+                if (existingInvite == null)
+                {
+                    for (int i = 0; i < 10; i++)
+                    {
+                        try
+                        {
+                            Random r = new Random();
+                            var newInvite = (await db.Invites.AddAsync(new InviteData()
+                            {
+                                BoardId = BoardExtensions.Board.Id,
+                                Privilege = request.Privilege,
+                                Key = new string(Enumerable.Range(0, 10).Select(_ => alphabet[r.Next(62)]).ToArray())
+                            })).Entity;
+                            await db.SaveChangesAsync();
+                            return newInvite.Key;
+                        }
+                        catch { }
+                    }
+                    throw new HTTPError("Failed to create invite");
+                }
+                return existingInvite.Key;
+            });
+        }
+        public async Task<UserRole> Join()
+        {
+            if (BoardExtensions.Board.DefaultPrivilege == null)
+                throw new HTTPError("Cannot join private board");
+            return await Services.DoWithDB(async db =>
+            {
+                var role = await GetOrCreateRole(db, Auth.CurrentUser.Id);
+                role.Privilege |= BoardExtensions.Board.DefaultPrivilege.Value;
+                return role;
             });
         }
     }

@@ -1,5 +1,7 @@
 ﻿using BenefactAPI.Controllers;
 using BenefactAPI.DataAccess;
+using BenefactAPI.RPCInterfaces.Board;
+using Microsoft.EntityFrameworkCore;
 using Replicate;
 using System;
 using System.Collections.Generic;
@@ -19,6 +21,12 @@ namespace BenefactAPI.RPCInterfaces
     {
         public string UrlName;
         public TrelloBoard Board;
+    }
+    [ReplicateType]
+    public class JoinRequest
+    {
+        public string Key;
+        public string UrlName;
     }
     [ReplicateType]
     public class MetaInterface
@@ -46,6 +54,21 @@ namespace BenefactAPI.RPCInterfaces
                 await addAdminRole(db, board);
                 return board.UrlName;
             }).HandleDuplicate("ix_boards_url_name", "A board with that URL already exists");
+        }
+        [AuthRequired]
+        [ReplicateRoute(Route = "board/join")]
+        public Task<BoardResponse> Join(JoinRequest request)
+        {
+            return services.DoWithDB(async db =>
+            {
+                var invite = await db.Invites.Include(i => i.Board).Where(i => i.Key == request.Key).FirstOrError("Invalid invite key", 400);
+                BoardExtensions.Board = invite.Board;
+                var role = await BoardsInterface.GetOrCreateRole(db, Auth.CurrentUser.Id);
+                role.Privilege |= invite.Privilege;
+                var response = new BoardResponse() { UserRole = role };
+                TypeUtil.UpdateMembersFrom(response, invite.Board);
+                return response;
+            });
         }
         [AuthRequired]
         [ReplicateRoute(Route = "board/trello_import")]
