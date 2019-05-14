@@ -23,6 +23,7 @@ namespace BenefactAPI.RPCInterfaces.Board
         public List<int> Tags;
         public CardState? State;
         public int? ColumnId;
+        public bool ShowArchived;
         public string Title;
     }
     [ReplicateType]
@@ -78,6 +79,8 @@ namespace BenefactAPI.RPCInterfaces.Board
                 andTerms.Add(card => card.Column.Id == term.ColumnId);
             if (term.State.HasValue)
                 andTerms.Add(card => card.Column.State == term.State);
+            if (!term.ShowArchived)
+                andTerms.Add(card => card.Archived == false);
             if (!andTerms.Any())
                 andTerms.Add(c => true);
             return andTerms.BinaryCombinator(Expression.And);
@@ -90,6 +93,10 @@ namespace BenefactAPI.RPCInterfaces.Board
             {
                 var exp = terms.SelectExp(termCardExpression).BinaryCombinator(Expression.Or);
                 query = query.Where(exp);
+            }
+            else
+            {
+                query = query.Where(c => c.Archived == false);
             }
             return query;
         }
