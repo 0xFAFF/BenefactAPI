@@ -21,6 +21,7 @@ namespace BenefactAPI.RPCInterfaces.Board
     public class CardQueryTerm
     {
         public List<int> Tags;
+        public CardState? State;
         public int? ColumnId;
         public string Title;
     }
@@ -75,6 +76,8 @@ namespace BenefactAPI.RPCInterfaces.Board
                 andTerms.Add(card => card.Title.ToLower().Contains(term.Title.ToLower()));
             if (term.ColumnId.HasValue)
                 andTerms.Add(card => card.Column.Id == term.ColumnId);
+            if (term.State.HasValue)
+                andTerms.Add(card => card.Column.State == term.State);
             if (!andTerms.Any())
                 andTerms.Add(c => true);
             return andTerms.BinaryCombinator(Expression.And);

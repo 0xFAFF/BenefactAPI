@@ -20,11 +20,6 @@ namespace BenefactAPI.Migrations
                     table.PrimaryKey("pk_boards", x => x.id);
                 });
 
-            migrationBuilder.InsertData(
-                table: "boards",
-                columns: new string[] { },
-                values: new object[] { });
-
             migrationBuilder.AddColumn<int>(
                 name: "board_id",
                 table: "tags",

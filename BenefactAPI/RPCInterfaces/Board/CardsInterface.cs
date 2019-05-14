@@ -19,6 +19,12 @@ namespace BenefactAPI.RPCInterfaces.Board
         public int CardId;
     }
     [ReplicateType]
+    public class CardArchiveRequest
+    {
+        public int CardId;
+        public bool Archive = true;
+    }
+    [ReplicateType]
     [ReplicateRoute(Route = "cards")]
     public class CardsInterface
     {
@@ -72,15 +78,13 @@ namespace BenefactAPI.RPCInterfaces.Board
             });
         }
 
-        [AuthRequired]
+        [AuthRequired(RequirePrivilege = Privilege.Admin)]
         public Task<bool> Delete(DeleteData card)
         {
             return Services.DoWithDB(
                 async db =>
                 {
                     var existing = await db.Cards.FirstOrDefaultAsync(c => c.Id == card.Id);
-                    if (existing.AuthorId != Auth.CurrentUser.Id)
-                        Auth.VerifyPrivilege(Privilege.Developer);
                     return await db.DeleteOrderAsync(db.Cards, card.Id);
                 },
                 false);
@@ -99,6 +103,17 @@ namespace BenefactAPI.RPCInterfaces.Board
                     db.Votes.Remove(vote);
                 await db.SaveChangesAsync();
                 return true;
+            });
+        }
+        [AuthRequired]
+        public Task Archive(CardArchiveRequest request)
+        {
+            return Services.DoWithDB(async db =>
+            {
+                var card = await db.Cards.BoardFilter(request.CardId).FirstOr404();
+                if (card.AuthorId != Auth.CurrentUser.Id)
+                    Auth.VerifyPrivilege(Privilege.Developer);
+                card.Archived = request.Archive;
             });
         }
     }

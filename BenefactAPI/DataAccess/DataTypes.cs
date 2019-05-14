@@ -90,6 +90,10 @@ namespace BenefactAPI.DataAccess
         public int BoardId { get; set; }
         [ReplicateIgnore]
         public ColumnData Column { get; set; }
+        [NotMapped]
+        public CardState? State => Column?.State;
+        [Required]
+        public bool? Archived { get; set; }
         [Required]
         public int? ColumnId { get; set; }
         [ReplicateIgnore]
@@ -105,6 +109,7 @@ namespace BenefactAPI.DataAccess
         public List<VoteData> Votes { get; set; } = new List<VoteData>();
         public List<AttachmentData> Attachments { get; set; } = new List<AttachmentData>();
     }
+
     [ReplicateType]
     public class CommentData : IBoardId, ICardReference
     {
@@ -151,6 +156,13 @@ namespace BenefactAPI.DataAccess
         public int TagId { get; set; }
         public TagData Tag { get; set; }
     }
+    public enum CardState
+    {
+        Proposed = 0,
+        InProgress = 1,
+        Cancelled = 2,
+        Complete = 3,
+    }
     [ReplicateType]
     public class ColumnData : IOrdered, IBoardId
     {
@@ -158,6 +170,7 @@ namespace BenefactAPI.DataAccess
         public int? Index { get; set; }
         public string Title { get; set; }
         public bool AllowContribution { get; set; }
+        public CardState State { get; set; }
         [ReplicateIgnore]
         public BoardData Board { get; set; }
         [ReplicateIgnore]

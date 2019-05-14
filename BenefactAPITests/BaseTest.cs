@@ -55,7 +55,7 @@ namespace BenefactAPITests
                 foreach (var board in boards)
                 {
                     var role = board.Roles.FirstOrDefault(r => r.User.Email == email);
-                    if(role != null)
+                    if (role != null)
                     {
                         if (!privilege.HasValue)
                             await db.DeleteAsync(db.Roles, role);
@@ -73,13 +73,14 @@ namespace BenefactAPITests
                 return user = await db.Users.FirstOrDefaultAsync(u => u.Email == email);
             });
         }
-        public async Task<string> Post(string url)
+        public async Task<string> Post(string url, string body, string board = "benefact")
         {
+            SetContext(body);
             return ((ContentResult)(await boardRPC.Post(url))).Content;
         }
-        public async Task<T> Post<T>(string url)
+        public async Task<T> Post<T, U>(string url, U request, string board = "benefact")
         {
-            return services.Serializer.Deserialize<T>(await Post(url));
+            return services.Serializer.Deserialize<T>(await Post(url, services.Serializer.Serialize(request)));
         }
     }
 }

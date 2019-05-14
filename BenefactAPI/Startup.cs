@@ -26,11 +26,16 @@ namespace BenefactAPI
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
+        public static void ConfigureTypes(IServiceCollection services)
         {
             ReplicationModel.Default.DictionaryAsObject = true;
             services.AddSingleton<IReplicateSerializer<string>>(new JSONGraphSerializer(ReplicationModel.Default));
+        }
+
+        // This method gets called by the runtime. Use this method to add services to the container.
+        public void ConfigureServices(IServiceCollection services)
+        {
+            ConfigureTypes(services);
             services.AddCors();
             services.AddMvc();
             services.AddEntityFrameworkNpgsql()

@@ -88,64 +88,70 @@ namespace BenefactAPI
                     BoardId = 1,
                 });
                 db.SaveChanges();
-                db.Columns.Add(new ColumnData()
+                var todo = db.Columns.Add(new ColumnData()
                 {
                     Title = "To Do",
                     Index = 1,
                     BoardId = 1,
-                });
-                db.Columns.Add(new ColumnData()
+                }).Entity;
+                var inProgress = db.Columns.Add(new ColumnData()
                 {
                     Title = "In Progress",
+                    State = CardState.InProgress,
                     Index = 2,
                     BoardId = 1,
-                });
-                db.Columns.Add(new ColumnData()
+                }).Entity;
+                var done = db.Columns.Add(new ColumnData()
                 {
                     Title = "Done",
+                    State = CardState.Complete,
                     Index = 3,
                     BoardId = 1,
-                });
+                }).Entity;
                 db.SaveChanges();
                 db.Cards.Add(new CardData()
                 {
                     Title = "Get MD Working",
                     Description = "Some Markdown\n=====\n\n```csharp\n var herp = \"derp\";\n```",
-                    ColumnId = 2,
+                    ColumnId = todo.Id,
                     TagIds = new[] { 1, 2, 3, 4, 5 }.ToList(),
                     BoardId = 1,
                     Index = 1,
                     AuthorId = faff.Id,
+                    Archived = false,
                 });
                 db.Cards.Add(new CardData()
                 {
                     Title = "Make sure UTF8 works 😑",
                     Description = "😈😈😈😈😈😈",
-                    ColumnId = 1,
+                    ColumnId = todo.Id,
                     TagIds = new[] { 1 }.ToList(),
                     BoardId = 1,
                     Index = 2,
                     AuthorId = faff.Id,
+                    Archived = false,
                 });
                 db.Cards.Add(new CardData()
                 {
                     Title = "Some Bug",
                     Description = "There was a bug",
-                    ColumnId = 2,
+                    ColumnId = inProgress.Id,
                     TagIds = new[] { 4, 2 }.ToList(),
                     BoardId = 1,
                     Index = 3,
                     AuthorId = faff.Id,
+                    Archived = false,
                 });
                 db.Cards.Add(new CardData()
                 {
                     Title = "Fixed Bug",
                     Description = "There was a bug",
-                    ColumnId = 3,
+                    ColumnId = done.Id,
                     TagIds = new[] { 4 }.ToList(),
                     BoardId = 1,
                     Index = 4,
                     AuthorId = faff.Id,
+                    Archived = false,
                 });
                 db.SaveChanges();
                 return true;

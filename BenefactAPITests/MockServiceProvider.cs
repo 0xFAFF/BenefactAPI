@@ -53,7 +53,7 @@ namespace BenefactAPITests
             public void Dispose() { }
         }
 
-        public JSONGraphSerializer Serializer = new JSONGraphSerializer(ReplicationModel.Default);
+        public JSONGraphSerializer Serializer = new JSONGraphSerializer(new ReplicationModel() { DictionaryAsObject = true });
         DbContextOptions dbOptions = new DbContextOptionsBuilder<BenefactDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
         public ConfigurationBuilder Config = new ConfigurationBuilder();
