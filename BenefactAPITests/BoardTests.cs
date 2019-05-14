@@ -76,5 +76,17 @@ namespace BenefactAPITests
             Assert.IsNotNull(secondResult);
             Assert.AreNotEqual(firstResult, secondResult);
         }
+        [TestMethod]
+        public async Task PrivateBoardJoinSucceeds()
+        {
+            user = Auth.CurrentUser = await GetUser("faff@faff.faff", Privilege.Admin);
+            SetContext("{\"Privilege\": 7}");
+            var firstResult = await Post<string>("invite");
+            Assert.IsNotNull(firstResult);
+            user = Auth.CurrentUser = await GetUser("a@a.a", null);
+            SetContext($"{{\"Key\": \"{firstResult}\"}}");
+            var joinResult = await Post<UserRole>("join");
+            Assert.AreEqual(7, (int)joinResult.Privilege);
+        }
     }
 }
