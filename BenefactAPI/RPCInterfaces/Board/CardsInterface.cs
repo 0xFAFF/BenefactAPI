@@ -66,6 +66,7 @@ namespace BenefactAPI.RPCInterfaces.Board
                 card.Id = 0;
                 card.BoardId = BoardExtensions.Board.Id;
                 card.AuthorId = Auth.CurrentUser.Id;
+                card.Archived = false;
                 var column = db.Columns.BoardFilter().FirstOrDefault(col => col.Id == card.ColumnId);
                 if (column == null)
                     throw new HTTPError("Invalid column id", 400);
