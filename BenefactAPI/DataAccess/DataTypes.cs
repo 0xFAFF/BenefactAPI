@@ -86,7 +86,6 @@ namespace BenefactAPI.DataAccess
         public string Description { get; set; }
         [ReplicateIgnore]
         public BoardData Board { get; set; }
-        [ReplicateIgnore]
         public int BoardId { get; set; }
         [ReplicateIgnore]
         public ColumnData Column { get; set; }

@@ -29,6 +29,7 @@ namespace BenefactAPI.RPCInterfaces.Board
     [ReplicateType]
     public class BoardResponse
     {
+        public int Id;
         public Dictionary<string, List<CardData>> Cards;
         public string Description;
         public Privilege? UserPrivilege;
