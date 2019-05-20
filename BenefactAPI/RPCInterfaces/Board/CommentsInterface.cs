@@ -31,7 +31,7 @@ namespace BenefactAPI.RPCInterfaces.Board
             return Services.DoWithDB(async db =>
             {
                 var comment = new CommentData();
-                TypeUtil.UpdateMembersFrom(comment, request);
+                TypeUtil.CopyFrom(comment, request);
                 var card = await db.Cards.BoardFilter(request.CardId).FirstOr404();
                 if (card.AuthorId != Auth.CurrentUser.Id)
                     Auth.VerifyPrivilege(Privilege.Comment);

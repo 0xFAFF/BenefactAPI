@@ -47,7 +47,7 @@ namespace BenefactAPI.RPCInterfaces.Board
             {
                 var existingTag = await db.Tags.FindAsync(BoardExtensions.Board.Id, tag.Id);
                 if (existingTag == null) throw new HTTPError("Tag not found", 404);
-                TypeUtil.UpdateMembersFrom(existingTag, tag, whiteList: new[] { nameof(TagData.Name), nameof(TagData.Character), nameof(TagData.Color) });
+                TypeUtil.CopyFrom(existingTag, tag, whiteList: new[] { nameof(TagData.Name), nameof(TagData.Character), nameof(TagData.Color) });
                 await db.SaveChangesAsync();
                 return true;
             });

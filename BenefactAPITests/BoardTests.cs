@@ -27,7 +27,7 @@ namespace BenefactAPITests
             user = Auth.CurrentUser = await GetUser("a@a.a", null);
             var result = await Post<BoardResponse, None>("/", None.Value);
             Assert.AreEqual("benefact", result.UrlName);
-            Assert.AreEqual(null, result.UserRole);
+            Assert.AreEqual(null, result.UserPrivilege);
             Assert.AreEqual(null, result.DefaultPrivilege);
             Assert.IsNotNull(result.Description);
         }

@@ -42,7 +42,7 @@ namespace BenefactAPI.RPCInterfaces
             return services.DoWithDB(async db =>
             {
                 var board = new BoardData();
-                TypeUtil.UpdateMembersFrom(board, request);
+                TypeUtil.CopyFrom(board, request);
                 board.CreatorId = Auth.CurrentUser.Id;
                 await db.AddAsync(board);
                 await addAdminRole(db, board);

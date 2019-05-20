@@ -1,5 +1,6 @@
 ﻿using BenefactAPI.Controllers;
 using BenefactAPI.DataAccess;
+using BenefactAPI.RPCInterfaces.Board;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -25,8 +26,9 @@ namespace BenefactAPI.RPCInterfaces
     public class UserResponse
     {
         public UserData User;
-        public List<UserRole> Roles;
-        public List<CardData> Cards;
+        public List<BoardResponse> Boards;
+        public List<CardData> CreatedCards;
+        public List<CardData> AssignedCards;
     }
     [ReplicateType]
     [ReplicateRoute(Route = "users")]
@@ -132,11 +134,24 @@ namespace BenefactAPI.RPCInterfaces
         {
             return await Services.DoWithDB(async db =>
             {
+                var boards = (await db.Roles
+                    .Include(r => r.Board)
+                    .Include(r => r.Board.Columns)
+                    .Include(r => r.Board.Tags)
+                    .Where(r => r.UserId == Auth.CurrentUser.Id).ToListAsync())
+                    .Select(r =>
+                            TypeUtil.CopyFrom(new BoardResponse()
+                            {
+                                UserPrivilege = r.Privilege,
+                                Columns = r.Board.Columns,
+                                Tags = r.Board.Tags,
+                            }, r.Board))
+                    .ToList();
                 return new UserResponse()
                 {
                     User = Auth.CurrentUser,
-                    Roles = await db.Roles.Include(r => r.Board).Where(r => r.UserId == Auth.CurrentUser.Id).ToListAsync(),
-                    Cards = await db.Cards.Where(c => c.AuthorId == Auth.CurrentUser.Id).ToListAsync(),
+                    Boards = boards,
+                    CreatedCards = await db.Cards.Where(c => c.AuthorId == Auth.CurrentUser.Id).ToListAsync(),
                 };
             });
         }

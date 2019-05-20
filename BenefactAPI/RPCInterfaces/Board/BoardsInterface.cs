@@ -31,7 +31,7 @@ namespace BenefactAPI.RPCInterfaces.Board
     {
         public Dictionary<string, List<CardData>> Cards;
         public string Description;
-        public UserRole UserRole;
+        public Privilege? UserPrivilege;
         public List<ColumnData> Columns;
         public List<TagData> Tags;
         public List<UserData> Users;
@@ -106,7 +106,7 @@ namespace BenefactAPI.RPCInterfaces.Board
         public Task<BoardResponse> Get(CardQuery query)
         {
             var response = new BoardResponse();
-            TypeUtil.UpdateMembersFrom(response, BoardExtensions.Board, blackList:
+            TypeUtil.CopyFrom(response, BoardExtensions.Board, blackList:
                 new string[] { nameof(BoardResponse.Tags), nameof(BoardResponse.Columns), nameof(BoardResponse.Users), nameof(BoardResponse.Cards) });
             if (Auth.CurrentRole == null)
                 return Task.FromResult(response);
@@ -132,7 +132,7 @@ namespace BenefactAPI.RPCInterfaces.Board
                 response.Cards = cardGroups;
                 response.Columns = await db.Columns.BoardFilter().OrderBy(col => col.Index).ToListAsync();
                 response.Tags = await db.Tags.BoardFilter().OrderBy(tag => tag.Id).ToListAsync();
-                response.UserRole = Auth.CurrentRole;
+                response.UserPrivilege = Auth.CurrentRole?.Privilege;
                 response.Users = await db.Users
                 .Where(u => u.Roles.Any(p => p.BoardId == boardId) || u.Votes.Any(v => v.BoardId == boardId) || u.Comments.Any(c => c.BoardId == boardId))
                 .ToListAsync();

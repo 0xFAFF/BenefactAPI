@@ -44,7 +44,7 @@ namespace BenefactAPI.RPCInterfaces.Board
                 // Only developers can edit cards they don't own, or move cards
                 if (card.AuthorId != Auth.CurrentUser.Id || update.Index.HasValue || update.ColumnId.HasValue)
                     Auth.VerifyPrivilege(Privilege.Developer);
-                TypeUtil.UpdateMembersFrom(card, update,
+                TypeUtil.CopyFrom(card, update,
                     whiteList: new[] { nameof(CardData.Title), nameof(CardData.Description), nameof(CardData.ColumnId) });
                 if (update.TagIds != null)
                 {
