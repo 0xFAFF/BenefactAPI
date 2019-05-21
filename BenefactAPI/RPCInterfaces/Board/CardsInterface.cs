@@ -53,7 +53,7 @@ namespace BenefactAPI.RPCInterfaces.Board
                 }
                 if (update.Index.HasValue)
                     await db.Insert(card, update.Index.Value, db.Cards.Where(c => c.BoardId == card.BoardId));
-                await db.SaveChangesAsync();
+                await Activity.LogActivity(db, card, ActivityType.Update);
                 return true;
             });
         }
@@ -74,7 +74,7 @@ namespace BenefactAPI.RPCInterfaces.Board
                     Auth.VerifyPrivilege(Privilege.Developer);
                 var result = await db.Cards.AddAsync(card);
                 await db.Insert(card, card.Index, db.Cards.Where(c => c.BoardId == card.BoardId));
-                await db.SaveChangesAsync();
+                await Activity.LogActivity(db, card, ActivityType.Create);
                 return result.Entity;
             });
         }
@@ -115,6 +115,7 @@ namespace BenefactAPI.RPCInterfaces.Board
                 if (card.AuthorId != Auth.CurrentUser.Id)
                     Auth.VerifyPrivilege(Privilege.Developer);
                 card.Archived = request.Archive;
+                await Activity.LogActivity(db, card, ActivityType.Archive);
             });
         }
     }

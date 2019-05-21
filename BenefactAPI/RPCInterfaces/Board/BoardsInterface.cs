@@ -122,6 +122,7 @@ namespace BenefactAPI.RPCInterfaces.Board
                     .Include(card => card.Comments)
                     .Include(card => card.Votes)
                     .Include(card => card.Attachments)
+                    .Include(card => card.Activity)
                     .OrderBy(card => card.Index);
                 var cardGroups = new Dictionary<string, List<CardData>>();
                 // TODO: This is derpy and serial, but the EF Core Include seems to have a bug in it when the queries run simultanesouly

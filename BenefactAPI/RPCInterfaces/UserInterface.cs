@@ -29,6 +29,7 @@ namespace BenefactAPI.RPCInterfaces
         public List<BoardResponse> Boards;
         public List<CardData> CreatedCards;
         public List<CardData> AssignedCards;
+        public List<ActivityData> Activity;
     }
     [ReplicateType]
     [ReplicateRoute(Route = "users")]
@@ -152,6 +153,11 @@ namespace BenefactAPI.RPCInterfaces
                     User = Auth.CurrentUser,
                     Boards = boards,
                     CreatedCards = await db.Cards.Where(c => c.AuthorId == Auth.CurrentUser.Id).ToListAsync(),
+                    Activity = await db.Activity
+                        .OrderByDescending(a => a.Time)
+                        .Include(a => a.Comment)
+                        .Include(a => a.Card)
+                        .Where(a => a.UserId == Auth.CurrentUser.Id).ToListAsync(),
                 };
             });
         }

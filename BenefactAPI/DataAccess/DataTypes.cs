@@ -54,6 +54,7 @@ namespace BenefactAPI.DataAccess
         public List<UserRole> Roles { get; set; } = new List<UserRole>();
         public List<AttachmentData> Attachments { get; set; } = new List<AttachmentData>();
         public List<InviteData> Invites { get; set; } = new List<InviteData>();
+        public List<ActivityData> Activity { get; set; } = new List<ActivityData>();
     }
 
     public class InviteData : IBoardId
@@ -107,6 +108,7 @@ namespace BenefactAPI.DataAccess
         public ICollection<CommentData> Comments { get; set; } = new AutoSortList<double, CommentData>(c => -c.CreatedTime);
         public List<VoteData> Votes { get; set; } = new List<VoteData>();
         public List<AttachmentData> Attachments { get; set; } = new List<AttachmentData>();
+        public List<ActivityData> Activity { get; set; } = new List<ActivityData>();
     }
 
     [ReplicateType]
@@ -128,6 +130,8 @@ namespace BenefactAPI.DataAccess
         public CardData Card { get; set; }
         public double CreatedTime { get; set; } = Util.Now();
         public double? EditedTime { get; set; }
+        [ReplicateIgnore]
+        public List<ActivityData> Activity { get; set; }
     }
     [ReplicateType]
     public class VoteData : ICardReference

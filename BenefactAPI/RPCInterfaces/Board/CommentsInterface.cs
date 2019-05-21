@@ -38,6 +38,7 @@ namespace BenefactAPI.RPCInterfaces.Board
                 comment.UserId = Auth.CurrentUser.Id;
                 comment.BoardId = BoardExtensions.Board.Id;
                 await db.Comments.AddAsync(comment);
+                await Activity.LogActivity(db, comment, ActivityType.Create);
                 return true;
             });
         }
@@ -52,7 +53,7 @@ namespace BenefactAPI.RPCInterfaces.Board
                     Auth.VerifyPrivilege(Privilege.Developer);
                 existingComment.Text = comment.Text;
                 existingComment.EditedTime = Util.Now();
-                await db.SaveChangesAsync();
+                await Activity.LogActivity(db, existingComment, ActivityType.Update);
                 return true;
             });
         }

@@ -28,6 +28,7 @@ namespace BenefactAPI.DataAccess
         public DbSet<StorageEntry> Files { get; set; }
         public DbSet<AttachmentData> Attachments { get; set; }
         public DbSet<InviteData> Invites { get; set; }
+        public DbSet<ActivityData> Activity { get; set; }
 
         IHostingEnvironment environment;
         public BenefactDbContext(DbContextOptions options, IHostingEnvironment env) : base(options) { environment = env; }
@@ -51,6 +52,7 @@ namespace BenefactAPI.DataAccess
             modelBuilder.ConfigureKey(b => b.Comments);
             modelBuilder.ConfigureKey(b => b.Attachments);
             modelBuilder.ConfigureKey(b => b.Invites);
+            modelBuilder.ConfigureKey(b => b.Activity);
 
             modelBuilder.Entity<BoardData>()
                 .HasIndex(bd => bd.UrlName)
@@ -70,6 +72,11 @@ namespace BenefactAPI.DataAccess
             modelBuilder.CardReference(c => c.Comments);
             modelBuilder.CardReference(c => c.Votes);
             modelBuilder.CardReference(c => c.Tags);
+
+            modelBuilder.Entity<CardData>()
+                .HasMany(c => c.Activity)
+                .WithOne(ac => ac.Card)
+                .HasForeignKey(ac => new { ac.BoardId, ac.CardId });
 
             modelBuilder.Entity<UserData>()
                 .HasAlternateKey(ud => ud.Email);
@@ -92,11 +99,6 @@ namespace BenefactAPI.DataAccess
                 .HasOne(u => u.Board)
                 .WithMany(b => b.Roles)
                 .HasForeignKey(u => u.BoardId);
-
-            modelBuilder.Entity<UserData>()
-                .HasMany(u => u.Roles)
-                .WithOne(up => up.User)
-                .HasForeignKey(up => up.UserId);
 
             // Column-Card
             modelBuilder.Entity<CardData>()
@@ -142,6 +144,11 @@ namespace BenefactAPI.DataAccess
                 .HasOne(a => a.Storage)
                 .WithOne(s => s.Attachment)
                 .HasForeignKey<AttachmentData>(a => a.StorageId);
+
+            modelBuilder.Entity<ActivityData>()
+                .HasOne(ad => ad.Comment)
+                .WithMany(co => co.Activity)
+                .HasForeignKey(ad => new { ad.BoardId, ad.CommentId });
 
             FixSnakeCaseNames(modelBuilder);
         }
