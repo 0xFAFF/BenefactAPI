@@ -107,7 +107,6 @@ namespace BenefactAPI.RPCInterfaces
                 return true;
             });
         }
-        [AuthRequired]
         public async Task SendPasswordReset(UserAuthRequest request)
         {
             var user = await Services.DoWithDB(db => db.Users.Where(u => u.Email == request.Email).FirstOr404());
