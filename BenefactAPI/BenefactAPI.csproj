@@ -14,10 +14,14 @@
 
   <ItemGroup>
     <None Remove="Content\email_template.html" />
+    <None Remove="Content\password_reset.html" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="Content\email_template.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\password_reset.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
