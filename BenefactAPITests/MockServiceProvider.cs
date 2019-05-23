@@ -1,4 +1,5 @@
-﻿using BenefactAPI.Controllers;
+﻿using BenefactAPI;
+using BenefactAPI.Controllers;
 using BenefactAPI.DataAccess;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;

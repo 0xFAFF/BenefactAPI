@@ -36,14 +36,11 @@ namespace BenefactAPI.RPCInterfaces
     public class UserInterface
     {
         IServiceProvider Services;
-        string baseURL;
-        string sendKey;
+        EmailService Email;
         public UserInterface(IServiceProvider services)
         {
             Services = services;
-            var config = services.GetService<IConfiguration>();
-            baseURL = config.GetValue<string>("BaseURL");
-            sendKey = config.GetValue<string>("SendKey");
+            Email = services.GetService<EmailService>();
         }
         public Task<string> auth(UserAuthRequest auth)
         {
@@ -75,40 +72,20 @@ namespace BenefactAPI.RPCInterfaces
                 await _sendVerification(user).ConfigureAwait(false);
             return Auth.GenerateToken(user);
         }
-        private async Task _sendVerification(UserData user)
+        private async Task<Guid> updateNonce(UserData user)
         {
-            await Services.DoWithDB(db =>
+            return await Services.DoWithDB(db =>
             {
                 db.Attach(user);
-                if (user == null) throw new HTTPError("Authentication error", 401);
                 user.Nonce = Guid.NewGuid();
-                return Task.FromResult(user);
+                return Task.FromResult(user.Nonce.Value);
             });
-            var client = new SendGridClient(sendKey);
-            var from = new EmailAddress($"noreply@{baseURL}", "Benefact - No Reply");
-            var subject = "Verify your email address";
-            var to = new EmailAddress(user.Email, "Benefact User");
-            var htmlContent = await File.ReadAllTextAsync(Path.Combine("Content", "verification.html"));
-            htmlContent = htmlContent.Replace("{{link_target}}", $"https://{baseURL}/login?nonce={user.Nonce}");
-            var msg = MailHelper.CreateSingleEmail(from, to, subject, null, htmlContent);
-            msg.AddAttachment(new SendGrid.Helpers.Mail.Attachment()
-            {
-                Content = "iVBORw0KGgoAAAANSUhEUgAAADwAAABQCAYAAABFyhZTAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4wMdEg8Xoj7YCAAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAACtElEQVR42uXazWpTQRQH8P+cBpS4EFzoyvoEBXcREXwId32FFkHXdudehPoGEnwLu5O+gLhRRKRSpBbUmDRtM11cPxKTe+98nJk5M/fAJcmdcMgvM/frzCg8v61x/TKgNbxjpoH1fvXqG2sKePsd2Lj6DHdfPwZTEL5NgcMJoBTExJoC3v0APv0CZvoR9u7v8oEVgGNB6D/Yz+P537PFhSYAEINewC61sqDp77vU6GYsG5oWPqVCm2FZ0LS0JzbaDuuNppV7Y6HdsF5oqm0JjfbDOqOpsTUUmgfrhKbWb3CjebHWaDJKx4UOg7VCk3E6X3RYrDGarNK5ouNgjdBknc4WHRfbiiandKboNNhGNDmna0OnxdaiyStdHVoGdiWavNPNo0lVGeVgl9A9lnIMABydVKWd0Zk07Dy6r/DqDo+YAByMgZv9p3jwZgdCgzDT8N40gIMJcDQFTvUTDAe7csHex7Cqjt/j6fww3pKKpgBY0WgKhBWLpoBYkWgKjBWHpghYUWiKhBWDpohYEWiKjE2OpgTYpGhKhE2GpoTYJGhKjI2OJgHYqGgSgo2GJkHYKGgShg2OJnwZA18nwLkGzjy3U62Z0S+5wT3c6gODazzrtACFe3u842Q4UNjc13zg9z+r3r1xqapNSQtGbDWkSQEfR8DhicTSaqCzdIfQ/67DHUEv3ml1AL18L104evXTUsHo+ufhQtHNFY8C0e01rcLQZlXLgtDmdelC0HYzDwWg7eeWMke7zR5mjHafH84U7bcCIEN0z/8v+40GqiKCeDDXOq0Po0x6eP0KX7ZzbHenh4FtbO6/KPuklRmWC5wNlgOcFdYXnB3WB5wl1hWcLdYFnDXWFpw91gZcBNYUXAzWBFwUtg1cHLYJXCS2DlwsdhW4aOz/4OKx8+BOYKsYDh6iQ3EBmYL5eYOwqDYAAAAASUVORK5CYII=",
-                ContentId = "logo",
-                Disposition = "inline",
-                Filename = "logo.png",
-                Type = "image/png",
-            });
-            try
-            {
-                var response = await client.SendEmailAsync(msg).ConfigureAwait(false);
-                if (!(response.StatusCode == HttpStatusCode.OK || response.StatusCode == HttpStatusCode.Accepted))
-                    throw new HTTPError($"Failed to send verification email\n{await response.Body.ReadAsStringAsync()}");
-            }
-            catch (HttpRequestException)
-            {
-                throw new HTTPError("Failed to send verification");
-            }
+        }
+        private async Task _sendVerification(UserData user)
+        {
+            var nonce = await updateNonce(user);
+            await Email.SendEmail(user.Email, "Verify your email address", "verification.html",
+                new Dictionary<string, string> { { "link_target", $"{{{{baseURL}}}}/login?verify={nonce}" } });
         }
         [AuthRequired(RequireVerified = false)]
         public async Task SendVerification()
@@ -128,6 +105,30 @@ namespace BenefactAPI.RPCInterfaces
                 user.EmailVerified = true;
                 user.Nonce = null;
                 return true;
+            });
+        }
+        [AuthRequired]
+        public async Task SendPasswordReset(UserAuthRequest request)
+        {
+            var user = await Services.DoWithDB(db => db.Users.Where(u => u.Email == request.Email).FirstOr404());
+            var nonce = await updateNonce(user);
+            await Email.SendEmail(user.Email, "Reset your password", "password_reset.html",
+                new Dictionary<string, string> { { "link_target", $"{{{{baseURL}}}}/login?reset={nonce}" } });
+        }
+        public async Task ChangePassword(ChangePasswordRequest request)
+        {
+            if (Auth.CurrentUser == null)
+            {
+                if (!Guid.TryParse(request.Nonce, out var nonce))
+                    throw new HTTPError("Failed to parse guid", 400);
+                Auth.CurrentUser = await Services.DoWithDB(db => db.Users.Where(u => u.Nonce == nonce).FirstOrError("Unauthorized", 401));
+            }
+            await Services.DoWithDB(db =>
+            {
+                db.Attach(Auth.CurrentUser);
+                Auth.CurrentUser.Hash = PasswordStorage.CreateHash(request.Password);
+                Auth.CurrentUser.Nonce = null;
+                return Task.FromResult(true);
             });
         }
         [AuthRequired]

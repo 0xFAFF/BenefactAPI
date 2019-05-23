@@ -41,9 +41,9 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "Migrate": {
+    "EmailTest": {
       "commandName": "Project",
-      "commandLineArgs": "action=migrate",
+      "commandLineArgs": "action=emailtest",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

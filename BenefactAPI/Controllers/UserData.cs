@@ -25,4 +25,10 @@ namespace BenefactAPI.Controllers
     {
         public string Nonce;
     }
+    [ReplicateType]
+    public class ChangePasswordRequest
+    {
+        public string Password;
+        public string Nonce;
+    }
 }

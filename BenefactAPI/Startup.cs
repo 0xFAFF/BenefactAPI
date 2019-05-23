@@ -41,6 +41,7 @@ namespace BenefactAPI
             services.AddEntityFrameworkNpgsql()
                .AddDbContext<BenefactDbContext>(c => c.UseNpgsql(Configuration.GetConnectionString("BenefactDatabase")));
             services.AddTransient<HTTPChannel>();
+            services.AddSingleton<EmailService>();
         }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, IServiceProvider services)
@@ -62,9 +63,10 @@ namespace BenefactAPI
                         using (var db = services.GetService<BenefactDbContext>())
                             db.Database.EnsureDeleted();
                         break;
-                    case "migrate":
-                        using (var db = services.GetService<BenefactDbContext>())
-                            db.Database.Migrate();
+                    case "emailtest":
+                        var email = services.GetService<EmailService>();
+                        email.SendEmail("asherman1024@gmail.com", "Welcome to Benefact!", "verification.html",
+                            new Dictionary<string, string> { { "link_target", $"https://{{{{baseURL}}}}/login?nonce=derp" } }).GetAwaiter().GetResult();
                         break;
                     case "mockdata":
                         using(var db = services.GetService<BenefactDbContext>())
