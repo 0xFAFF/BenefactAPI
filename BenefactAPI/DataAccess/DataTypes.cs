@@ -92,8 +92,7 @@ namespace BenefactAPI.DataAccess
         public ColumnData Column { get; set; }
         [NotMapped]
         public CardState? State => Column?.State;
-        [Required]
-        public bool? Archived { get; set; }
+        public bool Archived { get; set; }
         [Required]
         public int? ColumnId { get; set; }
         [ReplicateIgnore]

@@ -26,7 +26,7 @@ namespace BenefactAPITests
             var archive = (await services.DoWithDB(db => db.Cards
             .Where(c => c.Id == cardId)
             .FirstOrDefaultAsync())).Archived;
-            Assert.IsTrue(archive.Value);
+            Assert.IsTrue(archive);
         }
         [TestMethod]
         public async Task ArchiveCardOwnerSucceeds()
@@ -38,7 +38,7 @@ namespace BenefactAPITests
             var archive = (await services.DoWithDB(db => db.Cards
             .Where(c => c.Id == cardId)
             .FirstOrDefaultAsync())).Archived;
-            Assert.IsTrue(archive.Value);
+            Assert.IsTrue(archive);
         }
         [TestMethod]
         public async Task ArchiveCardNotOwnerFails()
@@ -64,7 +64,7 @@ namespace BenefactAPITests
             var archive = (await services.DoWithDB(db => db.Cards
             .Where(c => c.Id == cardId)
             .FirstOrDefaultAsync())).Archived;
-            Assert.IsFalse(archive.Value);
+            Assert.IsFalse(archive);
         }
         [TestMethod]
         public async Task CardStateUpdates()

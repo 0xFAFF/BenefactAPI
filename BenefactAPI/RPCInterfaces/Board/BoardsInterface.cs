@@ -81,7 +81,7 @@ namespace BenefactAPI.RPCInterfaces.Board
             if (term.State.HasValue)
                 andTerms.Add(card => card.Column.State == term.State);
             if (!term.ShowArchived)
-                andTerms.Add(card => card.Archived == false);
+                andTerms.Add(card => !card.Archived);
             if (!andTerms.Any())
                 andTerms.Add(c => true);
             return andTerms.BinaryCombinator(Expression.And);
@@ -97,7 +97,7 @@ namespace BenefactAPI.RPCInterfaces.Board
             }
             else
             {
-                query = query.Where(c => c.Archived == false);
+                query = query.Where(c => !c.Archived);
             }
             return query;
         }
