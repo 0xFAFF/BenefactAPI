@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 namespace BenefactAPI.RPCInterfaces
 {
     [ReplicateType]
-    public class DeleteData
+    public class IDRequest
     {
-        public int Id { get; set; }
+        public int Id;
     }
 }

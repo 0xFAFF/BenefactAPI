@@ -32,7 +32,7 @@ namespace BenefactAPI.RPCInterfaces.Board
         }
 
         [AuthRequired(RequirePrivilege = Privilege.Admin)]
-        public Task<bool> Delete(DeleteData tag)
+        public Task<bool> Delete(IDRequest tag)
         {
 
             return Services.DoWithDB(

@@ -38,7 +38,7 @@ namespace BenefactAPI.Controllers
             Channel.RegisterSingleton(new ColumnsInterface(Services));
             Channel.RegisterSingleton(new TagsInterface(Services));
             Channel.RegisterSingleton(new BoardsInterface(Services));
-            Channel.Respond<DeleteData, bool>(StorageController.Delete);
+            Channel.Respond<IDRequest, bool>(StorageController.Delete);
         }
         public override async Task<ActionResult> Handle(string path)
         {

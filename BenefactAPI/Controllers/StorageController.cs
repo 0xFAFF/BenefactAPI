@@ -66,7 +66,7 @@ namespace BenefactAPI.Controllers
                 return attachment;
             });
         }
-        public static Task<bool> Delete(DeleteData delete)
+        public static Task<bool> Delete(IDRequest delete)
         {
             return ReplicateController.Services.DoWithDB(async db =>
             {

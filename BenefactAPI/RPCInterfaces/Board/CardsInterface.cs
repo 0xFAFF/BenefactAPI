@@ -80,7 +80,7 @@ namespace BenefactAPI.RPCInterfaces.Board
         }
 
         [AuthRequired(RequirePrivilege = Privilege.Admin)]
-        public Task<bool> Delete(DeleteData card)
+        public Task<bool> Delete(IDRequest card)
         {
             return Services.DoWithDB(
                 async db =>

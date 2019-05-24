@@ -42,14 +42,18 @@ namespace BenefactAPI.RPCInterfaces
             Services = services;
             Email = services.GetService<EmailService>();
         }
+        public static IQueryable<UserData> UserLookup(BenefactDbContext db, string name)
+        {
+            return db.Users.Where(
+                    u => u.Email.ToLower() == name.ToLower()
+                    || u.Name.ToLower() == name.ToLower());
+        }
         public Task<string> auth(UserAuthRequest request)
         {
             if (request?.Email == null || request?.Password == null) return null;
             return Services.DoWithDB(async db =>
             {
-                var user = await db.Users.Where(
-                    u => u.Email.ToLower() == request.Email.ToLower()
-                    || u.Name.ToLower() == request.Email.ToLower()).FirstOrDefaultAsync();
+                var user = await UserLookup(db, request.Email).FirstOrDefaultAsync();
                 if (user == null || !PasswordStorage.VerifyPassword(request.Password, user.Hash))
                     throw new HTTPError("Invalid user/pass", 401);
                 return Auth.GenerateToken(user);
@@ -137,15 +141,16 @@ namespace BenefactAPI.RPCInterfaces
             });
         }
         [AuthRequired]
-        public async Task<UserResponse> Current()
+        public async Task<UserResponse> Get(UserGetRequest request)
         {
             return await Services.DoWithDB(async db =>
             {
+                var user = await UserLookup(db, request.Name).FirstOr404();
                 var boards = (await db.Roles
                     .Include(r => r.Board)
                     .Include(r => r.Board.Columns)
                     .Include(r => r.Board.Tags)
-                    .Where(r => r.UserId == Auth.CurrentUser.Id).ToListAsync())
+                    .Where(r => r.UserId == user.Id).ToListAsync())
                     .Select(r =>
                             TypeUtil.CopyFrom(new BoardResponse()
                             {
@@ -156,16 +161,21 @@ namespace BenefactAPI.RPCInterfaces
                     .ToList();
                 return new UserResponse()
                 {
-                    User = Auth.CurrentUser,
+                    User = user,
                     Boards = boards,
-                    CreatedCards = await db.Cards.Where(c => c.AuthorId == Auth.CurrentUser.Id).ToListAsync(),
+                    CreatedCards = await db.Cards.Where(c => c.AuthorId == user.Id).ToListAsync(),
                     Activity = await db.Activity
                         .OrderByDescending(a => a.Time)
                         .Include(a => a.Comment)
                         .Include(a => a.Card)
-                        .Where(a => a.UserId == Auth.CurrentUser.Id).ToListAsync(),
+                        .Where(a => a.UserId == user.Id).ToListAsync(),
                 };
             });
+        }
+        [AuthRequired]
+        public Task<UserResponse> Current()
+        {
+            return Get(new UserGetRequest() { Name = Auth.CurrentUser.Email });
         }
     }
 }

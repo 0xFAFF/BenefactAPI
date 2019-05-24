@@ -33,7 +33,7 @@ namespace BenefactAPI.RPCInterfaces.Board
         }
 
         [AuthRequired(RequirePrivilege = Privilege.Admin)]
-        public Task<bool> Delete(DeleteData column)
+        public Task<bool> Delete(IDRequest column)
         {
             return Services.DoWithDB(
                 db => db.DeleteOrderAsync(db.Columns, column.Id),

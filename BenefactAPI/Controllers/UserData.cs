@@ -14,6 +14,11 @@ namespace BenefactAPI.Controllers
         public string Password;
     }
     [ReplicateType]
+    public class UserGetRequest
+    {
+        public string Name;
+    }
+    [ReplicateType]
     public class UserCreateRequest
     {
         public string Email;
