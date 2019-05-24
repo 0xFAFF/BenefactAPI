@@ -202,9 +202,9 @@ namespace BenefactAPI.DataAccess
     public class UserData
     {
         public int Id { get; set; }
-        [Required]
+        [Required, Column(TypeName = "varchar(128)")]
         public string Email { get; set; }
-        [Required]
+        [Required, Column(TypeName = "varchar(64)")]
         public string Name { get; set; }
         [ReplicateIgnore]
         public Guid? Nonce { get; set; }

@@ -174,27 +174,24 @@ namespace BenefactAPI.RPCInterfaces.Board
             return await Services.DoWithDB(async db =>
             {
                 var existingInvite = await db.Invites.Where(i => i.BoardId == BoardExtensions.Board.Id && i.Privilege == request.Privilege).FirstOrDefaultAsync();
-                if (existingInvite == null)
+                if (existingInvite != null) return existingInvite.Key;
+                for (int i = 0; i < 10; i++)
                 {
-                    for (int i = 0; i < 10; i++)
+                    try
                     {
-                        try
+                        Random r = new Random();
+                        var newInvite = (await db.Invites.AddAsync(new InviteData()
                         {
-                            Random r = new Random();
-                            var newInvite = (await db.Invites.AddAsync(new InviteData()
-                            {
-                                BoardId = BoardExtensions.Board.Id,
-                                Privilege = request.Privilege,
-                                Key = new string(Enumerable.Range(0, 10).Select(_ => alphabet[r.Next(62)]).ToArray())
-                            })).Entity;
-                            await db.SaveChangesAsync();
-                            return newInvite.Key;
-                        }
-                        catch { }
+                            BoardId = BoardExtensions.Board.Id,
+                            Privilege = request.Privilege,
+                            Key = new string(Enumerable.Range(0, 10).Select(_ => alphabet[r.Next(62)]).ToArray())
+                        })).Entity;
+                        await db.SaveChangesAsync();
+                        return newInvite.Key;
                     }
-                    throw new HTTPError("Failed to create invite");
+                    catch { }
                 }
-                return existingInvite.Key;
+                throw new HTTPError("Failed to create invite");
             });
         }
         public async Task<UserRole> Join(JoinRequest request)

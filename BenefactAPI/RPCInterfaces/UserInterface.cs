@@ -42,20 +42,24 @@ namespace BenefactAPI.RPCInterfaces
             Services = services;
             Email = services.GetService<EmailService>();
         }
-        public Task<string> auth(UserAuthRequest auth)
+        public Task<string> auth(UserAuthRequest request)
         {
-            if (auth?.Email == null || auth?.Password == null) return null;
+            if (request?.Email == null || request?.Password == null) return null;
             return Services.DoWithDB(async db =>
             {
-                var user = await db.Users.Where(u => u.Email == auth.Email).FirstOrDefaultAsync();
-                if (user == null || !PasswordStorage.VerifyPassword(auth.Password, user.Hash))
+                var user = await db.Users.Where(
+                    u => u.Email.ToLower() == request.Email.ToLower()
+                    || u.Name.ToLower() == request.Email.ToLower()).FirstOrDefaultAsync();
+                if (user == null || !PasswordStorage.VerifyPassword(request.Password, user.Hash))
                     throw new HTTPError("Invalid user/pass", 401);
                 return Auth.GenerateToken(user);
             });
         }
         public async Task<string> Add(UserCreateRequest create, bool sendVerification = true)
         {
-            if (create?.Email == null || create?.Password == null) throw new HTTPError("Invalid request", 400);
+            if (create?.Email == null || create.Password == null || create.Name == null) throw new HTTPError("Invalid request", 400);
+            if (!create.Email.Contains("@")) throw new HTTPError("Invalid email address", 400);
+            if (create.Name.Contains("@")) throw new HTTPError("Invalid name", 400);
             var user = await Services.DoWithDB(async db =>
             {
                 var _user = (await db.Users.AddAsync(new UserData()
@@ -66,7 +70,9 @@ namespace BenefactAPI.RPCInterfaces
                     Hash = PasswordStorage.CreateHash(create.Password),
                 })).Entity;
                 return _user;
-            }).HandleDuplicate("ak_users_email", "User already exists");
+            })
+            .HandleDuplicate("ak_users_email", "A user with that email already exists")
+            .HandleDuplicate("ak_users_name", "A user with that name already exists");
             // TODO: Handle this failing and roll back the user add, putting this inside recurses the DB instance
             if (sendVerification)
                 await _sendVerification(user).ConfigureAwait(false);

@@ -80,6 +80,8 @@ namespace BenefactAPI.DataAccess
 
             modelBuilder.Entity<UserData>()
                 .HasAlternateKey(ud => ud.Email);
+            modelBuilder.Entity<UserData>()
+                .HasAlternateKey(ud => ud.Name);
 
             modelBuilder.Entity<CardData>()
                 .HasOne(cd => cd.Author)
