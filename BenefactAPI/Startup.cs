@@ -68,8 +68,12 @@ namespace BenefactAPI
                         email.SendEmail("asherman1024@gmail.com", "Welcome to Benefact!", "verification.html",
                             new Dictionary<string, string> { { "link_target", $"https://{{{{baseURL}}}}/login?nonce=derp" } }).GetAwaiter().GetResult();
                         break;
+                    case "migrate":
+                        using (var db = services.GetService<BenefactDbContext>())
+                            db.Database.Migrate();
+                        break;
                     case "mockdata":
-                        using(var db = services.GetService<BenefactDbContext>())
+                        using (var db = services.GetService<BenefactDbContext>())
                         {
                             db.Database.EnsureDeleted();
                             db.Database.Migrate();
