@@ -164,8 +164,7 @@ namespace BenefactAPI.RPCInterfaces
                     User = user,
                     Boards = boards,
                     CreatedCards = await db.Cards.Where(c => !c.Archived && c.AuthorId == user.Id).ToListAsync(),
-                    // TODO
-                    AssignedCards = await db.Cards.Where(c => !c.Archived && false).ToListAsync(),
+                    AssignedCards = await db.Cards.Where(c => !c.Archived && c.AssigneeId == user.Id).ToListAsync(),
                     Activity = await db.Activity
                         .OrderByDescending(a => a.Time)
                         .Include(a => a.Comment)

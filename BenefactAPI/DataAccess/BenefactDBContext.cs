@@ -88,6 +88,11 @@ namespace BenefactAPI.DataAccess
                 .WithMany(u => u.CreatedCards)
                 .HasForeignKey(cd => cd.AuthorId);
 
+            modelBuilder.Entity<CardData>()
+                .HasOne(cd => cd.Assignee)
+                .WithMany(u => u.AssignedCards)
+                .HasForeignKey(cd => cd.AssigneeId);
+
             // Privileges
             modelBuilder.Entity<UserRole>()
                 .HasKey(ur => new { ur.UserId, ur.BoardId });

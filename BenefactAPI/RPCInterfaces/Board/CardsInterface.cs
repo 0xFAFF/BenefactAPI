@@ -25,6 +25,12 @@ namespace BenefactAPI.RPCInterfaces.Board
         public bool Archive = true;
     }
     [ReplicateType]
+    public class CardAssignRequest
+    {
+        public int CardId;
+        public int? AssigneeId;
+    }
+    [ReplicateType]
     [ReplicateRoute(Route = "cards")]
     public class CardsInterface
     {
@@ -116,6 +122,24 @@ namespace BenefactAPI.RPCInterfaces.Board
                     Auth.VerifyPrivilege(Privilege.Developer);
                 card.Archived = request.Archive;
                 await Activity.LogActivity(db, card, ActivityType.Archive);
+            });
+        }
+        [AuthRequired(RequirePrivilege = Privilege.Developer)]
+        public Task Assign(CardAssignRequest request)
+        {
+            return Services.DoWithDB(async db =>
+            {
+                var card = await db.Cards.BoardFilter(request.CardId).FirstOr404();
+                // Verify the assignee is valid
+                if (request.AssigneeId.HasValue)
+                {
+                    await db.Roles.Where(
+                        r => r.BoardId == BoardExtensions.Board.Id
+                            && r.UserId == request.AssigneeId
+                            && (r.Privilege & Privilege.Developer) != 0)
+                        .FirstOrError("Invalid assignee", 400);
+                }
+                card.AssigneeId = request.AssigneeId;
             });
         }
     }

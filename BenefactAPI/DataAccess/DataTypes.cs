@@ -80,6 +80,9 @@ namespace BenefactAPI.DataAccess
         [ReplicateIgnore]
         [Required]
         public UserData Author { get; set; }
+        public int? AssigneeId { get; set; }
+        [ReplicateIgnore]
+        public UserData Assignee { get; set; }
         [Required]
         public int? Index { get; set; }
         [Required]
@@ -222,5 +225,7 @@ namespace BenefactAPI.DataAccess
         public List<CardData> CreatedCards { get; set; } = new List<CardData>();
         [ReplicateIgnore]
         public List<BoardData> CreatedBoards { get; set; } = new List<BoardData>();
+        [ReplicateIgnore]
+        public List<CardData> AssignedCards { get; set; } = new List<CardData>();
     }
 }
