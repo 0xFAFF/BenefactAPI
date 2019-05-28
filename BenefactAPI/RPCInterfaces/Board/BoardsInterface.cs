@@ -35,7 +35,7 @@ namespace BenefactAPI.RPCInterfaces.Board
         public Privilege? UserPrivilege;
         public List<ColumnData> Columns;
         public List<TagData> Tags;
-        public List<UserData> Users;
+        public List<UserRole> Roles;
         public Privilege? DefaultPrivilege;
         public string Title;
         public string UrlName;
@@ -108,7 +108,7 @@ namespace BenefactAPI.RPCInterfaces.Board
         {
             var response = new BoardResponse();
             TypeUtil.CopyFrom(response, BoardExtensions.Board, blackList:
-                new string[] { nameof(BoardResponse.Tags), nameof(BoardResponse.Columns), nameof(BoardResponse.Users), nameof(BoardResponse.Cards) });
+                new string[] { nameof(BoardResponse.Tags), nameof(BoardResponse.Columns), nameof(BoardResponse.Roles), nameof(BoardResponse.Cards) });
             if (Auth.CurrentRole == null)
                 return Task.FromResult(response);
             query = query ?? new CardQuery();
@@ -135,8 +135,7 @@ namespace BenefactAPI.RPCInterfaces.Board
                 response.Columns = await db.Columns.BoardFilter().OrderBy(col => col.Index).ToListAsync();
                 response.Tags = await db.Tags.BoardFilter().OrderBy(tag => tag.Id).ToListAsync();
                 response.UserPrivilege = Auth.CurrentRole?.Privilege;
-                response.Users = await db.Users
-                .Where(u => u.Roles.Any(p => p.BoardId == boardId) || u.Votes.Any(v => v.BoardId == boardId) || u.Comments.Any(c => c.BoardId == boardId))
+                response.Roles = await db.Roles.Include(r => r.User).Where(r => r.BoardId == BoardExtensions.Board.Id)
                 .ToListAsync();
                 return response;
             });

@@ -21,7 +21,6 @@ namespace BenefactAPI.DataAccess
     public class UserRole
     {
         public int UserId { get; set; }
-        [ReplicateIgnore]
         public UserData User { get; set; }
         public int BoardId { get; set; }
         public BoardData Board { get; set; }
