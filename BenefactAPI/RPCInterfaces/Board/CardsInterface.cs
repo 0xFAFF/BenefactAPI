@@ -65,7 +65,7 @@ namespace BenefactAPI.RPCInterfaces.Board
                 TypeUtil.CopyFrom(card, update,
                     whiteList: new[] { nameof(CardData.Title), nameof(CardData.Description),
                         nameof(CardData.ColumnId) });
-                if (update.TagIds != null)
+                if (update.Tags != null)
                 {
                     card.Tags.Clear();
                     card.TagIds = update.TagIds;
