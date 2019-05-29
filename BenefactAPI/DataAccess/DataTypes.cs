@@ -99,13 +99,13 @@ namespace BenefactAPI.DataAccess
         [Required]
         public int? ColumnId { get; set; }
         [ReplicateIgnore]
-        public List<CardTag> Tags { get; set; } = new List<CardTag>();
+        public List<CardTag> Tags { get; set; }
         [NotMapped]
         public List<int> TagIds
         {
             // TODO: Order by tag order?
-            get => Tags.OrderBy(tag => tag.TagId).Select(ccd => ccd.TagId).ToList();
-            set => Tags = value.Select(v => new CardTag() { Card = this, TagId = v }).ToList();
+            get => Tags?.OrderBy(tag => tag.TagId).Select(ccd => ccd.TagId).ToList() ?? new List<int>();
+            set => Tags = value?.Select(v => new CardTag() { Card = this, TagId = v }).ToList();
         }
         public ICollection<CommentData> Comments { get; set; } = new AutoSortList<double, CommentData>(c => -c.CreatedTime);
         public List<VoteData> Votes { get; set; } = new List<VoteData>();
