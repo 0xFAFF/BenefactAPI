@@ -50,8 +50,21 @@ namespace BenefactAPI.RPCInterfaces.Board
                 // Only developers can edit cards they don't own, or move cards
                 if (card.AuthorId != Auth.CurrentUser.Id || update.Index.HasValue || update.ColumnId.HasValue)
                     Auth.VerifyPrivilege(Privilege.Developer);
+                // Verify the assignee is valid and the editor is a developer
+                if (update.AssigneeId.HasValue)
+                {
+                    Auth.VerifyPrivilege(Privilege.Developer);
+                    if (update.AssigneeId != 0)
+                        await db.Roles.Where(
+                            r => r.BoardId == BoardExtensions.Board.Id
+                                && r.UserId == update.AssigneeId
+                                && (r.Privilege & Privilege.Developer) != 0)
+                            .FirstOrError("Invalid assignee", 400);
+                    card.AssigneeId = update.AssigneeId == 0 ? null : update.AssigneeId;
+                }
                 TypeUtil.CopyFrom(card, update,
-                    whiteList: new[] { nameof(CardData.Title), nameof(CardData.Description), nameof(CardData.ColumnId) });
+                    whiteList: new[] { nameof(CardData.Title), nameof(CardData.Description),
+                        nameof(CardData.ColumnId) });
                 if (update.TagIds != null)
                 {
                     card.Tags.Clear();
@@ -122,24 +135,6 @@ namespace BenefactAPI.RPCInterfaces.Board
                     Auth.VerifyPrivilege(Privilege.Developer);
                 card.Archived = request.Archive;
                 await Activity.LogActivity(db, card, ActivityType.Archive);
-            });
-        }
-        [AuthRequired(RequirePrivilege = Privilege.Developer)]
-        public Task Assign(CardAssignRequest request)
-        {
-            return Services.DoWithDB(async db =>
-            {
-                var card = await db.Cards.BoardFilter(request.CardId).FirstOr404();
-                // Verify the assignee is valid
-                if (request.AssigneeId.HasValue)
-                {
-                    await db.Roles.Where(
-                        r => r.BoardId == BoardExtensions.Board.Id
-                            && r.UserId == request.AssigneeId
-                            && (r.Privilege & Privilege.Developer) != 0)
-                        .FirstOrError("Invalid assignee", 400);
-                }
-                card.AssigneeId = request.AssigneeId;
             });
         }
     }
