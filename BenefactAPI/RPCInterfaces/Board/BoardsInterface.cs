@@ -18,6 +18,14 @@ namespace BenefactAPI.RPCInterfaces.Board
         public int? Limit;
     }
     [ReplicateType]
+    public class BoardUpdateRequest
+    {
+        public string Title;
+        public string UrlName;
+        public Privilege? DefaultPrivilege;
+        public string Description;
+    }
+    [ReplicateType]
     public class CardQueryTerm
     {
         public List<int> Tags;
@@ -140,6 +148,15 @@ namespace BenefactAPI.RPCInterfaces.Board
                 return response;
             });
         }
+        [AuthRequired(RequirePrivilege = Privilege.Admin)]
+        public Task Update(BoardUpdateRequest request)
+        {
+            return Services.DoWithDB(async db =>
+            {
+                var board = await db.Boards.Where(b => b.Id == BoardExtensions.Board.Id).FirstOr404();
+                TypeUtil.CopyFrom(board, request);
+            });
+        }
         public static async Task<UserRole> GetOrCreateRole(BenefactDbContext db, int userId)
         {
             if (userId == BoardExtensions.Board.CreatorId)
@@ -202,12 +219,12 @@ namespace BenefactAPI.RPCInterfaces.Board
                 {
                     var invite = await db.Invites.Include(i => i.Board).Where(i => i.Key == request.Key)
                         .FirstOrError("Invalid invite key", 400);
-                    privilege = (privilege ?? Privilege.None) | invite.Privilege;
+                    privilege = privilege | invite.Privilege;
                 }
-                if (privilege == null)
+                if (privilege == Privilege.None)
                     throw new HTTPError("Cannot join private board");
                 var role = await GetOrCreateRole(db, Auth.CurrentUser.Id);
-                role.Privilege |= privilege.Value;
+                role.Privilege |= privilege;
                 return role;
             });
         }

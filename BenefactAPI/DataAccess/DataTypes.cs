@@ -39,7 +39,7 @@ namespace BenefactAPI.DataAccess
         [Replicate]
         public string UrlName { get; set; }
         [Replicate]
-        public Privilege? DefaultPrivilege { get; set; }
+        public Privilege DefaultPrivilege { get; set; }
         [Replicate]
         public string Description { get; set; }
         [Replicate]
