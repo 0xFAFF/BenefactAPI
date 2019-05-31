@@ -47,7 +47,9 @@ namespace BenefactAPI.RPCInterfaces.Board
             {
                 var column = await db.Columns.FindAsync(BoardExtensions.Board.Id, update.Id);
                 if (column == null) throw new HTTPError("Column not found", 404);
-                TypeUtil.CopyFrom(column, update, whiteList: new[] { nameof(ColumnData.Title) });
+                TypeUtil.CopyFrom(column, update, whiteList: new[] {
+                    nameof(ColumnData.Title), nameof(ColumnData.State),
+                    nameof(ColumnData.AllowContribution) });
                 if (update.Index.HasValue)
                     await db.Insert(column, update.Index.Value, db.Columns.BoardFilter());
                 await db.SaveChangesAsync();

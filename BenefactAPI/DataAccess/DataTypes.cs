@@ -174,8 +174,10 @@ namespace BenefactAPI.DataAccess
         public int Id { get; set; }
         public int? Index { get; set; }
         public string Title { get; set; }
-        public bool AllowContribution { get; set; }
-        public CardState State { get; set; }
+        [Required]
+        public bool? AllowContribution { get; set; }
+        [Required]
+        public CardState? State { get; set; }
         [ReplicateIgnore]
         public BoardData Board { get; set; }
         [ReplicateIgnore]

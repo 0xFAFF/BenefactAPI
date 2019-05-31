@@ -89,7 +89,7 @@ namespace BenefactAPI.RPCInterfaces.Board
                 var column = db.Columns.BoardFilter().FirstOrDefault(col => col.Id == card.ColumnId);
                 if (column == null)
                     throw new HTTPError("Invalid column id", 400);
-                if (!column.AllowContribution)
+                if (!(column.AllowContribution ?? false))
                     Auth.VerifyPrivilege(Privilege.Developer);
                 var result = await db.Cards.AddAsync(card);
                 await db.Insert(card, card.Index, db.Cards.Where(c => c.BoardId == card.BoardId));
