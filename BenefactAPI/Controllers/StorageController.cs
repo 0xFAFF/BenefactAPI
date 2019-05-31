@@ -15,7 +15,7 @@ using Replicate;
 
 namespace BenefactAPI.Controllers
 {
-    [Route("api/board/{boardId}/files/")]
+    [Route("api/boards/{boardId}/files/")]
     [ReplicateRoute(Route = "files")]
     public class StorageController : ControllerBase
     {
