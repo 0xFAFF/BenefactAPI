@@ -90,12 +90,15 @@ namespace BenefactAPI
                 db.SaveChanges();
                 var todo = db.Columns.Add(new ColumnData()
                 {
+                    State = CardState.Proposed,
+                    AllowContribution = false,
                     Title = "To Do",
                     Index = 1,
                     BoardId = 1,
                 }).Entity;
                 var inProgress = db.Columns.Add(new ColumnData()
                 {
+                    AllowContribution = false,
                     Title = "In Progress",
                     State = CardState.InProgress,
                     Index = 2,
@@ -103,6 +106,7 @@ namespace BenefactAPI
                 }).Entity;
                 var done = db.Columns.Add(new ColumnData()
                 {
+                    AllowContribution = false,
                     Title = "Done",
                     State = CardState.Complete,
                     Index = 3,

@@ -54,4 +54,10 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <DotNetCliToolReference Include="Microsoft.EntityFrameworkCore.Tools.DotNet">
+      <Version>1.2.0-*</Version>
+    </DotNetCliToolReference>
+  </ItemGroup>
+
 </Project>
