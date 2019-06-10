@@ -15,6 +15,7 @@ namespace BenefactAPI.RPCInterfaces
     {
         public string Title;
         public string UrlName;
+        public bool CreateTemplate;
     }
     [ReplicateType]
     public class TrelloImportRequest
@@ -44,6 +45,110 @@ namespace BenefactAPI.RPCInterfaces
                 var board = new BoardData();
                 TypeUtil.CopyFrom(board, request);
                 board.CreatorId = Auth.CurrentUser.Id;
+                if (request.CreateTemplate)
+                {
+                    List<ColumnData> columns = new List<ColumnData>
+                    {
+                        new ColumnData
+                        {
+                            BoardId = board.Id,
+                            Title = "To Do",
+                            Index = 0,
+                            AllowContribution = false,
+                            State = CardState.Proposed
+                        },
+                        new ColumnData
+                        {
+                            BoardId = board.Id,
+                            Title = "In Progress",
+                            Index = 1,
+                            AllowContribution = false,
+                            State = CardState.InProgress
+                        },
+                        new ColumnData
+                        {
+                            BoardId = board.Id,
+                            Title = "Complete",
+                            Index = 2,
+                            AllowContribution = false,
+                            State = CardState.Complete
+                        }
+                    };
+                    List<TagData> tags = new List<TagData>
+                    {
+                        new TagData
+                        {
+                            BoardId = board.Id,
+                            Name = "Bug",
+                            Color = "#FF4136",
+                        },
+                        new TagData
+                        {
+                            BoardId = board.Id,
+                            Name = "Duplicate",
+                            Color = "#001f3f",
+                        },
+                        new TagData
+                        {
+                            BoardId = board.Id,
+                            Name = "Enhancement",
+                            Color = "#7FDBFF",
+                        },
+                        new TagData
+                        {
+                            BoardId = board.Id,
+                            Name = "Help Wanted",
+                            Color = "#3D9970",
+                        },
+                        new TagData
+                        {
+                            BoardId = board.Id,
+                            Name = "Invalid",
+                            Color = "#85144B",
+                        },
+                        new TagData
+                        {
+                            BoardId = board.Id,
+                            Name = "Question",
+                            Color = "#FF851B",
+                        },
+                        new TagData
+                        {
+                            BoardId = board.Id,
+                            Name = "Wont Fix",
+                            Color = "#F012BE",
+                        }
+                    };
+
+                    List<CardData> cards = new List<CardData>
+                    {
+                        new CardData
+                        {
+                            BoardId = board.Id,
+                            Column = columns[0],
+                            Description = "This is a description.",
+                            Title = "Example Card",
+                            Index = 0,
+                            AuthorId = Auth.CurrentUser.Id
+                        }
+                    };
+
+                    foreach (var column in columns)
+                    {
+                        board.Columns.Add(column);
+                    }
+
+                    foreach (var tag in tags)
+                    {
+                        board.Tags.Add(tag);
+                    }
+
+                    foreach (var card in cards)
+                    {
+                        board.Cards.Add(card);
+                    }
+                }
+
                 await db.AddAsync(board);
                 await addAdminRole(db, board);
                 return board.UrlName;

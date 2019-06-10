@@ -26,20 +26,17 @@ namespace BenefactAPI
             });
         }
 
-        public static Task<T> HandleError<T, E>(this Task<T> task, Action<E> handler) where E : Exception
+        public static async Task<T> HandleError<T, E>(this Task<T> task, Action<E> handler) where E : Exception
         {
-            return task.ContinueWith(t =>
+            try
             {
-                try
-                {
-                    return t.GetAwaiter().GetResult();
-                }
-                catch (E e)
-                {
-                    handler(e);
-                    throw;
-                }
-            });
+                return await task;
+            }
+            catch (E e)
+            {
+                handler(e);
+                throw;
+            }
         }
 
         public static T GetRouteParam<T>(this ActionContext context, string key, Func<string, T> converter)
