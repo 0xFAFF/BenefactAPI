@@ -61,7 +61,8 @@ namespace BenefactAPI.DataAccess
             modelBuilder.Entity<BoardData>()
                 .HasOne(bd => bd.Creator)
                 .WithMany(u => u.CreatedBoards)
-                .HasForeignKey(bd => bd.CreatorId);
+                .HasForeignKey(bd => bd.CreatorId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<InviteData>()
                 .HasIndex(i => i.Key)

@@ -38,6 +38,7 @@ namespace BenefactAPI.RPCInterfaces.Board
     public class BoardResponse
     {
         public int Id;
+        public int CreatorId;
         public Dictionary<string, List<CardData>> Cards;
         public string Description;
         public Privilege? UserPrivilege;
@@ -147,6 +148,13 @@ namespace BenefactAPI.RPCInterfaces.Board
                 .ToListAsync();
                 return response;
             });
+        }
+        [AuthRequired]
+        public Task Delete()
+        {
+            if (BoardExtensions.Board.CreatorId != Auth.CurrentUser.Id)
+                throw new HTTPError("Only the owner may delete a board", 403);
+            return Services.DoWithDB(db => db.DeleteAsync(db.Boards, BoardExtensions.Board));
         }
         [AuthRequired(RequirePrivilege = Privilege.Admin)]
         public Task Update(BoardUpdateRequest request)

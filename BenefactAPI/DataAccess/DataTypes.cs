@@ -45,7 +45,7 @@ namespace BenefactAPI.DataAccess
         [Replicate]
         public UserData Creator { get; set; }
         [Replicate]
-        public int? CreatorId { get; set; }
+        public int CreatorId { get; set; }
         public List<CardData> Cards { get; set; } = new List<CardData>();
         public List<CommentData> Comments { get; set; } = new List<CommentData>();
         public List<VoteData> Votes { get; set; } = new List<VoteData>();
