@@ -31,6 +31,14 @@ namespace BenefactAPI.RPCInterfaces.Board
         public int? AssigneeId;
     }
     [ReplicateType]
+    public class CardMoveRequest
+    {
+        public int CardId;
+        public int ColumnId;
+        public int? TargetCardId;
+        public bool TargetIsAfter = true;
+    }
+    [ReplicateType]
     [ReplicateRoute(Route = "cards")]
     public class CardsInterface
     {
@@ -76,6 +84,23 @@ namespace BenefactAPI.RPCInterfaces.Board
                 return true;
             });
         }
+
+        [AuthRequired]
+        public Task Move(CardMoveRequest request)
+        {
+            return Services.DoWithDB(async db =>
+            {
+                var card = await db.Cards.Where(c => c.Id == request.CardId).FirstOr404();
+                card.ColumnId = request.ColumnId;
+                var targetCard = await db.Cards.Where(c => c.Id == request.TargetCardId).FirstOr404();
+                var newCardIndex = targetCard.Index - 1;
+                if (request.TargetIsAfter)
+                    newCardIndex = targetCard.Index + 1;
+                await db.Insert(card, newCardIndex, db.Cards.Where(c => c.BoardId == card.BoardId));
+                return true;
+            });
+        }
+
 
         [AuthRequired(RequirePrivilege = Privilege.Contribute)]
         public Task<CardData> Add(CardData card)
