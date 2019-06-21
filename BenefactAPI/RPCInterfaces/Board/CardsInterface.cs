@@ -94,12 +94,15 @@ namespace BenefactAPI.RPCInterfaces.Board
                 var card = await db.Cards.Where(c => c.Id == request.CardId).FirstOr404();
                 if (request.ColumnId.HasValue)
                     card.ColumnId = request.ColumnId;
-                var targetCard = await db.Cards.Where(c => c.Id == request.TargetCardId).FirstOr404();
-                var newCardIndex = targetCard.Index;
-                if (request.MoveAfter)
-                    newCardIndex = targetCard.Index + 1;
-                if (newCardIndex > card.Index) newCardIndex--;
-                await db.Insert(card, newCardIndex, db.Cards.Where(c => c.BoardId == card.BoardId));
+                if (request.TargetCardId.HasValue)
+                {
+                    var targetCard = await db.Cards.Where(c => c.Id == request.TargetCardId).FirstOr404();
+                    var newCardIndex = targetCard.Index;
+                    if (request.MoveAfter)
+                        newCardIndex = targetCard.Index + 1;
+                    if (newCardIndex > card.Index) newCardIndex--;
+                    await db.Insert(card, newCardIndex, db.Cards.Where(c => c.BoardId == card.BoardId));
+                }
                 return true;
             });
         }
