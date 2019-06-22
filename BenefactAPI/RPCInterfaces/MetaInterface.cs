@@ -186,6 +186,8 @@ namespace BenefactAPI.RPCInterfaces
                         BoardId = board.Board.Id,
                         Title = list.name,
                         Index = i,
+                        AllowContribution = false,
+                        State = CardState.Proposed,
                     };
                     await db.AddAsync(list.Column);
                 }
