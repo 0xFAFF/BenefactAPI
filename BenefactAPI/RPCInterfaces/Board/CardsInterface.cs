@@ -31,6 +31,18 @@ namespace BenefactAPI.RPCInterfaces.Board
         public int? AssigneeId;
     }
     [ReplicateType]
+    public class CardMoveRequest
+    {
+        public int CardId;
+        public int? ColumnId;
+        public int? TargetCardId;
+        /// <summary>
+        /// If true, inserts the card specified by CardId <i>after</i> the card specified by TargetCardId
+        /// otherwise inserts it before
+        /// </summary>
+        public bool MoveAfter;
+    }
+    [ReplicateType]
     [ReplicateRoute(Route = "cards")]
     public class CardsInterface
     {
@@ -63,19 +75,38 @@ namespace BenefactAPI.RPCInterfaces.Board
                     card.AssigneeId = update.AssigneeId == 0 ? null : update.AssigneeId;
                 }
                 TypeUtil.CopyFrom(card, update,
-                    whiteList: new[] { nameof(CardData.Title), nameof(CardData.Description),
-                        nameof(CardData.ColumnId) });
+                    whiteList: new[] { nameof(CardData.Title), nameof(CardData.Description), nameof(CardData.ColumnId) });
                 if (update.Tags != null)
                 {
                     card.Tags.Clear();
                     card.TagIds = update.TagIds;
                 }
-                if (update.Index.HasValue)
-                    await db.Insert(card, update.Index.Value, db.Cards.Where(c => c.BoardId == card.BoardId));
                 await Activity.LogActivity(db, card, ActivityType.Update);
                 return true;
             });
         }
+
+        [AuthRequired(RequirePrivilege = Privilege.Developer)]
+        public Task Move(CardMoveRequest request)
+        {
+            return Services.DoWithDB(async db =>
+            {
+                var card = await db.Cards.Where(c => c.Id == request.CardId).FirstOr404();
+                if (request.ColumnId.HasValue)
+                    card.ColumnId = request.ColumnId;
+                if (request.TargetCardId.HasValue)
+                {
+                    var targetCard = await db.Cards.Where(c => c.Id == request.TargetCardId).FirstOr404();
+                    var newCardIndex = targetCard.Index;
+                    if (request.MoveAfter)
+                        newCardIndex = targetCard.Index + 1;
+                    if (newCardIndex > card.Index) newCardIndex--;
+                    await db.Insert(card, newCardIndex, db.Cards.Where(c => c.BoardId == card.BoardId));
+                }
+                return true;
+            });
+        }
+
 
         [AuthRequired(RequirePrivilege = Privilege.Contribute)]
         public Task<CardData> Add(CardData card)
