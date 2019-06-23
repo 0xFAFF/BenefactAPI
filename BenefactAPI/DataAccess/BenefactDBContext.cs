@@ -112,7 +112,8 @@ namespace BenefactAPI.DataAccess
             modelBuilder.Entity<CardData>()
                 .HasOne(cd => cd.Column)
                 .WithMany(co => co.Cards)
-                .HasForeignKey(cd => new { cd.BoardId, cd.ColumnId });
+                .HasForeignKey(cd => new { cd.BoardId, cd.ColumnId })
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Comments
             modelBuilder.Entity<UserData>()
