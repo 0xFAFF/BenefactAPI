@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Replicate.Serialization;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -80,7 +81,7 @@ namespace BenefactAPITests
         }
         public async Task<T> Post<T, U>(string url, U request, string board = "benefact")
         {
-            return services.Serializer.Deserialize<T>(await Post(url, services.Serializer.Serialize(request)));
+            return services.Serializer.Deserialize<T>(await Post(url, services.Serializer.Serialize(request).ReadAllString()));
         }
     }
 }

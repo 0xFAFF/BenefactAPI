@@ -33,7 +33,7 @@ namespace BenefactAPI.Controllers
     }
     public class HTTPChannel : RPCChannel<string, string>
     {
-        public HTTPChannel(IReplicateSerializer<string> serializer) : base(serializer) { }
+        public HTTPChannel(IReplicateSerializer serializer) : base(serializer) { }
 
         public override string GetEndpoint(MethodInfo endpoint)
         {
@@ -47,7 +47,10 @@ namespace BenefactAPI.Controllers
             return name;
         }
 
-        public override Task<string> Request(string messageID, RPCRequest request, ReliabilityMode reliability = ReliabilityMode.ReliableSequenced)
+        public override Stream GetStream(string wireValue) => SerializerExtensions.GetStream(wireValue);
+        public override string GetWireValue(Stream stream) => stream.ReadAllString();
+
+        public override Task<Stream> Request(string messageID, RPCRequest request, ReliabilityMode reliability = ReliabilityMode.ReliableSequenced)
         {
             throw new NotImplementedException();
         }
@@ -95,13 +98,25 @@ namespace BenefactAPI.Controllers
             while (path.Any() && path.Last() == '/')
                 path = path.Substring(0, path.Length - 1);
 
-            var bodyText = new StreamReader(Request.Body).ReadToEnd();
-            if (!Channel.TryGetContract(path, out var contract)) return new NotFoundResult();
-            contract.Method?.GetCustomAttribute<AuthRequiredAttribute>()?.ThrowIfUnverified();
-            var result = await Channel.ReceiveRaw(path, string.IsNullOrEmpty(bodyText) ? null : bodyText);
-            if (result.Item1 is ActionResult actionResult)
-                return actionResult;
-            return new ContentResult() { Content = Channel.Serializer.Serialize(result.Item2.ResponseType, result.Item1), ContentType = "application/json", StatusCode = 200 };
+            var bodyText = Request.Body.ReadAllString();
+            try
+            {
+                var request = Channel.CreateRequest(path, bodyText, null, out var contract);
+                contract.Method?.GetCustomAttribute<AuthRequiredAttribute>()?.ThrowIfUnverified();
+                var result = await Channel.Receive(request);
+                if (result is ActionResult actionResult)
+                    return actionResult;
+                return new ContentResult()
+                {
+                    Content = Channel.Serializer.Serialize(contract.ResponseType, result).ReadAllString(),
+                    ContentType = "application/json",
+                    StatusCode = 200
+                };
+            }
+            catch (ContractNotFoundError)
+            {
+                return new NotFoundResult();
+            }
         }
     }
 }

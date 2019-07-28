@@ -39,7 +39,7 @@ namespace BenefactAPI
             response.Headers.Add("Access-Control-Allow-Headers", "*");
             response.Headers.Add("Access-Control-Allow-Credentials", "true");
         }
-        public static void UseHandling(this IApplicationBuilder app, ILogger logger, IReplicateSerializer<string> serializer)
+        public static void UseHandling(this IApplicationBuilder app, ILogger logger, IReplicateSerializer serializer)
         {
             app.Use(async (context, next) =>
             {
@@ -58,7 +58,7 @@ namespace BenefactAPI
                         var (StatusCode, Error) = FromException(e);
                         context.Response.StatusCode = StatusCode;
                         context.Response.ContentType = "application/json";
-                        await context.Response.WriteAsync(serializer.Serialize(Error));
+                        await context.Response.WriteAsync(serializer.Serialize(Error).ReadAllString());
                     }
                 }
             });

@@ -45,7 +45,7 @@ namespace BenefactAPI.RPCInterfaces.Board
         public List<ColumnData> Columns;
         public List<TagData> Tags;
         public List<UserRole> Roles;
-        public Privilege? DefaultPrivilege;
+        public Privilege DefaultPrivilege;
         public string Title;
         public string UrlName;
     }

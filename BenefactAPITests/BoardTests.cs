@@ -28,7 +28,7 @@ namespace BenefactAPITests
             var result = await Post<BoardResponse, None>("/", None.Value);
             Assert.AreEqual("benefact", result.UrlName);
             Assert.AreEqual(null, result.UserPrivilege);
-            Assert.AreEqual(null, result.DefaultPrivilege);
+            Assert.AreEqual(Privilege.None, result.DefaultPrivilege);
             Assert.IsNotNull(result.Description);
         }
         [TestMethod]

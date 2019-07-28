@@ -29,7 +29,7 @@ namespace BenefactAPI
         public static void ConfigureTypes(IServiceCollection services)
         {
             ReplicationModel.Default.DictionaryAsObject = true;
-            services.AddSingleton<IReplicateSerializer<string>>(new JSONGraphSerializer(ReplicationModel.Default));
+            services.AddSingleton<IReplicateSerializer>(new JSONGraphSerializer(ReplicationModel.Default));
         }
 
         // This method gets called by the runtime. Use this method to add services to the container.
@@ -50,7 +50,7 @@ namespace BenefactAPI
             {
                 app.UseDeveloperExceptionPage();
             }
-            app.UseHandling(services.GetRequiredService<ILogger<Startup>>(), services.GetRequiredService<IReplicateSerializer<string>>());
+            app.UseHandling(services.GetRequiredService<ILogger<Startup>>(), services.GetRequiredService<IReplicateSerializer>());
             app.UseAuthn();
             app.UseMvc();
 
