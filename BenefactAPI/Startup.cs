@@ -29,6 +29,7 @@ namespace BenefactAPI
         public static void ConfigureTypes(IServiceCollection services)
         {
             ReplicationModel.Default.DictionaryAsObject = true;
+            ReplicationModel.Default.LoadTypes(typeof(BoardData).Assembly);
             services.AddSingleton<IReplicateSerializer>(new JSONGraphSerializer(ReplicationModel.Default));
         }
 

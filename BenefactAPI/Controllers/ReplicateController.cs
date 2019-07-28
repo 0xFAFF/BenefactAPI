@@ -99,6 +99,7 @@ namespace BenefactAPI.Controllers
                 path = path.Substring(0, path.Length - 1);
 
             var bodyText = Request.Body.ReadAllString();
+            if (string.IsNullOrEmpty(bodyText)) bodyText = null;
             try
             {
                 var request = Channel.CreateRequest(path, bodyText, null, out var contract);
