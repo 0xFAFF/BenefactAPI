@@ -2,6 +2,7 @@
 using BenefactAPI.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Replicate;
+using Replicate.Web;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -165,6 +166,7 @@ namespace BenefactAPI.RPCInterfaces.Board
                 TypeUtil.CopyFrom(board, request);
             });
         }
+        [ReplicateIgnore]
         public static async Task<UserRole> GetOrCreateRole(BenefactDbContext db, int userId)
         {
             if (userId == BoardExtensions.Board.CreatorId)

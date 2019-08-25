@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27703.2042
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29201.188
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BenefactAPI", "BenefactAPI\BenefactAPI.csproj", "{CA08153B-DD59-4996-AEE9-D31354D438D7}"
 EndProject
@@ -10,6 +10,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Replicate", "BenefactAPI\Replicate\Replicate\Replicate.csproj", "{315F1B19-CFB8-431B-9FB5-90FD2A51AF9A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReplicateTest", "BenefactAPI\Replicate\ReplicateTest\ReplicateTest.csproj", "{9388932F-1FDA-43D4-B87D-844B1DDF0003}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReplicateWeb", "BenefactAPI\Replicate\ReplicateWeb\ReplicateWeb.csproj", "{C9233E55-EAF2-4845-8A6D-0191ED1E8505}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{9388932F-1FDA-43D4-B87D-844B1DDF0003}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9388932F-1FDA-43D4-B87D-844B1DDF0003}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9388932F-1FDA-43D4-B87D-844B1DDF0003}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9233E55-EAF2-4845-8A6D-0191ED1E8505}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9233E55-EAF2-4845-8A6D-0191ED1E8505}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9233E55-EAF2-4845-8A6D-0191ED1E8505}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9233E55-EAF2-4845-8A6D-0191ED1E8505}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

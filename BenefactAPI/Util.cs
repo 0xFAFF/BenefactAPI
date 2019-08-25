@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql;
 using Replicate.MetaData;
+using Replicate.Web;
 using System;
 using System.Collections.Generic;
 using System.Linq;

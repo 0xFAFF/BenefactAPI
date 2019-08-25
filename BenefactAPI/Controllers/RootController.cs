@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Replicate;
+using Replicate.Web;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,13 +15,14 @@ using System.Threading.Tasks;
 namespace BenefactAPI.Controllers
 {
     [Route("api/")]
+    [ReplicateType]
     public class RootController : ReplicateController
     {
         public RootController(IServiceProvider provider) : base(provider)
         {
-            Channel.RegisterSingleton(new UserInterface(Services));
-            Channel.RegisterSingleton(new MetaInterface(Services));
-            Channel.Respond<None, string>(Version);
+            Server.RegisterSingleton(new UserInterface(Services));
+            Server.RegisterSingleton(new MetaInterface(Services));
+            Server.Respond<None, string>(Version);
         }
 
         public Task<string> Version(None _)
@@ -29,16 +31,17 @@ namespace BenefactAPI.Controllers
         }
     }
     [Route("api/boards/{boardId}")]
+    [ReplicateType]
     public class BoardController : ReplicateController
     {
         public BoardController(IServiceProvider provider) : base(provider)
         {
-            Channel.RegisterSingleton(new CardsInterface(Services));
-            Channel.RegisterSingleton(new CommentsInterface(Services));
-            Channel.RegisterSingleton(new ColumnsInterface(Services));
-            Channel.RegisterSingleton(new TagsInterface(Services));
-            Channel.RegisterSingleton(new BoardsInterface(Services));
-            Channel.Respond<IDRequest, bool>(StorageController.Delete);
+            Server.RegisterSingleton(new CardsInterface(Services));
+            Server.RegisterSingleton(new CommentsInterface(Services));
+            Server.RegisterSingleton(new ColumnsInterface(Services));
+            Server.RegisterSingleton(new TagsInterface(Services));
+            Server.RegisterSingleton(new BoardsInterface(Services));
+            Server.Respond<IDRequest, bool>(StorageController.Delete);
         }
         public override async Task<ActionResult> Handle(string path)
         {

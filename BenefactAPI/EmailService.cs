@@ -1,6 +1,7 @@
 ﻿using BenefactAPI.Controllers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Replicate.Web;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 using System;

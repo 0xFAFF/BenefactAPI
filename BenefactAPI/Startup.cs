@@ -30,18 +30,18 @@ namespace BenefactAPI
         {
             ReplicationModel.Default.DictionaryAsObject = true;
             ReplicationModel.Default.LoadTypes(typeof(BoardData).Assembly);
-            services.AddSingleton<IReplicateSerializer>(new JSONGraphSerializer(ReplicationModel.Default));
+            var serializer = new JSONSerializer(ReplicationModel.Default);
+            services.AddSingleton<IReplicateSerializer>(new JSONSerializer(ReplicationModel.Default));
+            services.AddSingleton(serializer);
         }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             ConfigureTypes(services);
-            services.AddCors();
             services.AddMvc();
             services.AddEntityFrameworkNpgsql()
                .AddDbContext<BenefactDbContext>(c => c.UseNpgsql(Configuration.GetConnectionString("BenefactDatabase")));
-            services.AddTransient<HTTPChannel>();
             services.AddSingleton<EmailService>();
         }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -51,7 +51,16 @@ namespace BenefactAPI
             {
                 app.UseDeveloperExceptionPage();
             }
-            app.UseHandling(services.GetRequiredService<ILogger<Startup>>(), services.GetRequiredService<IReplicateSerializer>());
+            app.Use(async (context, next) =>
+            {
+                context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST");
+                context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+                context.Response.Headers.Add("Access-Control-Allow-Headers", "*");
+                context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
+                if (context.Request.Method != "OPTIONS")
+                    await next();
+            });
+            app.UseHandling(services, services.GetService<ILogger<Startup>>());
             app.UseAuthn();
             app.UseMvc();
 

@@ -12,11 +12,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
 using Replicate;
+using Replicate.Web;
 
 namespace BenefactAPI.Controllers
 {
     [Route("api/boards/{boardId}/files/")]
     [ReplicateRoute(Route = "files")]
+    [ReplicateType(AutoMembers = AutoAdd.None, AutoMethods = AutoAdd.None)]
     public class StorageController : ControllerBase
     {
         IServiceProvider Services;
@@ -66,6 +68,7 @@ namespace BenefactAPI.Controllers
                 return attachment;
             });
         }
+        [ReplicateRPC]
         public static Task<bool> Delete(IDRequest delete)
         {
             return ReplicateController.Services.DoWithDB(async db =>

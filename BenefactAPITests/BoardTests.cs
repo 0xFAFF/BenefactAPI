@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Replicate;
 using Replicate.Serialization;
+using Replicate.Web;
 using System;
 using System.IO;
 using System.Linq;

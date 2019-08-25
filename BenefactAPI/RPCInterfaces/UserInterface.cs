@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Npgsql;
 using PasswordSecurity;
 using Replicate;
+using Replicate.Web;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 using System;
@@ -42,6 +43,7 @@ namespace BenefactAPI.RPCInterfaces
             Services = services;
             Email = services.GetService<EmailService>();
         }
+        [ReplicateIgnore]
         public static IQueryable<UserData> UserLookup(BenefactDbContext db, string name)
         {
             return db.Users.Where(

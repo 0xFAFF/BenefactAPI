@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Linq.Expressions;
 using Replicate;
+using Replicate.Web;
 
 namespace BenefactAPI.RPCInterfaces.Board
 {

@@ -45,6 +45,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="Replicate\ReplicateWeb\ReplicateWeb.csproj" />
     <ProjectReference Include="Replicate\Replicate\Replicate.csproj" />
   </ItemGroup>
 

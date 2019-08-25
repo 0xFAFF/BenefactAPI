@@ -2,9 +2,11 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Replicate;
 using Replicate.Serialization;
+using Replicate.Web;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,35 +33,27 @@ namespace BenefactAPI
     {
         static (int StatusCode, ErrorData Error) FromException(Exception exception)
             => (exception is HTTPError e ? e.Status : 500, new ErrorData(exception));
-
-        static void AddCors(HttpResponse response)
+        public static void UseHandling(this IApplicationBuilder app, IServiceProvider services, ILogger logger = null)
         {
-            response.Headers.Add("Access-Control-Allow-Methods", "GET, POST");
-            response.Headers.Add("Access-Control-Allow-Origin", "*");
-            response.Headers.Add("Access-Control-Allow-Headers", "*");
-            response.Headers.Add("Access-Control-Allow-Credentials", "true");
-        }
-        public static void UseHandling(this IApplicationBuilder app, ILogger logger, IReplicateSerializer serializer)
-        {
+            var serializer = services.GetRequiredService<IReplicateSerializer>();
             app.Use(async (context, next) =>
             {
-                AddCors(context.Response);
-                if (context.Request.Method != "OPTIONS")
+                try
                 {
-                    try
-                    {
-                        await next.Invoke();
-                    }
-                    catch (Exception e)
-                    {
-                        logger.LogError(e, "Handler exception");
-                        context.Response.Clear();
-                        AddCors(context.Response);
-                        var (StatusCode, Error) = FromException(e);
-                        context.Response.StatusCode = StatusCode;
-                        context.Response.ContentType = "application/json";
-                        await context.Response.WriteAsync(serializer.Serialize(Error).ReadAllString());
-                    }
+                    await next();
+                }
+                catch (Exception e)
+                {
+                    logger?.LogError(e, "Handler exception");
+                    // Save the headers from the previous request
+                    var headers = context.Response.Headers.ToList();
+                    context.Response.Clear();
+                    foreach (var kvp in headers)
+                        context.Response.Headers.Add(kvp.Key, kvp.Value);
+                    var (StatusCode, Error) = FromException(e);
+                    context.Response.StatusCode = StatusCode;
+                    context.Response.ContentType = "application/json";
+                    await context.Response.WriteAsync(serializer.Serialize(Error).ReadAllString());
                 }
             });
         }

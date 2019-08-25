@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Replicate.Web;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -15,12 +16,11 @@ using System.Threading.Tasks;
 
 namespace BenefactAPI.DataAccess
 {
-    [AttributeUsage(AttributeTargets.Method, Inherited = true)]
-    public class AuthRequiredAttribute : Attribute
+    public class AuthRequiredAttribute : CustomAuthAttribute
     {
         public bool RequireVerified = true;
         public Privilege RequirePrivilege = 0;
-        public void ThrowIfUnverified()
+        public override void ThrowIfUnverified()
         {
             Auth.ThrowIfUnauthorized(RequireVerified, RequirePrivilege);
         }

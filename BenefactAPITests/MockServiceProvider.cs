@@ -54,7 +54,7 @@ namespace BenefactAPITests
             public void Dispose() { }
         }
 
-        public JSONGraphSerializer Serializer;
+        public JSONSerializer Serializer;
         DbContextOptions dbOptions = new DbContextOptionsBuilder<BenefactDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
         public ConfigurationBuilder Config = new ConfigurationBuilder();
@@ -63,19 +63,17 @@ namespace BenefactAPITests
         {
             var model = new ReplicationModel() { DictionaryAsObject = true };
             model.LoadTypes(typeof(BoardData).Assembly);
-            Serializer = new JSONGraphSerializer(model);
+            Serializer = new JSONSerializer(model);
         }
 
         public object GetService(Type serviceType)
         {
-            if (serviceType == typeof(IReplicateSerializer))
+            if (serviceType == typeof(IReplicateSerializer) || serviceType == typeof(JSONSerializer))
                 return Serializer;
             if (serviceType == typeof(BenefactDbContext))
                 return new BenefactDbContext(dbOptions, new Env());
             if (serviceType == typeof(IConfiguration))
                 return Config.Build();
-            if (serviceType == typeof(HTTPChannel))
-                return new HTTPChannel(Serializer);
             if (serviceType == typeof(IServiceScopeFactory))
                 return new ScopeFactory(this);
             return null;
