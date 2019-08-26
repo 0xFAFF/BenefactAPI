@@ -16,13 +16,14 @@ using System.Threading.Tasks;
 
 namespace BenefactAPI.DataAccess
 {
-    public class AuthRequiredAttribute : CustomAuthAttribute
+    public class AuthRequiredAttribute : RPCMiddlewareAttribute
     {
         public bool RequireVerified = true;
         public Privilege RequirePrivilege = 0;
-        public override void ThrowIfUnverified()
+        public override Task Run(HttpContext services)
         {
             Auth.ThrowIfUnauthorized(RequireVerified, RequirePrivilege);
+            return Task.FromResult(true);
         }
     }
 
@@ -131,8 +132,7 @@ namespace BenefactAPI.DataAccess
         {
             return app.Use(async (context, next) =>
             {
-                var routeData = context.GetRouteData();
-                _currentUser.Value = await Authenticate(context.Request, app.ApplicationServices);
+                _currentUser.Value = await Authenticate(context.Request, context.RequestServices);
                 await next();
             });
         }

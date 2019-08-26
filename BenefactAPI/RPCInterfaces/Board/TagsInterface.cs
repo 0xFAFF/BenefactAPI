@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace BenefactAPI.RPCInterfaces.Board
 {
     [ReplicateType]
-    [ReplicateRoute(Route = "tags")]
+    [ReplicateRoute(Route = "api/boards/{boardId}/tags")]
     public class TagsInterface
     {
         readonly IServiceProvider Services;

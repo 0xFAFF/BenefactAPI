@@ -17,7 +17,7 @@ namespace BenefactAPI.RPCInterfaces.Board
         public string Text;
     }
     [ReplicateType]
-    [ReplicateRoute(Route = "comments")]
+    [ReplicateRoute(Route = "api/boards/{boardId}/comments")]
     public class CommentsInterface
     {
         readonly IServiceProvider Services;

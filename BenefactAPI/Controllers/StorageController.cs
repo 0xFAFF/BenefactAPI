@@ -17,7 +17,7 @@ using Replicate.Web;
 namespace BenefactAPI.Controllers
 {
     [Route("api/boards/{boardId}/files/")]
-    [ReplicateRoute(Route = "files")]
+    [ReplicateRoute(Route = "api/boards/{boardId}/files")]
     [ReplicateType(AutoMembers = AutoAdd.None, AutoMethods = AutoAdd.None)]
     public class StorageController : ControllerBase
     {
@@ -69,9 +69,9 @@ namespace BenefactAPI.Controllers
             });
         }
         [ReplicateRPC]
-        public static Task<bool> Delete(IDRequest delete)
+        public Task<bool> Delete(IDRequest delete)
         {
-            return ReplicateController.Services.DoWithDB(async db =>
+            return Services.DoWithDB(async db =>
             {
                 var existing = await db.Attachments.Include(a => a.Storage).BoardFilter(delete.Id).FirstOrDefaultAsync();
                 if (existing == null)

@@ -25,9 +25,15 @@ namespace BenefactAPI.RPCInterfaces
         public TrelloBoard Board;
     }
     [ReplicateType]
+    [ReplicateRoute(Route = "api")]
     public class MetaInterface
     {
         IServiceProvider services;
+
+        public Task<string> Version()
+        {
+            return Task.FromResult(Environment.GetEnvironmentVariable("GIT_COMMIT"));
+        }
         public MetaInterface(IServiceProvider services)
         {
             this.services = services;

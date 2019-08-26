@@ -14,6 +14,14 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Replicate.MetaData;
 using Replicate.Serialization;
+using Replicate.RPC;
+using Replicate;
+using BenefactAPI.RPCInterfaces;
+using Microsoft.AspNetCore.Internal;
+using Microsoft.AspNetCore.Routing.Constraints;
+using Microsoft.AspNetCore.Routing;
+using System.Text.RegularExpressions;
+using Replicate.Web;
 
 namespace BenefactAPI
 {
@@ -26,23 +34,19 @@ namespace BenefactAPI
 
         public IConfiguration Configuration { get; }
 
-        public static void ConfigureTypes(IServiceCollection services)
+
+        // This method gets called by the runtime. Use this method to add services to the container.
+        public void ConfigureServices(IServiceCollection services)
         {
             ReplicationModel.Default.DictionaryAsObject = true;
             ReplicationModel.Default.LoadTypes(typeof(BoardData).Assembly);
             var serializer = new JSONSerializer(ReplicationModel.Default);
             services.AddSingleton<IReplicateSerializer>(new JSONSerializer(ReplicationModel.Default));
             services.AddSingleton(serializer);
-        }
-
-        // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
-        {
-            ConfigureTypes(services);
-            services.AddMvc();
             services.AddEntityFrameworkNpgsql()
                .AddDbContext<BenefactDbContext>(c => c.UseNpgsql(Configuration.GetConnectionString("BenefactDatabase")));
             services.AddSingleton<EmailService>();
+            services.AddReplicate(serializer);
         }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, IServiceProvider services)
@@ -60,9 +64,11 @@ namespace BenefactAPI
                 if (context.Request.Method != "OPTIONS")
                     await next();
             });
-            app.UseHandling(services, services.GetService<ILogger<Startup>>());
+            app.UseEndpointRouting();
+            app.UseErrorHandling(services.GetRequiredService<IReplicateSerializer>());
             app.UseAuthn();
-            app.UseMvc();
+            app.UseBoards();
+            app.UseEndpoint();
 
             var command = Configuration.GetValue<string>("action");
             if (command != null)

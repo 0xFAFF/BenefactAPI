@@ -24,6 +24,35 @@ using System.Threading.Tasks;
 namespace BenefactAPI.RPCInterfaces
 {
     [ReplicateType]
+    public class UserAuthRequest
+    {
+        public string Email;
+        public string Password;
+    }
+    [ReplicateType]
+    public class UserGetRequest
+    {
+        public string Name;
+    }
+    [ReplicateType]
+    public class UserCreateRequest
+    {
+        public string Email;
+        public string Name;
+        public string Password;
+    }
+    [ReplicateType]
+    public class UserVerificationRequest
+    {
+        public string Nonce;
+    }
+    [ReplicateType]
+    public class ChangePasswordRequest
+    {
+        public string Password;
+        public string Nonce;
+    }
+    [ReplicateType]
     public class UserResponse
     {
         public UserData User;
@@ -33,7 +62,7 @@ namespace BenefactAPI.RPCInterfaces
         public List<ActivityData> Activity;
     }
     [ReplicateType]
-    [ReplicateRoute(Route = "users")]
+    [ReplicateRoute(Route = "api/users")]
     public class UserInterface
     {
         IServiceProvider Services;

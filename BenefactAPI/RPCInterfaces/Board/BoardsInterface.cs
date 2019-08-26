@@ -68,6 +68,7 @@ namespace BenefactAPI.RPCInterfaces.Board
     }
 
     [ReplicateType]
+    [ReplicateRoute(Route = "api/boards/{boardId}")]
     public class BoardsInterface
     {
         IServiceProvider Services;
@@ -117,7 +118,7 @@ namespace BenefactAPI.RPCInterfaces.Board
         public Task<BoardResponse> Get(CardQuery query)
         {
             var response = new BoardResponse();
-            TypeUtil.CopyFrom(response, BoardExtensions.Board, blackList:
+            TypeUtil.CopyTo(BoardExtensions.Board, response, blackList:
                 new string[] { nameof(BoardResponse.Tags), nameof(BoardResponse.Columns), nameof(BoardResponse.Roles), nameof(BoardResponse.Cards) });
             if (Auth.CurrentRole == null)
                 return Task.FromResult(response);

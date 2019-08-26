@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace BenefactAPI.RPCInterfaces.Board
 {
     [ReplicateType]
-    [ReplicateRoute(Route = "columns")]
+    [ReplicateRoute(Route = "api/boards/{boardId}/columns")]
     public class ColumnsInterface
     {
         readonly IServiceProvider Services;

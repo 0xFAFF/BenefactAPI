@@ -44,7 +44,7 @@ namespace BenefactAPI.RPCInterfaces.Board
         public bool MoveAfter;
     }
     [ReplicateType]
-    [ReplicateRoute(Route = "cards")]
+    [ReplicateRoute(Route = "api/boards/{boardId}/cards")]
     public class CardsInterface
     {
         IServiceProvider Services;

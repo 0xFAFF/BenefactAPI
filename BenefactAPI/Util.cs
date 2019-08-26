@@ -1,6 +1,7 @@
 ﻿using BenefactAPI.Controllers;
 using BenefactAPI.DataAccess;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql;
@@ -40,9 +41,9 @@ namespace BenefactAPI
             }
         }
 
-        public static T GetRouteParam<T>(this ActionContext context, string key, Func<string, T> converter)
+        public static T GetRouteParam<T>(this RouteData routeData, string key, Func<string, T> converter)
         {
-            if (context.RouteData.Values.TryGetValue(key, out var value))
+            if (routeData.Values.TryGetValue(key, out var value))
             {
                 try
                 {
@@ -50,7 +51,7 @@ namespace BenefactAPI
                 }
                 catch { }
             }
-            return default(T);
+            return default;
         }
 
         public static void ConfigureKey<T>(this ModelBuilder modelBuilder,
