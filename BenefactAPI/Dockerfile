@@ -10,7 +10,7 @@ COPY . ./
 RUN dotnet publish -c Release -o out
 
 # Build runtime image
-FROM microsoft/dotnet:aspnetcore-runtime
+FROM microsoft/dotnet:2.2-aspnetcore-runtime
 ARG GIT_COMMIT=unspecified
 LABEL git_commit=$GIT_COMMIT
 WORKDIR /app
