@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.Routing.Constraints;
 using Microsoft.AspNetCore.Routing;
 using System.Text.RegularExpressions;
 using Replicate.Web;
+using System.Diagnostics;
 
 namespace BenefactAPI
 {
@@ -84,10 +85,6 @@ namespace BenefactAPI
                         email.SendEmail("asherman1024@gmail.com", "Welcome to Benefact!", "verification.html",
                             new Dictionary<string, string> { { "link_target", $"https://{{{{baseURL}}}}/login?nonce=derp" } }).GetAwaiter().GetResult();
                         break;
-                    case "migrate":
-                        using (var db = services.GetService<BenefactDbContext>())
-                            db.Database.Migrate();
-                        break;
                     case "mockdata":
                         using (var db = services.GetService<BenefactDbContext>())
                         {
@@ -99,6 +96,8 @@ namespace BenefactAPI
                 }
                 Environment.Exit(0);
             }
+            using (var db = services.GetService<BenefactDbContext>())
+                db.Database.Migrate();
         }
     }
 }
