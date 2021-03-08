@@ -29,7 +29,7 @@
     },
     "ConfigureDB": {
       "commandName": "Project",
-      "commandLineArgs": "action=install",
+      "commandLineArgs": "action=migrate",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

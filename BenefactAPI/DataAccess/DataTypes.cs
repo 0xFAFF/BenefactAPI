@@ -85,6 +85,13 @@ namespace BenefactAPI.DataAccess
         public UserData Assignee { get; set; }
         [Required]
         public int? Index { get; set; }
+        public int? ParentId { get; set; }
+        [ReplicateIgnore]
+        public CardData Parent { get; set; }
+        [ReplicateIgnore]
+        public List<CardData> Children { get; set; } = new List<CardData>();
+        [NotMapped]
+        public List<int> ChildIds => Children.Select(c => c.Id).ToList();
         [Required]
         public string Title { get; set; }
         public string Description { get; set; }
