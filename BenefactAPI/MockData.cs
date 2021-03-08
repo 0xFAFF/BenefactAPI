@@ -30,18 +30,20 @@ namespace BenefactAPI
             BoardData board1 = null;
             services.DoWithDB(async db =>
             {
+                var faff = await db.Users.FirstOrDefaultAsync(u => u.Name == "FAFF");
+                var aUser = await db.Users.FirstOrDefaultAsync(u => u.Name == "A");
+
                 board1 = db.Boards.FirstOrDefault() ?? db.Boards.Add(new BoardData()
                 {
                     Id = 1,
                     Title = "Benefact",
                     UrlName = "benefact",
                     Description = "Benefact board",
+                    Creator = faff,
                 }).Entity;
 
-                var board2 = db.Boards.Skip(1).FirstOrDefault() ?? db.Boards.Add(new BoardData() { Id = 2, Title = "FAFF", UrlName = "faff" }).Entity;
+                var board2 = db.Boards.Skip(1).FirstOrDefault() ?? db.Boards.Add(new BoardData() { Id = 2, Title = "FAFF", UrlName = "faff", Creator = faff }).Entity;
 
-                var faff = await db.Users.FirstOrDefaultAsync(u => u.Name == "FAFF");
-                var aUser = await db.Users.FirstOrDefaultAsync(u => u.Name == "A");
                 aUser.EmailVerified = true;
                 faff.EmailVerified = true;
                 faff.Roles.Add(new UserRole()

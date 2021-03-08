@@ -103,7 +103,7 @@ namespace BenefactAPI.Controllers
             try
             {
                 var request = Channel.CreateRequest(path, bodyText, null, out var contract);
-                contract.Method?.GetCustomAttribute<AuthRequiredAttribute>()?.ThrowIfUnverified();
+                contract.Method?.GetCustomAttributes<AuthRequiredAttribute>().Last()?.ThrowIfUnverified();
                 var result = await Channel.Receive(request);
                 if (result is ActionResult actionResult)
                     return actionResult;

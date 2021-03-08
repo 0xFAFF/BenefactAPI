@@ -60,7 +60,7 @@ namespace BenefactAPI.RPCInterfaces.Board
                 var card = await db.Cards.Include(c => c.Tags).BoardFilter(update.Id).FirstOrDefaultAsync();
                 if (card == null) throw new HTTPError("Card not found", 404);
                 // Only developers can edit cards they don't own, or move cards
-                if (card.AuthorId != Auth.CurrentUser.Id || update.Index.HasValue || update.ColumnId.HasValue)
+                if (card.AuthorId != Auth.CurrentUser.Id || update.Index.HasValue || update.ColumnId.HasValue || update.ParentId.HasValue)
                     Auth.VerifyPrivilege(Privilege.Developer);
                 // Verify the assignee is valid and the editor is a developer
                 if (update.AssigneeId.HasValue)
@@ -74,8 +74,9 @@ namespace BenefactAPI.RPCInterfaces.Board
                             .FirstOrError("Invalid assignee", 400);
                     card.AssigneeId = update.AssigneeId == 0 ? null : update.AssigneeId;
                 }
-                TypeUtil.CopyFrom(card, update,
-                    whiteList: new[] { nameof(CardData.Title), nameof(CardData.Description), nameof(CardData.ColumnId) });
+                TypeUtil.CopyTo(update, card,
+                    whiteList: new[] { nameof(CardData.Title), nameof(CardData.Description), nameof(CardData.ColumnId), nameof(CardData.ParentId) });
+                if (update.ParentId == -1) card.ParentId = null;
                 if (update.Tags != null)
                 {
                     card.Tags.Clear();
