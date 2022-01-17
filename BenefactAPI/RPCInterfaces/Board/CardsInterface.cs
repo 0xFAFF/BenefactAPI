@@ -127,6 +127,7 @@ namespace BenefactAPI.RPCInterfaces.Board
                     Auth.VerifyPrivilege(Privilege.Developer);
                 var result = await db.Cards.AddAsync(card);
                 await db.Insert(card, card.Index, db.Cards.Where(c => c.BoardId == card.BoardId));
+                await db.SaveChangesAsync();
                 await Activity.LogActivity(db, card, ActivityType.Create);
                 return result.Entity;
             });
