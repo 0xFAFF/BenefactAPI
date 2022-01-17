@@ -42,7 +42,11 @@ namespace BenefactAPI
             ReplicationModel.Default.DictionaryAsObject = true;
             ReplicationModel.Default.LoadTypes(typeof(BoardData).Assembly);
             var serializer = new JSONSerializer(ReplicationModel.Default);
-            services.AddSingleton<IReplicateSerializer>(new JSONSerializer(ReplicationModel.Default, new JSONSerializer.Configuration() { Strict = false }));
+            services.AddSingleton<IReplicateSerializer>(new JSONSerializer(ReplicationModel.Default,
+                new JSONSerializer.Configuration() {
+                    Strict = false,
+                    KeyConvert = (s => s, s => string.IsNullOrEmpty(s) ? s : char.ToUpper(s[0]) + s[1..])
+                }));
             services.AddSingleton(serializer);
             services.AddDbContext<BenefactDbContext>(options =>
             {
