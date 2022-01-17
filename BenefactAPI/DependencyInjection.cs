@@ -18,12 +18,12 @@ namespace BenefactAPI
             bool autoSave = true)
         {
             using (var db = Services.CreateScope().ServiceProvider.GetService<BenefactDbContext>())
-            //using (var transaction = await db.Database.BeginTransactionAsync())
+            using (var transaction = await db.Database.BeginTransactionAsync())
             {
                 var result = await func(db);
                 if (autoSave)
                     await db.SaveChangesAsync();
-                //transaction.Commit();
+                transaction.Commit();
                 return result;
             }
         }

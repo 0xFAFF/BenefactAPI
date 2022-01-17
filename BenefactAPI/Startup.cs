@@ -42,17 +42,20 @@ namespace BenefactAPI
             ReplicationModel.Default.DictionaryAsObject = true;
             ReplicationModel.Default.LoadTypes(typeof(BoardData).Assembly);
             var serializer = new JSONSerializer(ReplicationModel.Default);
-            services.AddSingleton<IReplicateSerializer>(new JSONSerializer(ReplicationModel.Default));
+            services.AddSingleton<IReplicateSerializer>(new JSONSerializer(ReplicationModel.Default, new JSONSerializer.Configuration() { Strict = false }));
             services.AddSingleton(serializer);
-            services.AddEntityFrameworkNpgsql()
-               .AddDbContext<BenefactDbContext>(c => c.UseNpgsql(Configuration.GetConnectionString("BenefactDatabase")));
+            services.AddDbContext<BenefactDbContext>(options =>
+            {
+                options.EnableSensitiveDataLogging(true);
+                options.UseNpgsql(Configuration.GetConnectionString("BenefactDatabase"));
+                options.UseSnakeCaseNamingConvention();
+            });
             services.AddSingleton<EmailService>();
-            services.AddReplicate(serializer);
         }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, IServiceProvider services)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IServiceProvider services)
         {
-            if (env.IsDevelopment())
+            if (env.GetEnvironmentType() == EnvironmentType.Development)
             {
                 app.UseDeveloperExceptionPage();
             }
@@ -65,11 +68,11 @@ namespace BenefactAPI
                 if (context.Request.Method != "OPTIONS")
                     await next();
             });
-            app.UseEndpointRouting();
+            app.UseRouting();
             app.UseErrorHandling(services.GetRequiredService<IReplicateSerializer>());
             app.UseAuthn();
             app.UseBoards();
-            app.UseEndpoint();
+            app.UseEndpoints(env, services.GetRequiredService<IReplicateSerializer>());
 
             var command = Configuration.GetValue<string>("action");
             if (command != null)
@@ -97,7 +100,9 @@ namespace BenefactAPI
                 Environment.Exit(0);
             }
             using (var db = services.GetService<BenefactDbContext>())
+            {
                 db.Database.Migrate();
+            }
         }
     }
 }

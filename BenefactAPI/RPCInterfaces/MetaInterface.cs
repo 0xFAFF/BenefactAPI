@@ -25,6 +25,13 @@ namespace BenefactAPI.RPCInterfaces
         public TrelloBoard Board;
     }
     [ReplicateType]
+    public class GithubImportRequest
+    {
+        public string Name;
+        public string UrlName;
+        public List<GithubCard> Board;
+    }
+    [ReplicateType]
     [ReplicateRoute(Route = "api")]
     public class MetaInterface
     {
@@ -228,6 +235,62 @@ namespace BenefactAPI.RPCInterfaces
                 }
                 await addAdminRole(db, board.Board);
                 return board.Board.UrlName;
+            }).HandleDuplicate("ix_boards_url_name", "A board with that URL already exists");
+        }
+        [AuthRequired]
+        [ReplicateRoute(Route = "board/github_import")]
+        public Task<string> Import(GithubImportRequest request)
+        {
+            var requestBoard = new GithubBoard(request.Board);
+            return services.DoWithDB(async db =>
+            {
+                var board = new BoardData()
+                {
+                    Title = request.Name,
+                    UrlName = request.UrlName,
+                    CreatorId = Auth.CurrentUser.Id,
+                };
+                await db.AddAsync(board);
+                await db.SaveChangesAsync();
+                foreach (var label in requestBoard.labels.Values)
+                {
+                    label.Tag = new TagData()
+                    {
+                        Board = board,
+                        Color = label.color,
+                        Name = label.name
+                    };
+                    await db.AddAsync(label.Tag);
+                }
+                await db.SaveChangesAsync();
+                var column = new ColumnData()
+                {
+                    Board = board,
+                    Title = "Open",
+                    Index = 0,
+                    AllowContribution = false,
+                    State = CardState.Proposed,
+                };
+                await db.AddAsync(column);
+                await db.SaveChangesAsync();
+                var cards = requestBoard.cards;
+                for (int i = 0; i < cards.Count; i++)
+                {
+                    var card = cards[i];
+                    card.Card = new CardData()
+                    {
+                        Board = board,
+                        ColumnId = column.Id,
+                        Description = card.body.Replace("\r\n", "\n"),
+                        TagIds = card.labels.Select(lid => requestBoard.labels[lid.id].Tag.Id).ToList(),
+                        Title = card.title,
+                        Index = i,
+                        AuthorId = Auth.CurrentUser.Id,
+                    };
+                    await db.AddAsync(card.Card);
+                }
+                await addAdminRole(db, board);
+                return board.UrlName;
             }).HandleDuplicate("ix_boards_url_name", "A board with that URL already exists");
         }
     }
